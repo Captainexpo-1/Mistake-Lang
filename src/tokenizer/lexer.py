@@ -16,11 +16,18 @@ class Lexer:
     }
 
     def __init__(self):
-        self.tokens = []
+        self.tokens: List[Token] = []
         self.code = ""
         self.current_token = None
         self.current_position = 0
         self.current_line = 1
+
+    def add_token(self, token: Token):
+        # don't add newlines if they are already present
+        if token.type == TokenType.SYM_NEWLINE :
+            if len(self.tokens) > 0 and self.tokens[-1].type == TokenType.SYM_NEWLINE:
+                return
+        self.tokens.append(token)
 
     def is_identifier(self, s: str) -> bool:
         contains_non_number = False
@@ -40,7 +47,7 @@ class Lexer:
         while self.current_position < len(self.code) and self.code[self.current_position].isspace():
             if self.code[self.current_position] == '\n':
                 self.current_line += 1
-                self.tokens.append(Token(TokenType.SYM_NEWLINE, "NL", self.current_line))
+                self.add_token(Token(TokenType.SYM_NEWLINE, "NL", self.current_line))
             self.current_position += 1
     
     def skip_line(self):
@@ -48,7 +55,7 @@ class Lexer:
             self.current_position += 1
         self.current_line += 1
         self.current_position += 1
-        self.tokens.append(Token(TokenType.SYM_NEWLINE, "NL", self.current_line))
+        self.add_token(Token(TokenType.SYM_NEWLINE, "NL", self.current_line))
     
     def get_string(self) -> str:
         start = self.current_position
@@ -73,13 +80,13 @@ class Lexer:
                 continue
             
             if t == "string":
-                self.tokens.append(Token(TokenType.SYM_STRING, self.get_string(), self.current_line))
+                self.add_token(Token(TokenType.SYM_STRING, self.get_string(), self.current_line))
                 continue
             
             token_type = self.get_token(t)
             if token_type == TokenType.ERROR:
                 raise Exception(f"Unknown token '{t}' at line {self.current_line}")
-            self.tokens.append(Token(token_type, t, self.current_line))
+            self.add_token(Token(token_type, t, self.current_line))
         
         return self.tokens
     

@@ -25,10 +25,10 @@ class TokenType(Enum):
     SYM_NEWLINE = 19
 
 class Token:
-    def __init__(self, value: any, token_type: TokenType, line: int = 0):
+    def __init__(self, type: TokenType, value: any, line: int = 0):
         self.value = value
-        self.token_type = token_type
+        self.type = type
         self.line = line
     
-    def __str__(self) -> str: return f"Token({self.value}, {self.token_type})"
+    def __str__(self) -> str: return f"Token({self.type}: \"{self.value}\")"
     def __repr__(self) -> str: return str(self)
