@@ -2,7 +2,7 @@ from tokenizer.token import *
 from utils import *
 from typing import List
 from parser.errors.parser_errors import *
-
+import re
 class Lexer:
     keywords: dict[str, TokenType] = {
         "variable": TokenType.KW_VARIABLE,
@@ -39,7 +39,7 @@ class Lexer:
         return contains_non_number
             
     def get_token(self, s: str) -> TokenType:
-        if s.isdigit(): return TokenType.SYM_NUMBER
+        if re.fullmatch(r"\-?[0-9]+(\.[0-9]+)?", s) != None: return TokenType.SYM_NUMBER
         if s[:-1].isdigit() and s[-1] in ['s', 'u', 'l']: return TokenType.SYM_DURATION
         if self.is_identifier(s):
             return TokenType.SYM_IDENTIFIER
@@ -60,7 +60,7 @@ class Lexer:
     
     def get_string(self) -> str:
         start = self.current_position
-        while self.current_position < len(self.code) and self.code[self.current_position:self.current_position+5] != "end":
+        while self.current_position < len(self.code) and self.code[self.current_position:self.current_position+5] != "close":
             self.current_position += 1
         return self.code[start:self.current_position]
     
