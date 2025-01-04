@@ -100,10 +100,10 @@ class Parser:
             return ASTNode(NodeType.E_STRING, self.eat(TokenType.SYM_STRING).value, [self.parse_expression()])
         if self.peek_is(TokenType.SYM_NUMBER):
             return ASTNode(NodeType.E_NUMBER, self.eat(TokenType.SYM_NUMBER).value, [self.parse_expression()])
-        if self.peek_is(TokenType.SYM_IDENTIFIER):
+        if self.peek_is(TokenType.SYM_IDENTIFIER) or self.peek_is(TokenType.KW_RANDOMIZE):
             if not self.is_valid_identifier(self.peek().value, NodeType.S_FUNCTION_CALL):
                 raise InvalidIdentifierError(f"Invalid identifier '{self.peek().value}'")
-            return ASTNode(NodeType.S_FUNCTION_CALL, self.eat(TokenType.SYM_IDENTIFIER).value, [self.parse_expression()])
+            return ASTNode(NodeType.S_FUNCTION_CALL, self.advance().value, [self.parse_expression()])
         if self.peek_is(TokenType.KW_FUNCTION) or (self.peek_is(TokenType.KW_IMPURE) and self.peek_is(TokenType.KW_FUNCTION, dist=2)):
             return self.parse_function_declaration()
         if self.peek_is(TokenType.KW_OPEN):

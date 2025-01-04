@@ -17,7 +17,8 @@ class Lexer:
         "lifetime": TokenType.KW_LIFETIME,
         "true": TokenType.KW_TRUE,
         "false": TokenType.KW_FALSE,
-        "public": TokenType.KW_PUBLIC
+        "public": TokenType.KW_PUBLIC,
+        "randomize": TokenType.KW_RANDOMIZE
     }
 
     def __init__(self):

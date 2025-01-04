@@ -28,6 +28,7 @@ class TokenType(Enum):
     KW_TRUE = 22
     KW_FALSE = 23
     KW_PUBLIC = 24
+    KW_RANDOMIZE = 25
     SYM_EOF = 100
 
 class Token:
