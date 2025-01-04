@@ -1,17 +1,2 @@
-comment The below prints "Hello, world! What a great comment."
-?! string Hello, world! What a great comment. close
-
-comment string should accept up to _one_ leading space. So, the below would print " Hello, world!"
-?! string  Hello, world! close
-
-comment If, for some reason, you need to write "close" in a string, well, you can't.
-comment Luckily, you can use the + function!
-?! open + string Please clos close string e the door. close
-
-comment Beware that adding a number to a string will coerce the string into a number.
-comment This prints NaN.
-?! open + 5 string Hello! close
-
-comment Of course, you can multiply and divide strings.
-?! open * string Hello close 5  comment This prints HelloHelloHelloHelloHello
-?! open / string Hello close 5  comment This prints H
+?! open + 5 close end
+?! open + 5 6 close end

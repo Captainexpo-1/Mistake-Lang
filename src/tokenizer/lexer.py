@@ -38,6 +38,7 @@ class Lexer:
             
     def get_token(self, s: str) -> TokenType:
         if s.isdigit(): return TokenType.SYM_NUMBER
+        if s[:-1].isdigit() and s[-1] in ['s', 'm', 'h', 'd', 'l']: return TokenType.SYM_DURATION
         if self.is_identifier(s):
             return TokenType.SYM_IDENTIFIER
         
