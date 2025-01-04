@@ -11,9 +11,9 @@ All language constructs are in the user's language because it makes programs sel
 
 These are some core data types:
 
-* function
-* string
-* number
+* `function`
+* `string`
+* `number`
 
 Users can also create classes.
 
