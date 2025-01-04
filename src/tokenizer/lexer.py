@@ -23,10 +23,6 @@ class Lexer:
         self.current_line = 1
 
     def add_token(self, token: Token):
-        # don't add newlines if they are already present
-        if token.type == TokenType.SYM_NEWLINE :
-            if len(self.tokens) > 0 and self.tokens[-1].type == TokenType.SYM_NEWLINE:
-                return
         self.tokens.append(token)
 
     def is_identifier(self, s: str) -> bool:
@@ -48,7 +44,6 @@ class Lexer:
         while self.current_position < len(self.code) and self.code[self.current_position].isspace():
             if self.code[self.current_position] == '\n':
                 self.current_line += 1
-                self.add_token(Token(TokenType.SYM_NEWLINE, "NL", self.current_line))
             self.current_position += 1
     
     def skip_line(self):
@@ -56,7 +51,6 @@ class Lexer:
             self.current_position += 1
         self.current_line += 1
         self.current_position += 1
-        self.add_token(Token(TokenType.SYM_NEWLINE, "NL", self.current_line))
     
     def get_string(self) -> str:
         start = self.current_position
