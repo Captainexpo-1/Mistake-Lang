@@ -1,1 +1,1 @@
-?! open variable ()) is 3 end 5 close end
+?! open variable ()) lifetime 20s is 3 end 5 close end

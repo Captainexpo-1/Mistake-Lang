@@ -50,9 +50,13 @@ class Parser:
         # variable grammar = 'variable' identifier 'is' expression 'end'
         self.eat(TokenType.KW_VARIABLE)
         id = self.eat(TokenType.SYM_IDENTIFIER)
+        lt: Token = None
+        if self.peek_is(TokenType.KW_LIFETIME):
+            self.eat(TokenType.KW_LIFETIME)
+            lt = self.eat(TokenType.SYM_DURATION)
         self.eat(TokenType.KW_IS)
         expr = self.parse_expression()
-        return ASTNode(NodeType.S_VARIABLE_DECLARATION, id.value, [expr])
+        return ASTNode(NodeType.S_VARIABLE_DECLARATION, id.value, [expr, lt] if lt else [expr])
     
     def parse_block(self) -> ASTNode:
         # block grammar = 'open' statement* 'close'

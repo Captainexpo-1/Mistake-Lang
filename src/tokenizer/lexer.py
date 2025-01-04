@@ -12,7 +12,8 @@ class Lexer:
         "function": TokenType.KW_FUNCTION,
         "end": TokenType.KW_END,
         "returns": TokenType.KW_RETURNS,
-        "string": TokenType.KW_STRING
+        "string": TokenType.KW_STRING,
+        "lifetime": TokenType.KW_LIFETIME,
     }
 
     def __init__(self):
@@ -34,7 +35,7 @@ class Lexer:
             
     def get_token(self, s: str) -> TokenType:
         if s.isdigit(): return TokenType.SYM_NUMBER
-        if s[:-1].isdigit() and s[-1] in ['s', 'm', 'h', 'd', 'l']: return TokenType.SYM_DURATION
+        if s[:-1].isdigit() and s[-1] in ['s', 'u', 'l']: return TokenType.SYM_DURATION
         if self.is_identifier(s):
             return TokenType.SYM_IDENTIFIER
         

@@ -7,9 +7,6 @@ class NodeType(Enum):
     E_BLOCK = 2
     E_STRING = 3
     E_NUMBER = 4
-    
-    
-
 class ASTNode:
     def __init__(self, type: NodeType, value: any, children: List['ASTNode'] = []):
         self.value = value
