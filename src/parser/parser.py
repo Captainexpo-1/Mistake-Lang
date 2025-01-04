@@ -56,15 +56,16 @@ class Parser:
         # variable grammar = 'variable' identifier 'is' expression 'end'
         is_pub = self.peek_is(TokenType.KW_PUBLIC)
         if is_pub: self.eat(TokenType.KW_PUBLIC)
+        
         self.eat(TokenType.KW_VARIABLE)
         id = self.eat(TokenType.SYM_IDENTIFIER)
-        lt: Token = None
+        lt: Token = 'inf'
         if self.peek_is(TokenType.KW_LIFETIME):
             self.eat(TokenType.KW_LIFETIME)
-            lt = self.eat(TokenType.SYM_DURATION)
+            lt = self.eat(TokenType.SYM_DURATION).value
         self.eat(TokenType.KW_IS)
         expr = self.parse_expression()
-        return ASTNode(NodeType.S_VARIABLE_DECLARATION, id.value, [is_pub, expr, lt] if lt else [expr])
+        return ASTNode(NodeType.S_VARIABLE_DECLARATION, id.value, [is_pub, expr, lt], line=id.line)
     
     def parse_block(self) -> ASTNode:
         # block grammar = 'open' statement* 'close'
@@ -82,14 +83,14 @@ class Parser:
         # [impure] function [<identifier>]... returns <expression> close
         impure = self.peek_is(TokenType.KW_IMPURE)
         if impure: self.eat(TokenType.KW_IMPURE)
-        self.eat(TokenType.KW_FUNCTION)
+        ln=self.eat(TokenType.KW_FUNCTION).line
         ids = []
         while self.peek_is(TokenType.SYM_IDENTIFIER):
             ids.append(self.eat(TokenType.SYM_IDENTIFIER).value)
         self.eat(TokenType.KW_RETURNS)
         expr = self.parse_expression()
         self.eat(TokenType.KW_CLOSE)
-        return ASTNode(NodeType.E_FUNCTION_DECLARATION, ids, [impure, expr])
+        return ASTNode(NodeType.E_FUNCTION_DECLARATION, ids, [impure, expr], line=ln)
     
     def parse_expression(self) -> ASTNode|None:
         print("EXPR", self.cur(), self.peek(), self.position)
@@ -103,7 +104,8 @@ class Parser:
         if self.peek_is(TokenType.SYM_IDENTIFIER) or self.peek_is(TokenType.KW_RANDOMIZE):
             if not self.is_valid_identifier(self.peek().value, NodeType.S_FUNCTION_CALL):
                 raise InvalidIdentifierError(f"Invalid identifier '{self.peek().value}'")
-            return ASTNode(NodeType.S_FUNCTION_CALL, self.advance().value, [self.parse_expression()])
+            ln = self.peek().line
+            return ASTNode(NodeType.S_FUNCTION_CALL, self.advance().value, [self.parse_expression()], line=ln)
         if self.peek_is(TokenType.KW_FUNCTION) or (self.peek_is(TokenType.KW_IMPURE) and self.peek_is(TokenType.KW_FUNCTION, dist=2)):
             return self.parse_function_declaration()
         if self.peek_is(TokenType.KW_OPEN):

@@ -9,10 +9,11 @@ class NodeType(Enum):
     E_NUMBER = 4
     E_FUNCTION_DECLARATION = 5
 class ASTNode:
-    def __init__(self, type: NodeType, value: any, children: List['ASTNode'] = []):
+    def __init__(self, type: NodeType, value: any, children: List['ASTNode'] = [], line: int = 0):
         self.value = value
         self.type = type
-        self.children = [i for i in children if i]
+        self.children = [i for i in children if i != None]
+        self.line = line
         
     def __str__(self) -> str: return f"Node({self.type}: \"{self.value}\" & {self.children if self.children else 'none'})"
     def __repr__(self) -> str: return str(self)

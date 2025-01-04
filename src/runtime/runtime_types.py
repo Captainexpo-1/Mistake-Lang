@@ -41,6 +41,7 @@ class LifetimeType(Enum):
     TIMESTAMP = 0 # given in miliseconds since jan 1st 2020   
     SECONDS = 1
     LINES = 2
+    INFINITE = 3
 
 def get_timestamp():
     reference_date = datetime(2020, 1, 1)
@@ -68,6 +69,8 @@ class Lifetime(MLType):
     
     def is_expired(self, line=None):
         match self.type:
+            case LifetimeType.INFINITE:
+                return False
             case LifetimeType.TIMESTAMP:
                 return get_timestamp() >= self.value
             case LifetimeType.SECONDS:
@@ -77,16 +80,3 @@ class Lifetime(MLType):
                     raise InvalidLifetimeError("Line number must be provided for line lifetime")
                 return line - self.start >= self.value
             
-class Variable(MLType):
-    def __init__(self, name: str, value: MLType, lifetime: Lifetime = None): 
-        self.name = name
-        self.value = value
-        self.lifetime = None
-        
-    def is_expired(self, line=None):
-        if self.lifetime == None:
-            return False
-        return self.lifetime.is_expired(line)
-        
-    def to_string(self): 
-        return f"Variable({self.name}, {self.value})"

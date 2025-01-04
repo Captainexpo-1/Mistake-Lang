@@ -1,8 +1,1 @@
-comment JavaScript does this, so it must be good.
-comment (*+5) takes two numbers, multiplies them together and adds 5.
-variable (*+5) is function ? ! returns + open * ? ! close 5 close end
-
-comment Impure functions must say "impure".
-comment Otherwise, they must have no side effects.
-comment This is so that the compiler can theoretically apply theoretical optimisations to theoretical functions.
-variable ?!(*+5) is impure function ? ! returns ?! open (*+5) close close end
+variable $1 is open 5 close end

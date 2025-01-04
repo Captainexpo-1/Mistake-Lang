@@ -1,6 +1,9 @@
 class RuntimeError(Exception): pass
-class UndefinedVariableError(RuntimeError): pass
+class VariableNotFoundError(RuntimeError): pass
+class VariableAlreadyDefinedError(RuntimeError): pass
+
 class InvalidAssignmentError(RuntimeError): pass
 class InvalidFunctionCallError(RuntimeError): pass
 
 class InvalidLifetimeError(RuntimeError): pass
+class LifetimeExpiredError(RuntimeError): pass
