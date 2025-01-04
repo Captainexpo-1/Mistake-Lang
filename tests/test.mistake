@@ -1,1 +1,9 @@
-?! open variable ()) lifetime 20s is 3 end 5 close end
+public variable ++ is impure function $ returns open
+    comment I can access my class variables here!
+
+    comment Add $ to the counter:
+    < [#] open + open ? [#] close $ close end
+
+    comment And return it:
+    ? [#]
+close close end

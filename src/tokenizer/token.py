@@ -25,6 +25,9 @@ class TokenType(Enum):
     SYM_NEWLINE = 19
     SYM_DURATION = 20
     KW_LIFETIME = 21
+    KW_TRUE = 22
+    KW_FALSE = 23
+    KW_PUBLIC = 24
     SYM_EOF = 100
 
 class Token:

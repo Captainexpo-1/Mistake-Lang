@@ -1,6 +1,7 @@
 from tokenizer.token import *
 from utils import *
 from typing import List
+from parser.errors.parser_errors import *
 
 class Lexer:
     keywords: dict[str, TokenType] = {
@@ -14,9 +15,13 @@ class Lexer:
         "returns": TokenType.KW_RETURNS,
         "string": TokenType.KW_STRING,
         "lifetime": TokenType.KW_LIFETIME,
+        "true": TokenType.KW_TRUE,
+        "false": TokenType.KW_FALSE,
+        "public": TokenType.KW_PUBLIC
     }
 
     def __init__(self):
+        self.errors: List[ParserError] = []
         self.tokens: List[Token] = []
         self.code = ""
         self.current_token = None
@@ -55,7 +60,7 @@ class Lexer:
     
     def get_string(self) -> str:
         start = self.current_position
-        while self.current_position < len(self.code) and self.code[self.current_position:self.current_position+5] != "close":
+        while self.current_position < len(self.code) and self.code[self.current_position:self.current_position+5] != "end":
             self.current_position += 1
         return self.code[start:self.current_position]
     
