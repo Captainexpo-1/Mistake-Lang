@@ -1,6 +1,1 @@
-?! open 
-    + 5 
-close end
-?! open 
-    + 5 6 
-close end  
+?! open variable ()) is 3 end 5 close end

@@ -25,6 +25,7 @@ class TokenType(Enum):
     SYM_NEWLINE = 19
     SYM_DURATION = 20
     KW_LIFETIME = 21
+    SYM_EOF = 100
 
 class Token:
     def __init__(self, type: TokenType, value: any, line: int = 0):

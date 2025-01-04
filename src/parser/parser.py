@@ -32,7 +32,7 @@ class Parser:
     
     def parse(self, tokens: List[Token]) -> List[ASTNode]:
         self.tokens = tokens
-        while self.position < len(self.tokens):
+        while not self.peek_is(TokenType.SYM_EOF):
             self.ast.append(self.parse_statement())
             print(self.ast)
         return self.ast
@@ -52,7 +52,6 @@ class Parser:
         id = self.eat(TokenType.SYM_IDENTIFIER)
         self.eat(TokenType.KW_IS)
         expr = self.parse_expression()
-        self.eat(TokenType.KW_END)
         return ASTNode(NodeType.S_VARIABLE_DECLARATION, id.value, [expr])
     
     def parse_block(self) -> ASTNode:
@@ -67,14 +66,20 @@ class Parser:
         self.eat(TokenType.KW_CLOSE)
         return block
     
-    def parse_expression(self) -> ASTNode:
+    def parse_expression(self) -> ASTNode|None:
+        print("EXPR", self.cur(), self.peek(), self.position)
+        if self.peek_is(TokenType.KW_END) or self.peek_is(TokenType.KW_CLOSE):
+            return None
         if self.peek_is(TokenType.SYM_STRING):
-            return ASTNode(NodeType.E_STRING, self.eat(TokenType.SYM_STRING).value)
+            self.eat(TokenType.SYM_STRING)
+            return ASTNode(NodeType.E_STRING, self.eat(TokenType.SYM_STRING).value, [self.parse_expression()])
         if self.peek_is(TokenType.SYM_NUMBER):
-            return ASTNode(NodeType.E_NUMBER, self.eat(TokenType.SYM_NUMBER).value)
+            return ASTNode(NodeType.E_NUMBER, self.eat(TokenType.SYM_NUMBER).value, [self.parse_expression()])
         if self.peek_is(TokenType.SYM_IDENTIFIER):
             return ASTNode(NodeType.S_FUNCTION_CALL, self.eat(TokenType.SYM_IDENTIFIER).value, [self.parse_expression()])
         if self.peek_is(TokenType.KW_OPEN):
-            return self.parse_block()
-        raise UnknownTokenError(f"Unknown token {self.cur()}")
+            block = self.parse_block()
+            block.add_child(self.parse_expression())
+            return block
+        raise UnknownTokenError(f"Unknown token {self.peek()}")
         

@@ -83,6 +83,7 @@ class Lexer:
                 raise Exception(f"Unknown token '{t}' at line {self.current_line}")
             self.add_token(Token(token_type, t, self.current_line))
         
+        self.add_token(Token(TokenType.SYM_EOF, "EOF", self.current_line))
         return self.tokens
     
     def __str__(self):
