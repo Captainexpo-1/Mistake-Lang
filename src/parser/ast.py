@@ -66,11 +66,11 @@ class VariableDeclaration(ASTNode):
         return f"VariableDeclaration({self.name}, value={self.value}, lifetime={self.lifetime})"
     
 class FunctionDeclaration(ASTNode):
-    def __init__(self, parameter: str, body: ASTNode, impure: bool = False):
-        self.parameter = parameter
+    def __init__(self, parameters: List[str], body: ASTNode, impure: bool = False):
+        self.parameters = parameters
         self.body = body
         self.impure = impure
         
     def __str__(self):
-        return f"FunctionDeclaration({self.parameter}, body={self.body}, impure={self.impure})"
+        return f"FunctionDeclaration({self.parameters}, body={self.body}, impure={self.impure})"
     

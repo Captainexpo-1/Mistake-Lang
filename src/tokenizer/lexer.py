@@ -23,9 +23,7 @@ class Lexer:
         "randomize": TokenType.KW_RANDOMIZE,
         "type": TokenType.KW_TYPE,
         "number": TokenType.TYPE_NUMBER,
-        "string": TokenType.TYPE_STRING,
         "boolean": TokenType.TYPE_BOOLEAN,
-        "function": TokenType.TYPE_FUNCTION,
         "unit": TokenType.KW_UNIT
     }
 
@@ -96,8 +94,9 @@ class Lexer:
             
             token_type = self.get_token(t)
             if token_type == TokenType.ERROR:
-                raise Exception(f"Unknown token '{t}' at line {self.current_line}")
-            self.add_token(Token(token_type, t, self.current_line))
+                self.add_token(Token(TokenType.ERROR, t, self.current_line))
+            else:
+                self.add_token(Token(token_type, t, self.current_line))
         
         self.add_token(Token(TokenType.SYM_EOF, "EOF", self.current_line))
         return self.tokens

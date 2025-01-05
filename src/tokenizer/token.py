@@ -27,10 +27,8 @@ class TokenType(Enum):
     
     # TYPES
     TYPE_NUMBER = 27
-    TYPE_STRING = 28
-    TYPE_BOOLEAN = 29
-    TYPE_FUNCTION = 30
-    
+    TYPE_BOOLEAN = 29    
+
     # LITERALS
     KW_UNIT = 31
     KW_TRUE = 22

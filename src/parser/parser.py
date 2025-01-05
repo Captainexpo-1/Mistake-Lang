@@ -106,6 +106,28 @@ class Parser:
         value = self.parse_expression()        
         return VariableDeclaration(name, value, lifetime)
 
+    def get_unparsed_body(self):
+        body = []
+        while self.current_token.type != TokenType.KW_END:
+            body.append(self.current_token)
+            self.advance()
+        return body
+
+    def parse_function_declaration(self):
+        impure = False
+        if self.next_is(TokenType.KW_IMPURE):
+            self.eat(TokenType.KW_IMPURE)
+            impure = True    
+        
+        self.eat(TokenType.KW_FUNCTION)
+        parameters = []
+        while self.current_token.type != TokenType.KW_RETURNS:
+            parameters.append(self.eat(TokenType.SYM_IDENTIFIER).value)
+        
+        self.eat(TokenType.KW_RETURNS)
+        body = self.get_unparsed_body()
+        return FunctionDeclaration(parameters, body, impure)
+
     def parse_id_expression(self, allow_function_application=True):
         if self.tokens[self.position + 1].type not in [TokenType.KW_END, TokenType.KW_CLOSE, TokenType.SYM_EOF] and allow_function_application:
             return self.parse_function_application(VariableAccess(self.eat(TokenType.SYM_IDENTIFIER).value))

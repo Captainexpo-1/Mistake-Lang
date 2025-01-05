@@ -1,6 +1,3 @@
-variable $2 is open
-  variable $1 is + 5 end
-  $1
-close 6 end
-
-!! open = $2 11 close end
+variable "?" is function _ returns open
+  blah blah this is invalid syntax blah
+close end comment Note that you still need close 
