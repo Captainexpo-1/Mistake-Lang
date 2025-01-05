@@ -97,8 +97,9 @@ class Parser:
         if self.peek_is(TokenType.KW_END) or self.peek_is(TokenType.KW_CLOSE):
             return None
         if self.peek_is(TokenType.SYM_STRING):
-            self.eat(TokenType.SYM_STRING)
-            return ASTNode(NodeType.E_STRING, self.eat(TokenType.SYM_STRING).value, [self.parse_expression()])
+            v = self.eat(TokenType.SYM_STRING).value
+            self.eat(TokenType.KW_CLOSE)
+            return ASTNode(NodeType.E_STRING, v, [self.parse_expression()])
         if self.peek_is(TokenType.SYM_NUMBER):
             return ASTNode(NodeType.E_NUMBER, self.eat(TokenType.SYM_NUMBER).value, [self.parse_expression()])
         if self.peek_is(TokenType.SYM_IDENTIFIER) or self.peek_is(TokenType.KW_RANDOMIZE):

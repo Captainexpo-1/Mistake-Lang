@@ -2,7 +2,7 @@ from runtime.runtime_types import *
 from runtime.errors.runtime_errors import *
 from typing import List
 from parser.ast import ASTNode, NodeType
-
+import runtime.stdlib.std_funcs as stdlib
 
 class Environment:
     def __init__(self, parent: 'Environment'):
@@ -10,7 +10,7 @@ class Environment:
         self.lifetimes: dict[str, Lifetime] = {}
         self.parent = parent
         
-    def get_variable(self, name: str) -> MLType:
+    def get_variable(self, name: str, force_purity=True) -> MLType:
         if name in self.variables:
             if self.lifetimes[name].is_expired():
                 del self.variables[name]
@@ -18,8 +18,12 @@ class Environment:
                 raise LifetimeExpiredError(f"Lifetime for variable {name} has expired")
             return self.variables[name]
         
-        if self.parent:
+        if self.parent and not force_purity:
             return self.parent.get_variable(name)
+        
+        if name in stdlib.std_funcs:
+            return stdlib.std_funcs[name]
+        
         raise VariableNotFoundError(f"Variable {name} not found")
     
     def add_variable(self, name: str, value: MLType, lifetime: Lifetime):
@@ -36,4 +40,5 @@ class Environment:
             
         out += ")"
         return out
+    
         

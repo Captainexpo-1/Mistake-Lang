@@ -3,6 +3,8 @@ from utils import *
 from typing import List
 from parser.errors.parser_errors import *
 import re
+import html
+
 class Lexer:
     keywords: dict[str, TokenType] = {
         "variable": TokenType.KW_VARIABLE,
@@ -63,7 +65,8 @@ class Lexer:
         start = self.current_position
         while self.current_position < len(self.code) and self.code[self.current_position:self.current_position+5] != "close":
             self.current_position += 1
-        return self.code[start:self.current_position]
+            
+        return html.unescape(self.code[start:self.current_position])
     
     def tokenize(self, code: str) -> List[Token]:
         self.code = code

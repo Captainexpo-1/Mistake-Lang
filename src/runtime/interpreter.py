@@ -12,24 +12,25 @@ class Interpreter:
 
     def execute(self, ast: ASTNode):
         for node in ast:
-            self.visit(node, self.global_environment, is_imp=True)
+            self.visit(node, self.global_environment, ctx={'is_imp': True, 'allow_side_effects': False})
         return self.global_environment
-    def visit(self, node: ASTNode, env: Environment, is_imp=False):
+    
+    def visit(self, node: ASTNode, env: Environment, ctx):
         if node.type == NodeType.S_VARIABLE_DECLARATION:
-            self.visit_variable_declaration(node, env, is_imp)
+            self.visit_variable_declaration(node, env, ctx)
         elif node.type == NodeType.E_BLOCK:
             try:
-                self.visit_block(node, env, is_imp)
+                self.visit_block(node, env, ctx)
             except ReturnValueException as e:
                 return e.value
         elif node.type == NodeType.S_FUNCTION_CALL:
-            self.visit_function_call(node, env, is_imp)
+            return self.visit_function_call(node, env, ctx)
         elif node.type == NodeType.E_STRING:
             return node.value
         elif node.type == NodeType.E_NUMBER:
             return node.value
         elif node.type == NodeType.E_FUNCTION_DECLARATION:
-            self.visit_function_declaration(node, env, is_imp)
+            return self.visit_function_declaration(node, env, ctx)
         else:
             raise NotImplementedError(f"Node type {node.type} not implemented")
     
@@ -44,33 +45,48 @@ class Interpreter:
         
         raise NotImplementedError(f"Invalid lifetime duration {lt}")
     
-    def visit_variable_declaration(self, node: ASTNode, env: Environment, is_imp=False): 
+    def visit_variable_declaration(self, node: ASTNode, env: Environment, ctx: dict[str, any]): 
         is_pub, value, lifetime = node.children
         name = node.value
         
-        value = self.visit(value, env, is_imp)
+        value = self.visit(value, env, ctx)
         
         lifetime = self.parse_lifetime(node, lifetime)
         
         env.add_variable(name, value, lifetime)
+    
+    def visit_function_declaration(self, node: ASTNode, env: Environment, ctx: dict[str, any]):
+        ids = node.value
+        impure, body = node.children
+        name = ids
         
-        
-    def visit_block(self, node: ASTNode, env: Environment, is_imp=False):
+        return Function(name, body, impure)
+    
+    def visit_block(self, node: ASTNode, env: Environment, ctx: dict[str, any]):
         new_env = Environment(env)
         last = None
         for child in node.children:
-            last = self.visit(child, new_env, is_imp)
+            last = self.visit(child, new_env, ctx)
         raise ReturnValueException(last)
     
-    def visit_function_call(self, node: ASTNode, env: Environment, is_imp=False):
+    def visit_function_call(self, node: ASTNode, env: Environment, ctx: dict[str, any]):
         name = node.value
         if not env.get_variable(name):
             raise VariableNotFoundError(f"Function {name} not found")
         
         function = env.get_variable(name)
-        if not isinstance(function, Function):
+        print(function)
+        if not isinstance(function, Function) and not isinstance(function, BuiltinFunction):
             raise TypeError(f"Variable {name} is not a function")
+        
+        if isinstance(function, BuiltinFunction):
+            return function.func(node.children, env)
         
         new_env = Environment(env)
         for child in node.children:
-            self.visit(child, new_env, False)
+            self.visit(child, new_env, 
+                ctx={
+                    'is_imp': False, 
+                    'allow_side_effects': function.impure
+                }
+            )

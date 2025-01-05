@@ -40,7 +40,7 @@ For the avoidance of doubt, a character is a Unicode grapheme.
 
 ## Classes of characters
 
-* <identifier> is any character that is not whitespace or in the Latin alphabet (a to z). Identifiers must contain at least one non-numeric character to distinguish them from number literals.
+* `<identifier>` is any character that is not whitespace or in the Latin alphabet (a to z). Identifiers must contain at least one non-numeric character to distinguish them from number literals.
     * `-67.42!` is an identifier.
     * `-67.42` is a number.
     * `67.42.128.6` is an identifier, not an invalid number.
@@ -94,7 +94,9 @@ class [<identifier>] [inherits <identifier>]? has [<statement>]...? end
 
 public is only valid in a class statement.
 
+```
 [public] variable <identifier> [lifetime <lifetime>]? [type <string>] is <expression> end
+```
 
 ### Jump statements
 
@@ -234,6 +236,27 @@ All networking functions are impure.
         * Returns `true` if successful and `false` otherwise.
     * `>|<` closes the socket on both TCP and UDP sockets.
     * `>>` on TCP sockets receives a string. **Blocking**. On a UDP socket, does nothing.
+
+## Airtable
+
+Mistake is a language for Hack Clubbers. Therefore, it has native Airtable integration for maximum development flow.
+All functions except {=} are impure and blocking.
+
+* `{=}` creates a base object. A base object can be called to return a table object.
+* `{?}` lists records in a table. Returns a list of record object.
+* `{>}` fetches a specific record from a table. Returns a record object.
+* `{<}` puts a record into a table. Returns the new record object.
+* `{\}` modifies a record. Returns the new record object.
+* `{-}` deletes a record by its ID.
+
+You can use these functions to work with record objects.
+
+* `{!` creates a new record object.
+* `{<` sets a field.
+* `{>` gets a field.
+* `{#<` sets the record's ID.
+* `{#>` gets the record's ID.
+
 
 ## The basics of Mistake
 
@@ -630,7 +653,19 @@ close close end
 comment Mistake will wait for all tasks to complete before shutting down.
 ```
 
-### Parsing
+### Lists
+
+To create a list, use [!]. [<] sets an item of a list, [>] gets them. Note that in Mistake, list indexes start from 1 to be more friendly to new developers.
+
+```
+variable [] is [!] unit end
+
+[<] [] 1 5              comment Set the first list item to 1.
+?! open [>] [] 1 close  comment Prints "5"
+```
+
+
+### Advanced String Manipulation
 
 Mistake supports regex. The `/?/` function can be used to search through a string.
 
@@ -663,4 +698,45 @@ You can also search for binary values.
 
 ```
 variable <0> is /?/ string &#0; close string /\x00/ close end
+```
+
+### Airtable
+
+Mistake supports Airtable to fuel Hack Club's neverending Airtable addiction. See your interpreter's documentation on how to configure Airtable.
+
+```
+variable {_} is {=} string app60o9dkpPOkIdG4 close string people close end
+
+comment Ok, let's insert a new person into the High Seas base
+comment #? contains the new record object.
+variable #? is {<} {_} open
+  variable {} is {! end
+  {< string email close string sarah@revohacks.com close end
+  {< string name close string Sarah Landtable close end
+  {}
+close end
+
+comment Great! Now, let's find someone from the High Seas base.
+comment We can just get a list of 10 arbitrary people:
+?! open {?} {_} 10 unit close  comment Prints "list"
+
+comment Or, use filterByFormula:
+?! open {?} {_} 1 string {name} = "Kestrel Bird" close close end
+
+comment Actually, I got my name wrong. My last name is Lesbiantable.
+comment Let's change that.
+{/} {_} open
+  variable {} is {! end
+  
+  {< string name close string Sarah Lesbiantable close end
+  {#< open {#> #? close end
+  {}
+close end
+
+comment Hrm. Let me just check that I've got my email right too:
+?! open {>} {_} open {#> #? close close end  comment Prints the entire record
+
+comment Actually, I've decided that High Seas is kind of overrated.
+comment Time to delete myself.
+{-} {_} open {#> #? close end
 ```

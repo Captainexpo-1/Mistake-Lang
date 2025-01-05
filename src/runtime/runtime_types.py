@@ -30,13 +30,20 @@ class Boolean(MLType):
         return self.value
     
 class Function(MLType):
-    def __init__(self, name: str, body: List[ASTNode],  impure: bool = False): 
-        self.name = name
+    def __init__(self, parameters: str, body: List[ASTNode], impure: bool = False, is_std: tuple[bool, callable] = (False, None)): 
+        self.name = parameters
         self.body = body
         self.impure = impure
+        self.is_std = is_std    
     def to_string(self): 
-        return f"{'Impure' if self.impure else ''}Function({self.name}, {self.body})"
-    
+        return f"{'Impure' if self.impure else ''}Function({self.name}, body={self.body}, std={self.is_std})"
+
+class BuiltinFunction(MLType):
+    def __init__(self, func: callable): 
+        self.func = func
+    def to_string(self): 
+        return f"BuiltinFunction({self.func})"
+
 class LifetimeType(Enum):
     TIMESTAMP = 0 # given in miliseconds since jan 1st 2020   
     SECONDS = 1
@@ -48,8 +55,8 @@ def get_timestamp():
     current_time = datetime.utcnow()
     time_difference = current_time - reference_date
     milliseconds = int(time_difference.total_seconds() * 1000)
-    
-    return milliseconds
+    decimal_milliseconds = int(milliseconds * 0.864)
+    return decimal_milliseconds
 
 class Lifetime(MLType):
     def __init__(self, value: float, type: LifetimeType, start: float = 0): 
@@ -74,7 +81,7 @@ class Lifetime(MLType):
             case LifetimeType.TIMESTAMP:
                 return get_timestamp() >= self.value
             case LifetimeType.SECONDS:
-                return time.process_time() - self.start >= self.value
+                return (time.process_time()*0.864) - self.start >= self.value # 0.864 is the conversion from seconds to decimal seconds
             case LifetimeType.LINES:
                 if line == None:
                     raise InvalidLifetimeError("Line number must be provided for line lifetime")
