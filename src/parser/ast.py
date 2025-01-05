@@ -1,22 +1,75 @@
 from enum import Enum
 from typing import List
 
-class NodeType(Enum):
-    S_FUNCTION_CALL = 0
-    S_VARIABLE_DECLARATION = 1
-    E_BLOCK = 2
-    E_STRING = 3
-    E_NUMBER = 4
-    E_FUNCTION_DECLARATION = 5
 class ASTNode:
-    def __init__(self, type: NodeType, value: any, children: List['ASTNode'] = [], line: int = 0):
-        self.value = value
-        self.type = type
-        self.children = [i for i in children if i != None]
-        self.line = line
+    def __init__(self): pass
+    def __str__(self): pass
+    def __repr__(self): return self.__str__()
+
+class VariableAccess(ASTNode):
+    def __init__(self, name: str):
+        self.name = name
         
-    def __str__(self) -> str: return f"Node({self.type}: \"{self.value}\" & {self.children if self.children else 'none'})"
-    def __repr__(self) -> str: return str(self)
+    def __str__(self):
+        return f"VariableAccess({self.name})"
     
-    def add_child(self, child: 'ASTNode'):
-        if child != None: self.children.append(child)
+class FunctionApplication(ASTNode):
+    def __init__(self, called: ASTNode, parameter: str):
+        self.called = called
+        self.parameter = parameter
+        
+    def __str__(self):
+        return f"FunctionApplication({self.called}, {self.parameter})"
+    
+class Number(ASTNode):
+    def __init__(self, value: float):
+        self.value = float(value)
+        
+    def __str__(self):
+        return str(self.value)
+    
+class String(ASTNode):
+    def __init__(self, value: str):
+        self.value = value
+        
+    def __str__(self):
+        return self.value
+    
+class Boolean(ASTNode):
+    def __init__(self, value: bool):
+        self.value = value
+        
+    def __str__(self):
+        return str(self.value)
+    
+class Unit(ASTNode):
+    def __init__(self):
+        pass
+    
+    def __str__(self):
+        return "Unit"
+    
+class Block(ASTNode):
+    def __init__(self, body: List[ASTNode]):
+        self.body = body
+        
+    def __str__(self):
+        return f"Block({self.body})"
+    
+class VariableDeclaration(ASTNode):
+    def __init__(self, name: str, value: ASTNode):
+        self.name = name
+        self.value = value
+        
+    def __str__(self):
+        return f"VariableDeclaration({self.name}, value={self.value})"
+    
+class FunctionDeclaration(ASTNode):
+    def __init__(self, parameter: str, body: ASTNode, impure: bool = False):
+        self.parameter = parameter
+        self.body = body
+        self.impure = impure
+        
+    def __str__(self):
+        return f"FunctionDeclaration({self.parameter}, body={self.body}, impure={self.impure})"
+    

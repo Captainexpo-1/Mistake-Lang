@@ -7,11 +7,6 @@ class TokenType(Enum):
     KW_IS = 1
     KW_OPEN = 2
     KW_CLOSE = 3
-    SYM_SEMICOLON = 4
-    SYM_PLUS = 5
-    SYM_MINUS = 6
-    SYM_MULTIPLY = 7
-    SYM_DIVIDE = 8
     KW_IMPURE = 9
     KW_FUNCTION = 10
     SYM_IDENTIFIER = 11
@@ -29,6 +24,15 @@ class TokenType(Enum):
     KW_FALSE = 23
     KW_PUBLIC = 24
     KW_RANDOMIZE = 25
+    KW_TYPE = 26
+    
+    # TYPES
+    TYPE_NUMBER = 27
+    TYPE_STRING = 28
+    TYPE_BOOLEAN = 29
+    TYPE_FUNCTION = 30
+    TYPE_UNIT = 31
+    
     SYM_EOF = 100
 
 class Token:

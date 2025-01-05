@@ -1,119 +1,107 @@
 from utils import *
-from typing import List
+from typing import List, Callable, Dict
 from tokenizer.token import Token, TokenType
-from parser.ast import ASTNode, NodeType
+from parser.ast import *
 from parser.errors.parser_errors import *
+
 class Parser:
     def __init__(self):
-        self.tokens: List[Token] = []
-        self.ast: List[ASTNode] = []
-        self.position = -1
-
-    def peek(self, dist: int = 1) -> Token:
-        return self.tokens[self.position + dist]
-    
-    def cur(self) -> Token:
-        return self.tokens[self.position]
-    
-    def cur_is(self, mayhaps: TokenType) -> bool:
-        return self.cur().type == mayhaps
-    
-    def advance(self) -> Token:
-        self.position += 1
-        return self.cur()
-    
-    def eat(self, expect: TokenType)  -> Token|UnexpectedTokenError:
-        if self.peek().type != expect:
-            raise UnexpectedTokenError(f"Expected {expect} but got {self.peek()}")
-        return self.advance()
-    
-    def peek_is(self, mayhaps: TokenType, dist: int=1) -> bool:  
-        return self.peek(dist=dist).type == mayhaps
-    
-    def is_valid_identifier(self, id: str, in_type: NodeType) -> bool:
-        if id == "_" and in_type != NodeType.S_VARIABLE_DECLARATION:
-            return False
+        self.tokens = []
+        self.position = 0
+        self.current_token = None
         
-        # Assume other cases would be caught by the lexer
-        return True
-    def parse(self, tokens: List[Token]) -> List[ASTNode]:
+    def parse(self, tokens: List[Token]) -> ASTNode:
         self.tokens = tokens
-        while not self.peek_is(TokenType.SYM_EOF):
-            self.ast.append(self.parse_statement())
-            print(self.ast)
-        return self.ast
+        self.position = 0
+        self.current_token = self.tokens[self.position]
+        
+        return self.parse_program()
     
-    def parse_statement(self, require_end=True) -> ASTNode:
-        m = None
-        if self.peek_is(TokenType.KW_VARIABLE) or (self.peek_is(TokenType.KW_PUBLIC) and self.peek_is(TokenType.KW_VARIABLE, dist=2)):
-            m = self.parse_variable_declaration()
+    def parse_program(self):
+        nodes = []
+        while self.current_token.type != TokenType.SYM_EOF:
+            nodes.append(self.parse_node())
+        return nodes
+    
+    def eat(self, token_type: TokenType):
+        if self.current_token.type == token_type:
+            self.position += 1
+            if self.position < len(self.tokens):
+                self.current_token = self.tokens[self.position]
+            return self.tokens[self.position-1]
         else:
-            m = self.parse_expression()
-        if require_end: self.eat(TokenType.KW_END)
-        return m
+            raise UnexpectedTokenError(f"Unexpected token {self.current_token} at position {self.position}, expected {token_type}")
+
+    
+    def peek_next_is(self, token_type: TokenType):
+        return self.tokens[self.position + 1].type == token_type
         
-    def parse_variable_declaration(self) -> ASTNode:
-        # variable grammar = 'variable' identifier 'is' expression 'end'
-        is_pub = self.peek_is(TokenType.KW_PUBLIC)
-        if is_pub: self.eat(TokenType.KW_PUBLIC)
+    
+    def next_is(self, token_type: TokenType):
+        return self.current_token.type == token_type
+    
+
+    def parse_node(self):
+        if self.current_token.type == TokenType.KW_VARIABLE:
+            val = self.parse_variable_declaration()
+        else:
+            try:
+                val = self.parse_expression()
+            except UnexpectedTokenError as e:
+                raise e
+        print(val)
+        self.eat(TokenType.KW_END)
+        return val  
+            
+    def parse_expression(self):
+        if self.current_token.type == TokenType.SYM_IDENTIFIER and self.peek_next_is(TokenType.SYM_IDENTIFIER):
+            return self.parse_function_application()
         
+        match self.current_token.type:
+            case TokenType.SYM_NUMBER:
+                return Number(self.eat(TokenType.SYM_NUMBER).value)
+            case TokenType.SYM_STRING:
+                return String(self.eat(TokenType.SYM_STRING).value)
+            case TokenType.KW_TRUE:
+                return Boolean(True)
+            case TokenType.KW_FALSE:
+                return Boolean(False)
+            case TokenType.SYM_IDENTIFIER:
+                return self.parse_id_expression()
+            case TokenType.KW_OPEN:
+                return self.parse_block()
+            case TokenType.KW_FUNCTION:
+                return self.parse_function_declaration()
+            case TokenType.KW_IMPURE:
+                return self.parse_function_declaration()
+            case _:
+                raise UnexpectedTokenError(f"Unexpected token {self.current_token} at position {self.position}")
+    
+    def parse_variable_declaration(self):
         self.eat(TokenType.KW_VARIABLE)
-        id = self.eat(TokenType.SYM_IDENTIFIER)
-        lt: Token = 'inf'
-        if self.peek_is(TokenType.KW_LIFETIME):
-            self.eat(TokenType.KW_LIFETIME)
-            lt = self.eat(TokenType.SYM_DURATION).value
+        name = self.eat(TokenType.SYM_IDENTIFIER).value
+        if self.next_is(TokenType.KW_TYPE):
+            self.eat(TokenType.KW_TYPE)
+            self.position += 1
         self.eat(TokenType.KW_IS)
-        expr = self.parse_expression()
-        return ASTNode(NodeType.S_VARIABLE_DECLARATION, id.value, [is_pub, expr, lt], line=id.line)
+        value = self.parse_expression()        
+        return VariableDeclaration(name, value)
+
+    def parse_id_expression(self):
+        if self.tokens[self.position + 1].type not in [TokenType.KW_END, TokenType.KW_CLOSE, TokenType.SYM_EOF]:
+            return self.parse_function_application()
+
+        return VariableAccess(self.eat(TokenType.SYM_IDENTIFIER).value)
     
-    def parse_block(self) -> ASTNode:
-        # block grammar = 'open' statement* 'close'
-        self.eat(TokenType.KW_OPEN)
-        block = ASTNode(NodeType.E_BLOCK, "block")
-        while not self.peek_is(TokenType.KW_CLOSE):
-            block.add_child(self.parse_statement(require_end=False))
-            print(block)
-            if not self.peek_is(TokenType.KW_CLOSE):
-                self.eat(TokenType.KW_END)
-        self.eat(TokenType.KW_CLOSE)
-        return block
-    
-    def parse_function_declaration(self) -> ASTNode:
-        # [impure] function [<identifier>]... returns <expression> close
-        impure = self.peek_is(TokenType.KW_IMPURE)
-        if impure: self.eat(TokenType.KW_IMPURE)
-        ln=self.eat(TokenType.KW_FUNCTION).line
-        ids = []
-        while self.peek_is(TokenType.SYM_IDENTIFIER):
-            ids.append(self.eat(TokenType.SYM_IDENTIFIER).value)
-        self.eat(TokenType.KW_RETURNS)
-        expr = self.parse_expression()
-        self.eat(TokenType.KW_CLOSE)
-        return ASTNode(NodeType.E_FUNCTION_DECLARATION, ids, [impure, expr], line=ln)
-    
-    def parse_expression(self) -> ASTNode|None:
-        print("EXPR", self.cur(), self.peek(), self.position)
-        if self.peek_is(TokenType.KW_END) or self.peek_is(TokenType.KW_CLOSE):
-            return None
-        if self.peek_is(TokenType.SYM_STRING):
-            v = self.eat(TokenType.SYM_STRING).value
-            self.eat(TokenType.KW_CLOSE)
-            return ASTNode(NodeType.E_STRING, v, [self.parse_expression()])
-        if self.peek_is(TokenType.SYM_NUMBER):
-            return ASTNode(NodeType.E_NUMBER, self.eat(TokenType.SYM_NUMBER).value, [self.parse_expression()])
-        if self.peek_is(TokenType.SYM_IDENTIFIER) or self.peek_is(TokenType.KW_RANDOMIZE):
-            if not self.is_valid_identifier(self.peek().value, NodeType.S_FUNCTION_CALL):
-                raise InvalidIdentifierError(f"Invalid identifier '{self.peek().value}'")
-            ln = self.peek().line
-            return ASTNode(NodeType.S_FUNCTION_CALL, self.advance().value, [self.parse_expression()], line=ln)
-        if self.peek_is(TokenType.KW_FUNCTION) or (self.peek_is(TokenType.KW_IMPURE) and self.peek_is(TokenType.KW_FUNCTION, dist=2)):
-            return self.parse_function_declaration()
-        if self.peek_is(TokenType.KW_OPEN):
-            block = self.parse_block()
-            block.add_child(self.parse_expression())
-            return block
-        raise UnknownTokenError(f"Unknown token {self.peek()}")
+    def parse_function_application(self):
+        name = self.eat(TokenType.SYM_IDENTIFIER).value
+        parameters = []
         
+        while self.current_token.type not in [TokenType.KW_END, TokenType.KW_CLOSE, TokenType.SYM_EOF]:
+            parameters.append(self.parse_expression())
         
+        function_application = VariableAccess(name)
+        for param in parameters:
+            function_application = FunctionApplication(function_application, param)
         
+        return function_application

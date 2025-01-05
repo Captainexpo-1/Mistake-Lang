@@ -1,7 +1,7 @@
 from runtime.runtime_types import *
 from runtime.errors.runtime_errors import *
 from typing import List
-from parser.ast import ASTNode, NodeType
+from parser.ast import ASTNode
 import runtime.stdlib.std_funcs as stdlib
 
 class Environment:

@@ -1,4 +1,1 @@
-variable $1 is 5 end
-
-
-!? $1 end
+variable % is 3 end

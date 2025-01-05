@@ -1,5 +1,5 @@
 from typing import List
-from parser.ast import ASTNode, NodeType
+from parser.ast import ASTNode
 from enum import Enum
 from runtime.errors.runtime_errors import *
 import datetime, time
@@ -31,12 +31,12 @@ class Boolean(MLType):
     
 class Function(MLType):
     def __init__(self, parameters: str, body: List[ASTNode], impure: bool = False, is_std: tuple[bool, callable] = (False, None)): 
-        self.name = parameters
+        self.params = parameters
         self.body = body
         self.impure = impure
         self.is_std = is_std    
     def to_string(self): 
-        return f"{'Impure' if self.impure else ''}Function({self.name}, body={self.body}, std={self.is_std})"
+        return f"{'Impure' if self.impure else ''}Function({self.params}, body={self.body}, std={self.is_std})"
 
 class BuiltinFunction(MLType):
     def __init__(self, func: callable): 
