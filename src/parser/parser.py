@@ -3,6 +3,7 @@ from typing import List, Callable, Dict
 from tokenizer.token import Token, TokenType
 from parser.ast import *
 from parser.errors.parser_errors import *
+from parser.preprocess import preprocess_tokens
 
 class Parser:
     def __init__(self):
@@ -12,6 +13,9 @@ class Parser:
         
     def parse(self, tokens: List[Token]) -> ASTNode:
         self.tokens = tokens
+        
+        preprocess_tokens(self.tokens)
+        
         self.position = 0
         self.current_token = self.tokens[self.position]
         
@@ -57,29 +61,35 @@ class Parser:
         if self.position < len(self.tokens):
             self.current_token = self.tokens[self.position]
     
-    def parse_expression(self, allow_function_application=True):
-        if self.current_token.type == TokenType.SYM_IDENTIFIER and self.peek_next_is(TokenType.SYM_IDENTIFIER):
-            return self.parse_function_application()
+    def parse_single_expr(self, atom: ASTNode, allow_function_application=True):
+        if self.next_is(TokenType.KW_END) or self.next_is(TokenType.KW_CLOSE) or not allow_function_application:
+            return atom
         
+        return self.parse_function_application(atom)
+        
+    
+    def parse_expression(self, allow_function_application=True):
         match self.current_token.type:
             case TokenType.SYM_NUMBER:
-                return Number(self.eat(TokenType.SYM_NUMBER).value)
+                val = Number(self.eat(TokenType.SYM_NUMBER).value)
             case TokenType.SYM_STRING:
-                return String(self.eat(TokenType.SYM_STRING).value)
+                val =  String(self.eat(TokenType.SYM_STRING).value)
             case TokenType.KW_TRUE:
-                return Boolean(True)
+                val =  Boolean(True)
             case TokenType.KW_FALSE:
-                return Boolean(False)
+                val =  Boolean(False)
             case TokenType.SYM_IDENTIFIER:
-                return self.parse_id_expression(allow_function_application=allow_function_application)
+                val =  self.parse_id_expression(allow_function_application=allow_function_application)
             case TokenType.KW_OPEN:
-                return self.parse_block()
+                val =  self.parse_block()
             case TokenType.KW_FUNCTION:
-                return self.parse_function_declaration()
+                val =  self.parse_function_declaration()
             case TokenType.KW_IMPURE:
-                return self.parse_function_declaration()
+                val =  self.parse_function_declaration()
             case _:
                 raise UnexpectedTokenError(f"Unexpected token {self.current_token} at position {self.position}")
+            
+        return self.parse_single_expr(val, allow_function_application=allow_function_application)
     
     def parse_variable_declaration(self):
         self.eat(TokenType.KW_VARIABLE)
@@ -98,23 +108,22 @@ class Parser:
 
     def parse_id_expression(self, allow_function_application=True):
         if self.tokens[self.position + 1].type not in [TokenType.KW_END, TokenType.KW_CLOSE, TokenType.SYM_EOF] and allow_function_application:
-            return self.parse_function_application()
+            return self.parse_function_application(VariableAccess(self.eat(TokenType.SYM_IDENTIFIER).value))
 
         return VariableAccess(self.eat(TokenType.SYM_IDENTIFIER).value)
     
-    def parse_function_application(self):
-        name = self.eat(TokenType.SYM_IDENTIFIER).value
+    def get_function_application_from_params(self, expr: ASTNode, params: List[ASTNode]):
+        for param in params:
+            expr = FunctionApplication(expr, param)
+        return expr
+    
+    def parse_function_application(self, func: ASTNode=None):
         parameters = []
         
         while self.current_token.type not in [TokenType.KW_END, TokenType.KW_CLOSE, TokenType.SYM_EOF]:
             parameters.append(self.parse_expression(allow_function_application=False))
         
-        function_application = VariableAccess(name)
-        print(parameters)
-        for param in parameters:
-            function_application = FunctionApplication(function_application, param)
-        
-        return function_application
+        return self.get_function_application_from_params(func, parameters)
     
     def close_comes_before_end(self):
         for token in self.tokens[self.position:]:
