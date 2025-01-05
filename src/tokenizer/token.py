@@ -37,6 +37,19 @@ class TokenType(Enum):
     SYM_STRING = 18
     SYM_NUMBER = 13
     
+    KW_JUMP = 30
+    KW_NEW = 32
+    KW_CLASS = 33
+    KW_INHERITS = 34
+    KW_HAS = 35
+    KW_MATCH = 36
+    KW_CASES = 38
+    KW_CASE = 37
+    KW_OTHERWISE = 39
+    KW_MEMBER = 40
+    KW_THEN = 41
+    
+    
     SYM_EOF = 100
 
 class Token:

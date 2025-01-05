@@ -1,3 +1,6 @@
-variable "?" is function _ returns open
-  blah blah this is invalid syntax blah
-close end comment Note that you still need close 
+match %1 cases 
+  case = 1 @ then $1 close
+  case = 2 @ then $2 close
+  case = 3 @ then $3 close
+  otherwise $7 close
+close end

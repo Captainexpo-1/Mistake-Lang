@@ -24,7 +24,18 @@ class Lexer:
         "type": TokenType.KW_TYPE,
         "number": TokenType.TYPE_NUMBER,
         "boolean": TokenType.TYPE_BOOLEAN,
-        "unit": TokenType.KW_UNIT
+        "unit": TokenType.KW_UNIT,
+        "jump": TokenType.KW_JUMP,
+        "new": TokenType.KW_NEW,
+        "class": TokenType.KW_CLASS,
+        "inherits": TokenType.KW_INHERITS,
+        "has": TokenType.KW_HAS,
+        "match": TokenType.KW_MATCH,
+        "case": TokenType.KW_CASE,
+        "cases": TokenType.KW_CASES,
+        "otherwise": TokenType.KW_OTHERWISE,
+        "member": TokenType.KW_MEMBER,
+        "then": TokenType.KW_THEN
     }
 
     def __init__(self):

@@ -74,3 +74,20 @@ class FunctionDeclaration(ASTNode):
     def __str__(self):
         return f"FunctionDeclaration({self.parameters}, body={self.body}, impure={self.impure})"
     
+class MatchCase(ASTNode):
+    def __init__(self, condition: ASTNode, expr: ASTNode):
+        self.condition = condition
+        self.expr = expr
+        
+    def __str__(self):
+        return f"MatchCase({self.condition}, {self.expr})"
+    
+class Match(ASTNode):
+    def __init__(self, expr: ASTNode, cases: List[MatchCase], otherwise: ASTNode):
+        self.expr = expr
+        self.cases = cases
+        self.otherwise = otherwise
+        
+    def __str__(self):
+        return f"Match({self.expr}, cases={self.cases}, otherwise={self.otherwise})"
+    
