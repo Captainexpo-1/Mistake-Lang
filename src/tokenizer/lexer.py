@@ -20,7 +20,13 @@ class Lexer:
         "true": TokenType.KW_TRUE,
         "false": TokenType.KW_FALSE,
         "public": TokenType.KW_PUBLIC,
-        "randomize": TokenType.KW_RANDOMIZE
+        "randomize": TokenType.KW_RANDOMIZE,
+        "type": TokenType.KW_TYPE,
+        "number": TokenType.TYPE_NUMBER,
+        "string": TokenType.TYPE_STRING,
+        "boolean": TokenType.TYPE_BOOLEAN,
+        "function": TokenType.TYPE_FUNCTION,
+        "unit": TokenType.KW_UNIT
     }
 
     def __init__(self):

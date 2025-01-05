@@ -15,7 +15,7 @@ if __name__ == "__main__":
         print(lexer)
         print("\n---------- ast ----------")
         ast = parser.parse(tokens)
-        print('\n'.join([str(i) for i in ast]))
+        print(ast)
         
         #e = runtime.execute(parser.ast)
         #print(e)

@@ -57,12 +57,13 @@ class Block(ASTNode):
         return f"Block({self.body})"
     
 class VariableDeclaration(ASTNode):
-    def __init__(self, name: str, value: ASTNode):
+    def __init__(self, name: str, value: ASTNode, lifetime: str = "inf"):
         self.name = name
         self.value = value
+        self.lifetime = lifetime
         
     def __str__(self):
-        return f"VariableDeclaration({self.name}, value={self.value})"
+        return f"VariableDeclaration({self.name}, value={self.value}, lifetime={self.lifetime})"
     
 class FunctionDeclaration(ASTNode):
     def __init__(self, parameter: str, body: ASTNode, impure: bool = False):

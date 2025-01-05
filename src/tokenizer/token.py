@@ -8,20 +8,19 @@ class TokenType(Enum):
     KW_OPEN = 2
     KW_CLOSE = 3
     KW_IMPURE = 9
-    KW_FUNCTION = 10
+
     SYM_IDENTIFIER = 11
     KW_STRING = 12
-    SYM_NUMBER = 13
+
     SYM_OPEN_PAREN = 14
     SYM_CLOSE_PAREN = 15
     KW_END = 16
     KW_RETURNS = 17
-    SYM_STRING = 18
+
     SYM_NEWLINE = 19
     SYM_DURATION = 20
     KW_LIFETIME = 21
-    KW_TRUE = 22
-    KW_FALSE = 23
+
     KW_PUBLIC = 24
     KW_RANDOMIZE = 25
     KW_TYPE = 26
@@ -31,7 +30,14 @@ class TokenType(Enum):
     TYPE_STRING = 28
     TYPE_BOOLEAN = 29
     TYPE_FUNCTION = 30
-    TYPE_UNIT = 31
+    
+    # LITERALS
+    KW_UNIT = 31
+    KW_TRUE = 22
+    KW_FALSE = 23
+    KW_FUNCTION = 10
+    SYM_STRING = 18
+    SYM_NUMBER = 13
     
     SYM_EOF = 100
 

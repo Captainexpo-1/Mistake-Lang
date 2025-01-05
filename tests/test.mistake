@@ -1,1 +1,6 @@
-variable % is 3 end
+variable $2 is open
+  variable $1 is + 5 end
+  $1
+close end 6 end
+
+!! open = $2 11 close end

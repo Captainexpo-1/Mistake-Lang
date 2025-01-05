@@ -49,13 +49,15 @@ class Parser:
                 val = self.parse_expression()
             except UnexpectedTokenError as e:
                 raise e
-        print(val)
         self.eat(TokenType.KW_END)
         return val  
     
+    def advance(self):
+        self.position += 1
+        if self.position < len(self.tokens):
+            self.current_token = self.tokens[self.position]
     
-    
-    def parse_expression(self):
+    def parse_expression(self, allow_function_application=True):
         if self.current_token.type == TokenType.SYM_IDENTIFIER and self.peek_next_is(TokenType.SYM_IDENTIFIER):
             return self.parse_function_application()
         
@@ -69,7 +71,7 @@ class Parser:
             case TokenType.KW_FALSE:
                 return Boolean(False)
             case TokenType.SYM_IDENTIFIER:
-                return self.parse_id_expression()
+                return self.parse_id_expression(allow_function_application=allow_function_application)
             case TokenType.KW_OPEN:
                 return self.parse_block()
             case TokenType.KW_FUNCTION:
@@ -84,13 +86,18 @@ class Parser:
         name = self.eat(TokenType.SYM_IDENTIFIER).value
         if self.next_is(TokenType.KW_TYPE):
             self.eat(TokenType.KW_TYPE)
-            self.position += 1
+            self.advance()
+        lifetime = "inf"
+        if self.next_is(TokenType.KW_LIFETIME):
+            self.eat(TokenType.KW_LIFETIME)
+            lifetime = self.eat(TokenType.SYM_DURATION).value
+            
         self.eat(TokenType.KW_IS)
         value = self.parse_expression()        
-        return VariableDeclaration(name, value)
+        return VariableDeclaration(name, value, lifetime)
 
-    def parse_id_expression(self):
-        if self.tokens[self.position + 1].type not in [TokenType.KW_END, TokenType.KW_CLOSE, TokenType.SYM_EOF]:
+    def parse_id_expression(self, allow_function_application=True):
+        if self.tokens[self.position + 1].type not in [TokenType.KW_END, TokenType.KW_CLOSE, TokenType.SYM_EOF] and allow_function_application:
             return self.parse_function_application()
 
         return VariableAccess(self.eat(TokenType.SYM_IDENTIFIER).value)
@@ -100,9 +107,10 @@ class Parser:
         parameters = []
         
         while self.current_token.type not in [TokenType.KW_END, TokenType.KW_CLOSE, TokenType.SYM_EOF]:
-            parameters.append(self.parse_expression())
+            parameters.append(self.parse_expression(allow_function_application=False))
         
         function_application = VariableAccess(name)
+        print(parameters)
         for param in parameters:
             function_application = FunctionApplication(function_application, param)
         

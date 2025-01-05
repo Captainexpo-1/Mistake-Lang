@@ -1,0 +1,20 @@
+{
+    "":"variable",
+    "":"is",
+    "":"open",
+    "":"close",
+    "":"impure",
+    "":"function",
+    "":"end",
+    "":"return",
+    "":"string",
+    "":"lifetime",
+    "":"true",
+    "":"false",
+    "":"public",
+    "":"randomize",
+    "":"type",
+    "":"number",
+    "":"boolean",
+    "":"unit"
+}
