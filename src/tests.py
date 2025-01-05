@@ -40,6 +40,16 @@ def test_parser():
             )
         )
     ])
+    do_test("""
+            open 
+                variable $1 is 1 end
+                $1
+            close end""",
+        [Block([
+            VariableDeclaration("$1", Number(1)),
+            VariableAccess("$1")
+        ])]
+    )
     
 if __name__ == "__main__":
     test_parser()

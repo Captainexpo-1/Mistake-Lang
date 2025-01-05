@@ -52,7 +52,9 @@ class Parser:
         print(val)
         self.eat(TokenType.KW_END)
         return val  
-            
+    
+    
+    
     def parse_expression(self):
         if self.current_token.type == TokenType.SYM_IDENTIFIER and self.peek_next_is(TokenType.SYM_IDENTIFIER):
             return self.parse_function_application()
@@ -105,3 +107,22 @@ class Parser:
             function_application = FunctionApplication(function_application, param)
         
         return function_application
+    
+    def close_comes_before_end(self):
+        for token in self.tokens[self.position:]:
+            if token.type == TokenType.KW_CLOSE:
+                return True
+            if token.type == TokenType.KW_END:
+                return False
+        return False
+    
+    def parse_block(self):
+        self.eat(TokenType.KW_OPEN)
+        body = []
+        while self.current_token.type != TokenType.KW_CLOSE:
+            if self.close_comes_before_end():
+                body.append(self.parse_expression())
+            else:
+                body.append(self.parse_node())
+        self.eat(TokenType.KW_CLOSE)
+        return Block(body)
