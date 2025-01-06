@@ -99,3 +99,11 @@ class ClassDefinition(ASTNode):
         
     def __str__(self):
         return f"ClassDefinition({self.body}, inherit={self.inherit})"
+    
+class MemberAccess(ASTNode):
+    def __init__(self, obj: str, member: str):
+        self.obj = obj
+        self.member = member
+        
+    def __str__(self):
+        return f"MemberAccess({self.obj}, {self.member})"

@@ -99,6 +99,8 @@ class Parser:
                 val = self.parse_match_expression()
             case TokenType.KW_CLASS:
                 val = self.parse_class_definition()
+            case TokenType.KW_MEMBER:
+                val = self.parse_member_access()
             case _:
                 raise UnexpectedTokenError(f"Unexpected token {self.current_token} at position {self.position}")
             
@@ -172,6 +174,14 @@ class Parser:
             body.append(self.parse_node())
         self.eat(TokenType.KW_CLOSE)
         return ClassDefinition(body, inherit)
+
+    def parse_member_access(self):
+        self.eat(TokenType.KW_MEMBER)
+        member = self.eat(TokenType.SYM_IDENTIFIER).value
+        self.eat(TokenType.KW_OF)
+        obj = self.eat(TokenType.SYM_IDENTIFIER).value
+        return MemberAccess(obj, member)
+    
 
     def parse_function_declaration(self):
         impure = False

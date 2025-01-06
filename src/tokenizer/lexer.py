@@ -35,7 +35,8 @@ class Lexer:
         "cases": TokenType.KW_CASES,
         "otherwise": TokenType.KW_OTHERWISE,
         "member": TokenType.KW_MEMBER,
-        "then": TokenType.KW_THEN
+        "then": TokenType.KW_THEN,
+        "of": TokenType.KW_OF
     }
 
     def __init__(self):
