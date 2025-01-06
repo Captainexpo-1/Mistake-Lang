@@ -157,7 +157,6 @@ class Parser:
             if stack == 0: break
             body.append(self.current_token)
             self.advance()
-            print(stack, body, self.current_token)       
 
         return body
 

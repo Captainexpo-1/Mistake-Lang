@@ -1,5 +1,13 @@
+variable #++ is class has
+  variable [#] is 0 end
 
-public variable ++ is impure function $ returns open 
-  < [#] open + open ? [#] close $ close
-  ? [#]
-close close end
+  public variable ++ is impure function $ returns open
+    comment I can access my class variables here!
+
+    comment Add $ to the counter:
+    < [#] open + open ? [#] close $ close end
+
+    comment And return it:
+    ? [#]
+  close close end
+close end

@@ -5,7 +5,6 @@ from typing import List
 def preprocess_tokens(tokens: List[Token]):
     stack = []
     for i in tokens:
-        print(stack)
         if i.type in opening_tokens:
             stack.append(i)
         elif i.type == TokenType.KW_CLOSE:
