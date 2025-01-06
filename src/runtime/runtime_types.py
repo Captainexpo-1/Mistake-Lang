@@ -42,6 +42,20 @@ class Function(MLType):
     def to_string(self): 
         return f"{'Impure' if self.impure else ''}Function({self.param}, body={self.body})"
 
+class ClassType(MLType):
+    def __init__(self, name: str, fields: dict[str, MLType]): 
+        self.name = name
+        self.methods = fields
+    def to_string(self): 
+        return f"Class({self.name}, fields={self.methods})"
+
+class ClassInstance(MLType):
+    def __init__(self, class_type: ClassType, fields: dict[str, MLType]): 
+        self.class_type = class_type
+        self.members = fields   
+    def to_string(self):
+        return f"InstanceOf({self.class_type.name}, fields={self.members})"
+
 class BuiltinFunction(MLType):
     def __init__(self, func: callable, is_impure=True): 
         self.func = func

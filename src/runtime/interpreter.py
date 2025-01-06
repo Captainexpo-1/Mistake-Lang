@@ -64,6 +64,54 @@ class Interpreter:
             case _:
                 raise RuntimeError(f"Invalid lifetime {lifetime}")
     
+    def visit_class_definition(self, node: ClassDefinition, env: Environment):
+        # Handle inheritance
+        parent_class = None
+        if node.inherit:
+            parent_class = env.get_variable(node.inherit)
+            if not isinstance(parent_class, ClassType):
+                raise RuntimeError(f"Inherited class '{node.inherit}' is not a valid class.")
+
+        # Collect fields from the class definition
+        members = {}
+        for member in node.members:
+            if isinstance(member, VariableDeclaration):
+                members[member.name] = self.visit_node(member.value, env)
+            else:
+                raise RuntimeError(f"Invalid field declaration in class '{node.inherit}'.")
+
+        # Inherit fields from the parent class, if any
+        if parent_class:
+            inherited_fields = {**parent_class.methods}
+            inherited_fields.update(members)
+            members = inherited_fields
+
+        # Define the class in the environment
+        new_class = ClassType(node.__str__(), members)
+        env.add_variable(node.__str__(), new_class, Lifetime(LifetimeType.INFINITE, 0))
+        return new_class
+    
+    def visit_class_instancing(self, node: ClassInstancing, env: Environment):
+        # Lookup the class in the environment
+        class_type = env.get_variable(node.name)
+        if not isinstance(class_type, ClassType):
+            raise RuntimeError(f"'{node.name}' is not a valid class.")
+
+        # Create a new instance with the class fields
+        instance_members = {name: value for name, value in class_type.methods.items()}
+        return ClassInstance(class_type, instance_members)
+    
+    def visit_member_access(self, node: MemberAccess, env: Environment):
+        # Lookup the instance in the environment
+        instance = env.get_variable(node.obj)
+        if not isinstance(instance, ClassInstance):
+            raise RuntimeError(f"'{node.obj}' is not a valid instance.")
+
+        # Access the field of the instance
+        if node.member not in instance.members:
+            raise RuntimeError(f"'{node.member}' is not a valid field of '{node.obj}'.")
+        return instance.members[node.member]
+    
     def visit_node(self, node: ASTNode, env: Environment, implicit=False):
         #print(f"Visiting node {node} with:\n{env}")
         if isinstance(node, Unit):
@@ -88,6 +136,12 @@ class Interpreter:
             return value
         if isinstance(node, FunctionDeclaration):
             return self.visit_function_declaration(node, env)
+        if isinstance(node, ClassDefinition):
+            return self.visit_class_definition(node, env)
+        if isinstance(node, ClassInstancing):
+            return self.visit_class_instancing(node, env)
+        if isinstance(node, MemberAccess):
+            return self.visit_member_access(node, env)
         raise RuntimeError(f"Node {node} not implemented")
     
     def execute(self, ast: List[ASTNode]):

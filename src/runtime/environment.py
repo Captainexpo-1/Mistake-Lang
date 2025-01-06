@@ -9,7 +9,7 @@ class Environment:
         self.variables: dict[str, MLType] = {}
         self.lifetimes: dict[str, Lifetime] = {}
         
-        print(f"Creating environment {id(self)} with parent {id(parent)}")
+        #print(f"Creating environment {id(self)} with parent {id(parent)}")
         self.parent = parent
         
     def get_variable(self, name: str, force_purity=True) -> MLType:
@@ -32,7 +32,7 @@ class Environment:
         if name in self.variables:
             raise VariableAlreadyDefinedError(f"Variable {name} already defined in this scope")
         
-        print(f"Adding variable {name} with value {value} and lifetime {lifetime} to {id(self)}")
+        #print(f"Adding variable {name} with value {value} and lifetime {lifetime} to {id(self)}")
         
         self.variables[name] = value
         self.lifetimes[name] = lifetime

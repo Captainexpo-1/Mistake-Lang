@@ -1,6 +1,9 @@
-variable ^1 is function $3 returns open
-  variable $2 is function _ returns $3 close end
-  $2
-close close end 
+variable #++ is class has
+  variable [#] is 0 end
 
-variable %%%2 is ^1 unit end
+  public variable $3 is [#] end
+close end
+
+variable $1 is new #++ end
+
+!? member $3 of $1 end
