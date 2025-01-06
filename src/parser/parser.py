@@ -151,10 +151,10 @@ class Parser:
         body = []
         stack = 1
         while stack > 0:
-
             if self.current_token.type in opening_tokens: stack += 1
             if self.current_token.type == TokenType.KW_CLOSE: stack -= 1
             if stack == 0: break
+            
             body.append(self.current_token)
             self.advance()
 
@@ -162,12 +162,16 @@ class Parser:
 
     def parse_class_definition(self):
         self.eat(TokenType.KW_CLASS)
+        inherit = None
+        if self.next_is(TokenType.KW_INHERITS):
+            self.eat(TokenType.KW_INHERITS)
+            inherit = self.eat(TokenType.SYM_IDENTIFIER).value
         self.eat(TokenType.KW_HAS)
         body = []
         while self.current_token.type != TokenType.KW_CLOSE:
             body.append(self.parse_node())
         self.eat(TokenType.KW_CLOSE)
-        return ClassDefinition(body)
+        return ClassDefinition(body, inherit)
 
     def parse_function_declaration(self):
         impure = False

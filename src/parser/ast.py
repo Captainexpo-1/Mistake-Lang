@@ -93,8 +93,9 @@ class Match(ASTNode):
         return f"Match({self.expr}, cases={self.cases}, otherwise={self.otherwise})"
     
 class ClassDefinition(ASTNode):
-    def __init__(self, body: List[ASTNode]):
+    def __init__(self, body: List[ASTNode], inherit: str|None = None):
         self.body = body
+        self.inherit = inherit
         
     def __str__(self):
-        return f"ClassDefinition({self.body})"
+        return f"ClassDefinition({self.body}, inherit={self.inherit})"
