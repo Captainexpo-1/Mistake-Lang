@@ -1,1 +1,5 @@
-function _ returns open variable $1 is string hello world close close end 
+
+public variable ++ is impure function $ returns open 
+  < [#] open + open ? [#] close $ close
+  ? [#]
+close close end

@@ -57,13 +57,14 @@ class Block(ASTNode):
         return f"Block({self.body})"
     
 class VariableDeclaration(ASTNode):
-    def __init__(self, name: str, value: ASTNode, lifetime: str = "inf"):
+    def __init__(self, name: str, value: ASTNode, lifetime: str = "inf", public: bool = False):
         self.name = name
         self.value = value
         self.lifetime = lifetime
+        self.public = public
         
     def __str__(self):
-        return f"VariableDeclaration({self.name}, value={self.value}, lifetime={self.lifetime})"
+        return f"VariableDeclaration({self.name}, value={self.value}, lifetime={self.lifetime}, public={self.public})"
     
 class FunctionDeclaration(ASTNode):
     def __init__(self, parameters: List[str], body: ASTNode, impure: bool = False):
@@ -91,3 +92,9 @@ class Match(ASTNode):
     def __str__(self):
         return f"Match({self.expr}, cases={self.cases}, otherwise={self.otherwise})"
     
+class ClassDefinition(ASTNode):
+    def __init__(self, body: List[ASTNode]):
+        self.body = body
+        
+    def __str__(self):
+        return f"ClassDefinition({self.body})"

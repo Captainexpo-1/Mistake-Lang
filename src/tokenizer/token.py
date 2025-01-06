@@ -51,7 +51,13 @@ class TokenType(Enum):
     
     
     SYM_EOF = 100
-
+opening_tokens = [
+    TokenType.KW_OPEN, 
+    TokenType.KW_CASES, 
+    TokenType.KW_CASE, 
+    TokenType.KW_RETURNS, 
+    TokenType.KW_HAS
+]
 class Token:
     def __init__(self, type: TokenType, value: any, line: int = 0):
         self.value = value

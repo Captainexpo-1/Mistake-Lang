@@ -1,6 +1,6 @@
 from utils import *
 from typing import List, Callable, Dict
-from tokenizer.token import Token, TokenType
+from tokenizer.token import Token, TokenType, opening_tokens
 from parser.ast import *
 from parser.errors.parser_errors import *
 from parser.preprocess import preprocess_tokens
@@ -14,7 +14,7 @@ class Parser:
         TokenType.KW_CASES,
         TokenType.KW_THEN
     ]
-    
+
     def __init__(self):
         self.tokens = []
         self.position = 0
@@ -55,7 +55,7 @@ class Parser:
     
 
     def parse_node(self):
-        if self.current_token.type == TokenType.KW_VARIABLE:
+        if self.current_token.type in [TokenType.KW_PUBLIC, TokenType.KW_VARIABLE]:
             val = self.parse_variable_declaration()
         else:
             try:
@@ -82,27 +82,33 @@ class Parser:
             case TokenType.SYM_NUMBER:
                 val = Number(self.eat(TokenType.SYM_NUMBER).value)
             case TokenType.SYM_STRING:
-                val =  String(self.eat(TokenType.SYM_STRING).value)
+                val = String(self.eat(TokenType.SYM_STRING).value)
             case TokenType.KW_TRUE:
-                val =  Boolean(True)
+                val = Boolean(True)
             case TokenType.KW_FALSE:
-                val =  Boolean(False)
+                val = Boolean(False)
             case TokenType.SYM_IDENTIFIER:
-                val =  self.parse_id_expression(allow_function_application=allow_function_application)
+                val = self.parse_id_expression(allow_function_application=allow_function_application)
             case TokenType.KW_OPEN:
-                val =  self.parse_block()
+                val = self.parse_block()
             case TokenType.KW_FUNCTION:
-                val =  self.parse_function_declaration()
+                val = self.parse_function_declaration()
             case TokenType.KW_IMPURE:
-                val =  self.parse_function_declaration()
+                val = self.parse_function_declaration()
             case TokenType.KW_MATCH:
-                val =  self.parse_match_expression()
+                val = self.parse_match_expression()
+            case TokenType.KW_CLASS:
+                val = self.parse_class_definition()
             case _:
                 raise UnexpectedTokenError(f"Unexpected token {self.current_token} at position {self.position}")
             
         return self.parse_single_expr(val, allow_function_application=allow_function_application)
     
     def parse_variable_declaration(self):
+        public = False
+        if self.next_is(TokenType.KW_PUBLIC):
+            self.eat(TokenType.KW_PUBLIC)
+            public = True
         self.eat(TokenType.KW_VARIABLE)
         name = self.eat(TokenType.SYM_IDENTIFIER).value
         if self.next_is(TokenType.KW_TYPE):
@@ -115,7 +121,7 @@ class Parser:
             
         self.eat(TokenType.KW_IS)
         value = self.parse_expression()        
-        return VariableDeclaration(name, value, lifetime)
+        return VariableDeclaration(name, value, lifetime, public)
 
     def parse_case(self):
         self.eat(TokenType.KW_CASE)
@@ -132,7 +138,6 @@ class Parser:
         expr = self.parse_expression()
         self.eat(TokenType.KW_CASES)
         cases = []
-        print(self.current_token)
         while self.current_token.type != TokenType.KW_OTHERWISE:
             cases.append(self.parse_case())
             
@@ -144,10 +149,26 @@ class Parser:
 
     def get_unparsed_body(self):
         body = []
-        while self.current_token.type != TokenType.KW_END:
+        stack = 1
+        while stack > 0:
+
+            if self.current_token.type in opening_tokens: stack += 1
+            if self.current_token.type == TokenType.KW_CLOSE: stack -= 1
+            if stack == 0: break
             body.append(self.current_token)
             self.advance()
+            print(stack, body, self.current_token)       
+
         return body
+
+    def parse_class_definition(self):
+        self.eat(TokenType.KW_CLASS)
+        self.eat(TokenType.KW_HAS)
+        body = []
+        while self.current_token.type != TokenType.KW_CLOSE:
+            body.append(self.parse_node())
+        self.eat(TokenType.KW_CLOSE)
+        return ClassDefinition(body)
 
     def parse_function_declaration(self):
         impure = False
@@ -162,11 +183,11 @@ class Parser:
         
         self.eat(TokenType.KW_RETURNS)
         body = self.get_unparsed_body()
+        self.eat(TokenType.KW_CLOSE)
         return FunctionDeclaration(parameters, body, impure)
 
     def parse_id_expression(self, allow_function_application=True):
         if self.tokens[self.position + 1].type not in self.breaking_tokens and allow_function_application:
-            print("Parsing function application", self.tokens[self.position + 1].type)
             return self.parse_function_application(VariableAccess(self.eat(TokenType.SYM_IDENTIFIER).value))
 
         return VariableAccess(self.eat(TokenType.SYM_IDENTIFIER).value)
