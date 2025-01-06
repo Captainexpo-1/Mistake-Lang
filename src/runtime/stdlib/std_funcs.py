@@ -14,10 +14,29 @@ format:
 ) = rparen
 """
 
-def fn_bang_qmark(arg: MLType, env: 'environment.Environment', ctx: dict[str, any], interpreter: 'runtime.Interpreter'):
+def fn_bang_qmark(arg: MLType, *_):
     print(arg)
 
+def get_type(val: any):
+    if isinstance(val, int) or isinstance(val, float):
+        return RuntimeNumber(val)
+    if isinstance(val, str):
+        return RuntimeString(val)
+    if isinstance(val, bool):
+        return RuntimeBoolean(val)
+    if isinstance(val, callable):
+        return BuiltinFunction(val)
+
 std_funcs = {
-    '!?': BuiltinFunction(fn_bang_qmark),
-    '+': BuiltinFunction(lambda x, *_: BuiltinFunction(lambda y: Number(x.value + y.value))),
+    '!?': BuiltinFunction(lambda arg, *_: print(arg)),
+    '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value)), False),
+    '*': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value * x.value)), False),
+    '-': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value - x.value)), False),
+    '/': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value / x.value)), False),
+    '%': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value % x.value)), False),
+    '=': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg == x)), False),
+    '>': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg > x)), False),
+    '<': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg < x)), False),
+    '≠': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg != x)), False),
+    
 }

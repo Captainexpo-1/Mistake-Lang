@@ -8,6 +8,8 @@ class Environment:
     def __init__(self, parent: 'Environment'):
         self.variables: dict[str, MLType] = {}
         self.lifetimes: dict[str, Lifetime] = {}
+        
+        print(f"Creating environment {id(self)} with parent {id(parent)}")
         self.parent = parent
         
     def get_variable(self, name: str, force_purity=True) -> MLType:
@@ -24,11 +26,13 @@ class Environment:
         if name in stdlib.std_funcs:
             return stdlib.std_funcs[name]
         
-        raise VariableNotFoundError(f"Variable {name} not found")
+        raise VariableNotFoundError(f"Variable {name} not found in {self}")
     
     def add_variable(self, name: str, value: MLType, lifetime: Lifetime):
         if name in self.variables:
             raise VariableAlreadyDefinedError(f"Variable {name} already defined in this scope")
+        
+        print(f"Adding variable {name} with value {value} and lifetime {lifetime} to {id(self)}")
         
         self.variables[name] = value
         self.lifetimes[name] = lifetime
@@ -36,7 +40,7 @@ class Environment:
     def __repr__(self):
         out = "Environment(\n"
         for var in self.variables:
-            out += f"   {var}: {self.variables[var]}\n"
+            out += f"   {var}: {self.variables[var].to_string()}\n"
             
         out += ")"
         return out

@@ -24,7 +24,9 @@ class Parser:
         self.tokens = tokens
         
         preprocess_tokens(self.tokens)
-        
+
+        #print(self.tokens)
+
         self.position = 0
         self.current_token = self.tokens[self.position]
         
@@ -55,6 +57,7 @@ class Parser:
     
 
     def parse_node(self):
+        print("PARSING CUR:", self.current_token)
         if self.current_token.type in [TokenType.KW_PUBLIC, TokenType.KW_VARIABLE]:
             val = self.parse_variable_declaration()
         else:
@@ -83,11 +86,15 @@ class Parser:
                 val = Number(self.eat(TokenType.SYM_NUMBER).value)
             case TokenType.SYM_STRING:
                 val = String(self.eat(TokenType.SYM_STRING).value)
+                self.eat(TokenType.KW_CLOSE)
             case TokenType.KW_TRUE:
+                self.eat(TokenType.KW_TRUE)
                 val = Boolean(True)
             case TokenType.KW_FALSE:
+                self.eat(TokenType.KW_FALSE)
                 val = Boolean(False)
             case TokenType.KW_UNIT:
+                self.eat(TokenType.KW_UNIT)
                 val = Unit()
             case TokenType.SYM_IDENTIFIER:
                 val = self.parse_id_expression(allow_function_application=allow_function_application)
@@ -154,7 +161,7 @@ class Parser:
         return Match(expr, cases, otherwise)
 
     def get_unparsed_body(self):
-        body = []
+        body: List[Token] = []
         stack = 1
         while stack > 0:
             if self.current_token.type in opening_tokens: stack += 1
@@ -164,7 +171,10 @@ class Parser:
             body.append(self.current_token)
             self.advance()
 
-        return body
+        if body[0].type != TokenType.KW_OPEN:
+            body = [Token(TokenType.KW_OPEN, "open")] + body + [Token(TokenType.KW_CLOSE, "close")]
+
+        return body + [Token(TokenType.KW_END, "end"), Token(TokenType.SYM_EOF, "eof")]
 
     def parse_class_definition(self):
         self.eat(TokenType.KW_CLASS)
@@ -222,19 +232,33 @@ class Parser:
         
         return self.get_function_application_from_params(func, parameters)
     
-    def close_comes_before_end(self):
-        for token in self.tokens[self.position:]:
-            if token.type == TokenType.KW_CLOSE:
-                return True
-            if token.type == TokenType.KW_END:
+    def is_final_expr_in_block(self):
+        stack = [self.tokens[self.position].type]  # Initialize with the current opening token
+
+        for i in range(self.position + 1, len(self.tokens)):
+            token = self.tokens[i]
+
+            if token.type in opening_tokens:
+                stack.append(token.type)
+            elif token.type == TokenType.KW_CLOSE:
+                stack.pop()
+
+                if not stack:
+                    # We've closed all nested blocks
+                    return True
+            elif token.type == TokenType.KW_END and len(stack) == 1:
+                # If we find an 'end' at the current block depth, it's not the final expression
                 return False
-        return False
+
+        # If we exit the loop without returning, we've hit the end of the input
+        return True
     
     def parse_block(self):
         self.eat(TokenType.KW_OPEN)
         body = []
         while self.current_token.type != TokenType.KW_CLOSE:
-            if self.close_comes_before_end():
+            print("PARSING BLOCK", self.current_token, self.is_final_expr_in_block())
+            if self.is_final_expr_in_block():
                 body.append(self.parse_expression())
             else:
                 body.append(self.parse_node())

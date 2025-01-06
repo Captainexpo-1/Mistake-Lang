@@ -11,38 +11,43 @@ class MLType:
     def __repr__(self):
         return self.to_string()
 
-class Number(MLType):
+class RuntimeNull(MLType):
+    def __init__(self): pass
+    def to_string(self): 
+        return "Null"
+
+class RuntimeNumber(MLType):
     def __init__(self, value: float): 
         self.value = value
     def to_string(self): 
-        return self.value
+        return f"Number({self.value})"
     
-class String(MLType):
+class RuntimeString(MLType):
     def __init__(self, value: str): 
         self.value = value
     def to_string(self): 
-        return self.value
+        return f"String(\"{self.value}\")"
     
-class Boolean(MLType):
+class RuntimeBoolean(MLType):
     def __init__(self, value: bool|str): 
         self.value = value in ['true', 'True', True]
     def to_string(self): 
-        return self.value
+        return f"Bool({self.value})"
     
 class Function(MLType):
-    def __init__(self, parameters: str, body: List[ASTNode], impure: bool = False, is_std: tuple[bool, callable] = (False, None)): 
-        self.params = parameters
+    def __init__(self, parameter: str, body: List[ASTNode], impure: bool = False): 
+        self.param = parameter
         self.body = body
         self.impure = impure
-        self.is_std = is_std    
     def to_string(self): 
-        return f"{'Impure' if self.impure else ''}Function({self.params}, body={self.body}, std={self.is_std})"
+        return f"{'Impure' if self.impure else ''}Function({self.param}, body={self.body})"
 
 class BuiltinFunction(MLType):
-    def __init__(self, func: callable): 
+    def __init__(self, func: callable, is_impure=True): 
         self.func = func
+        self.impure = is_impure
     def to_string(self): 
-        return f"BuiltinFunction({self.func})"
+        return f"BuiltinFunction({self.func}, impure={self.impure})"
 
 class LifetimeType(Enum):
     TIMESTAMP = 0 # given in miliseconds since jan 1st 2020   
@@ -59,7 +64,7 @@ def get_timestamp():
     return decimal_milliseconds
 
 class Lifetime(MLType):
-    def __init__(self, value: float, type: LifetimeType, start: float = 0): 
+    def __init__(self, type: LifetimeType, value: float, start: float = 0): 
         self.value = value
         self.type = type
         self.start = start
@@ -86,4 +91,4 @@ class Lifetime(MLType):
                 if line == None:
                     raise InvalidLifetimeError("Line number must be provided for line lifetime")
                 return line - self.start >= self.value
-            
+

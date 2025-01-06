@@ -13,10 +13,11 @@ if __name__ == "__main__":
         
         tokens = lexer.tokenize(code)
         print(lexer)
+        
         print("\n---------- ast ----------")
         ast = parser.parse(tokens)
         print(ast)
         
-        #e = runtime.execute(parser.ast)
-        #print(e)
+        e = runtime.execute(ast)
+        print(e)
         
