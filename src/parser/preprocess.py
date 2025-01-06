@@ -4,19 +4,28 @@ from typing import List
 
 def preprocess_tokens(tokens: List[Token]):
     stack = []
-    in_match = False
+    exceptions = set()
     for i in tokens:
-        if i.type == TokenType.KW_OPEN and not in_match:
+        print(exceptions)
+        if i.type == TokenType.KW_OPEN:
             stack.append(i)
-        elif i.type == TokenType.KW_CLOSE and not in_match:
+        elif i.type == TokenType.KW_CLOSE:
+            if TokenType.SYM_STRING in exceptions:
+                exceptions.remove(TokenType.SYM_STRING)
+                continue
             try:
                 stack.pop()
             except IndexError:
                 raise Exception("Unbalanced open/close tokens")
         elif i.type == TokenType.KW_MATCH:
-            in_match = True
+            exceptions.add(TokenType.KW_MATCH)
+        elif i.type == TokenType.SYM_STRING:
+            exceptions.add(TokenType.SYM_STRING)
         elif i.type == TokenType.KW_END:
-            if in_match: in_match = False
+            if TokenType.KW_MATCH in exceptions:
+                exceptions.remove(TokenType.KW_MATCH)
+                continue
+            
             
     if len(stack) > 0:
         raise Exception("Unbalanced open/close tokens")

@@ -1,6 +1,1 @@
-match %1 cases 
-  case = 1 @ then $1 close
-  case = 2 @ then $2 close
-  case = 3 @ then $3 close
-  otherwise $7 close
-close end
+function _ returns open variable $1 is string hello world close close end 
