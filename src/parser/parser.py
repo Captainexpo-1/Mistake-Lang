@@ -101,6 +101,8 @@ class Parser:
                 val = self.parse_class_definition()
             case TokenType.KW_MEMBER:
                 val = self.parse_member_access()
+            case TokenType.KW_NEW:
+                val = self.parse_class_instancing()
             case _:
                 raise UnexpectedTokenError(f"Unexpected token {self.current_token} at position {self.position}")
             
@@ -236,3 +238,8 @@ class Parser:
                 body.append(self.parse_node())
         self.eat(TokenType.KW_CLOSE)
         return Block(body)
+    
+    def parse_class_instancing(self):
+        self.eat(TokenType.KW_NEW)
+        name = self.eat(TokenType.SYM_IDENTIFIER).value
+        return ClassInstancing(name)

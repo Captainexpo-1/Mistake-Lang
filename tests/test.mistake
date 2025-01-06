@@ -3,3 +3,7 @@ variable 5++ is class inherits #++ has
     ++ 5
   close close end
 close end
+
+member +5 of 5++ end
+
+new 5++ end
