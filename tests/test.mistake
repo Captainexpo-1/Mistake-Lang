@@ -1,9 +1,12 @@
-variable 5++ is class inherits #++ has
-  public variable +5 is impure function _ returns open
-    ++ 5
-  close close end
-close end
+comment Trying to get closer to hardware implementations, you are able to use a "stack" to run functions as well.
 
-member +5 of 5++ end
+comment Pushes 5 onto the stack, then 7.
+|>| 5 end
+|>| 7 end
 
-new 5++ end
+comment Adds 7 and 5
+?! |<| |<| + end
+
+comment Multiplies 5 and the data at the top of the stack
+comment As there is no data, the multiplication function will simply not be called in order to soften your mistake
+|<| * 5 end

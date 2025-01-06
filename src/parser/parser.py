@@ -87,6 +87,8 @@ class Parser:
                 val = Boolean(True)
             case TokenType.KW_FALSE:
                 val = Boolean(False)
+            case TokenType.KW_UNIT:
+                val = Unit()
             case TokenType.SYM_IDENTIFIER:
                 val = self.parse_id_expression(allow_function_application=allow_function_application)
             case TokenType.KW_OPEN:

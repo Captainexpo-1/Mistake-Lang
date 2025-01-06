@@ -51,6 +51,7 @@ class TokenType(Enum):
     KW_OF = 42
     
     
+    
     SYM_EOF = 100
 opening_tokens = [
     TokenType.KW_OPEN, 
