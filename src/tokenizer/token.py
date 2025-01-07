@@ -58,6 +58,7 @@ opening_tokens = [
     TokenType.KW_OPEN, 
     TokenType.KW_CASES, 
     TokenType.KW_CASE, 
+    TokenType.KW_OTHERWISE,
     TokenType.KW_RETURNS, 
     TokenType.KW_HAS,
     TokenType.SYM_STRING,

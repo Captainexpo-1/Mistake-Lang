@@ -1,5 +1,13 @@
 variable #++ is class has
-  variable $2 is function _ returns open 2 close close end
+  variable $2 is function *2 returns 
+    open 
+      match *2 cases
+        case = @ 0 then 1 close
+        otherwise 3 close 
+      close 
+    close   
+  close end
+
   public variable $1 is $2 end
 close end
 
@@ -7,5 +15,5 @@ variable &0 is new #++ end
 
 variable $15 is member $1 of &0 end
 
-variable ^2 is $15 unit end
+variable ^2 is $15 0 end
 !? ^2 end

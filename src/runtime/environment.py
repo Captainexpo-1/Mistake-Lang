@@ -28,8 +28,8 @@ class Environment:
         
         raise VariableNotFoundError(f"Variable {name} not found in {self}")
     
-    def add_variable(self, name: str, value: MLType, lifetime: Lifetime):
-        if name in self.variables:
+    def add_variable(self, name: str, value: MLType, lifetime: Lifetime, ignore_duplicate=False):
+        if not ignore_duplicate and name in self.variables:
             raise VariableAlreadyDefinedError(f"Variable {name} already defined in this scope")
         
         #print(f"Adding variable {name} with value {value} and lifetime {lifetime} to {id(self)}")

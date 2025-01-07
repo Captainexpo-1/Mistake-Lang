@@ -114,6 +114,17 @@ class Interpreter:
             raise RuntimeError(f"'{node.member}' is not a public field of '{node.obj}'.")
         return self.visit_node(instance.members[node.member], instance.environment)
     
+    def visit_match(self, node: Match, env: Environment):
+        expr = self.visit_node(node.expr, env)
+        env.add_variable("@", expr, Lifetime(LifetimeType.INFINITE, 0))
+        for case in node.cases:
+            
+            v = self.visit_node(case.condition, env)
+            
+            if v == True:
+                return self.visit_node(case.expr, env)
+        return self.visit_node(node.otherwise, env)
+    
     def visit_node(self, node: ASTNode, env: Environment, implicit=False):
         #"EXECUTING WITH",env)
         #print(f"Visiting node {node} with:\n{env}")
@@ -145,6 +156,8 @@ class Interpreter:
             return self.visit_class_instancing(node, env)
         if isinstance(node, MemberAccess):
             return self.visit_member_access(node, env)
+        if isinstance(node, Match):
+            return self.visit_match(node, env)
         raise RuntimeError(f"Node {node} not implemented")
     
     def execute(self, ast: List[ASTNode]):

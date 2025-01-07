@@ -33,8 +33,10 @@ class RuntimeBoolean(MLType):
     def __init__(self, value: bool|str): 
         self.value = value in ['true', 'True', True]
     def to_string(self): 
-        return f"Bool({self.value})"
-    
+        return f"Boolean({self.value})"
+    def __eq__(self, other):
+        ov = other.value if isinstance(other, RuntimeBoolean) else other
+        return self.value == ov
 class Function(MLType):
     def __init__(self, parameter: str, body: List[ASTNode], impure: bool = False): 
         self.param = parameter
