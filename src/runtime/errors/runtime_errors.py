@@ -7,3 +7,5 @@ class InvalidFunctionCallError(RuntimeError): pass
 
 class InvalidLifetimeError(RuntimeError): pass
 class LifetimeExpiredError(RuntimeError): pass
+
+class StackEmptyError(RuntimeError): pass

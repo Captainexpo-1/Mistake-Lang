@@ -28,8 +28,13 @@ def get_type(val: any):
     if isinstance(val, callable):
         return BuiltinFunction(val)
 
-# HACK: Using string comparison for now because it'll work. It's really slow though.
 
+THE_STACK = []
+def try_pop():
+    if len(THE_STACK) == 0:
+        raise StackEmptyError("Stack is empty")
+    return THE_STACK.pop()
+# HACK: Using string comparison for now because it'll work. It's really slow though.
 std_funcs = {
     '!?': BuiltinFunction(lambda arg, *_: print(arg)),
     '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value)), False),
@@ -42,4 +47,10 @@ std_funcs = {
     '<': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value < x.value)), False),
     '≠': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.to_string() != x.to_string())), False), 
     
+    # Get current line
+    '[?]': BuiltinFunction(lambda arg, env, runtime: runtime.current_line),
+    
+    # Stack functions
+    '|<|': BuiltinFunction(lambda arg, *_: THE_STACK.append(arg)),
+    '|>|': BuiltinFunction(lambda *_: try_pop()),
 }

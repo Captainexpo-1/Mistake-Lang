@@ -16,7 +16,8 @@ class Interpreter:
     def __init__(self):
         self.parser = Parser()
         self.global_environment = Environment(None)
-
+        self.current_line = 0
+        
     def visit_function_application(self, env: Environment, node: FunctionApplication):
         
         function = self.visit_node(node.called, env)
@@ -26,7 +27,7 @@ class Interpreter:
         param = self.visit_node(node.parameter, env)
         
         if isinstance(function, BuiltinFunction):
-            return function.func(param)
+            return function.func(param, env, self)
         
         new_env = Environment(env)
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
@@ -97,7 +98,7 @@ class Interpreter:
         
         instance_env = Environment(env)
         for name, value in instance_members.items():
-            instance_env.add_variable(name, self.visit_node(value, instance_env), Lifetime(LifetimeType.INFINITE, 0))
+            instance_env.add_variable(name, self.visit_node(value, instance_env), Lifetime(LifetimeType.INFINITE, 0)) # TODO: Add lifetimes for class members ig.
         
         return ClassInstance(class_type, instance_members, instance_env)
     
@@ -162,7 +163,9 @@ class Interpreter:
     
     def execute(self, ast: List[ASTNode]):
         self.ast = ast
+        self.current_line = 1
         for node in ast:
             self.visit_node(node, self.global_environment, True)
+            self.current_line += 1
         return self.global_environment
     
