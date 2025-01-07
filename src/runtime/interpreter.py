@@ -65,29 +65,24 @@ class Interpreter:
                 raise RuntimeError(f"Invalid lifetime {lifetime}")
     
     def visit_class_definition(self, node: ClassDefinition, env: Environment):
-        # Handle inheritance
+        
         parent_class = None
-        if node.inherit:
-            parent_class = env.get_variable(node.inherit)
-            if not isinstance(parent_class, ClassType):
-                raise RuntimeError(f"Inherited class '{node.inherit}' is not a valid class.")
-
-        # Collect fields from the class definition
         members = {}
-        for member in node.members:
-            if isinstance(member, VariableDeclaration):
-                members[member.name] = self.visit_node(member.value, env)
-            else:
-                raise RuntimeError(f"Invalid field declaration in class '{node.inherit}'.")
-
-        # Inherit fields from the parent class, if any
-        if parent_class:
-            inherited_fields = {**parent_class.methods}
-            inherited_fields.update(members)
-            members = inherited_fields
-
-        # Define the class in the environment
-        new_class = ClassType(node.__str__(), members)
+        pmembers = set()
+        if node.parent:
+            parent_class = env.get_variable(node.parent)
+            if not isinstance(parent_class, ClassType):
+                raise RuntimeError(f"'{node.parent}' is not a valid class.")
+            
+            members = {name: value for name, value in parent_class.members.items()} 
+            pmembers = parent_class.public_members
+            
+        for name, value in node.members.items():
+            members[name] = value   
+        
+        pmembers.update(node.public_members)
+        
+        new_class = ClassType(node.__str__(), members, pmembers)
         env.add_variable(node.__str__(), new_class, Lifetime(LifetimeType.INFINITE, 0))
         return new_class
     
@@ -98,8 +93,13 @@ class Interpreter:
             raise RuntimeError(f"'{node.name}' is not a valid class.")
 
         # Create a new instance with the class fields
-        instance_members = {name: value for name, value in class_type.methods.items()}
-        return ClassInstance(class_type, instance_members)
+        instance_members = {name: value for name, value in class_type.members.items()}
+        
+        instance_env = Environment(env)
+        for name, value in instance_members.items():
+            instance_env.add_variable(name, self.visit_node(value, instance_env), Lifetime(LifetimeType.INFINITE, 0))
+        
+        return ClassInstance(class_type, instance_members, instance_env)
     
     def visit_member_access(self, node: MemberAccess, env: Environment):
         # Lookup the instance in the environment
@@ -110,9 +110,12 @@ class Interpreter:
         # Access the field of the instance
         if node.member not in instance.members:
             raise RuntimeError(f"'{node.member}' is not a valid field of '{node.obj}'.")
-        return instance.members[node.member]
+        if node.member not in instance.class_type.public_members:
+            raise RuntimeError(f"'{node.member}' is not a public field of '{node.obj}'.")
+        return self.visit_node(instance.members[node.member], instance.environment)
     
     def visit_node(self, node: ASTNode, env: Environment, implicit=False):
+        #"EXECUTING WITH",env)
         #print(f"Visiting node {node} with:\n{env}")
         if isinstance(node, Unit):
             return RuntimeNull()

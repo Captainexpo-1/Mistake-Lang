@@ -5,6 +5,7 @@ class ASTNode:
     def __init__(self): pass
     def __str__(self): pass
     def __repr__(self): return self.__str__()
+    def to_string(self): return self.__str__()
 
 class VariableAccess(ASTNode):
     def __init__(self, name: str):
@@ -93,12 +94,13 @@ class Match(ASTNode):
         return f"Match({self.expr}, cases={self.cases}, otherwise={self.otherwise})"
     
 class ClassDefinition(ASTNode):
-    def __init__(self, fields: List[ASTNode], inherit: str|None = None):
-        self.members = fields
-        self.inherit = inherit
+    def __init__(self, members: dict[str, ASTNode], parent: str|None = None, pmembers: set[str] = set()):
+        self.members = members
+        self.parent = parent
+        self.public_members = pmembers
         
     def __str__(self):
-        return f"ClassDefinition({self.members}, inherit={self.inherit})"
+        return f"ClassDefinition({self.members}, inherit={self.parent})"
     
 class MemberAccess(ASTNode):
     def __init__(self, obj: str, member: str):

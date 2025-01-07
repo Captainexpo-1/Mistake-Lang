@@ -1,9 +1,11 @@
 variable #++ is class has
-  variable [#] is 0 end
-
-  public variable $3 is [#] end
+  variable $2 is function _ returns open 2 close close end
+  public variable $1 is $2 end
 close end
 
-variable $1 is new #++ end
+variable &0 is new #++ end
 
-!? member $3 of $1 end
+variable $15 is member $1 of &0 end
+
+variable ^2 is $15 unit end
+!? ^2 end

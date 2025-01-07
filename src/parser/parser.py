@@ -57,7 +57,7 @@ class Parser:
     
 
     def parse_node(self):
-        print("PARSING CUR:", self.current_token)
+        #print("PARSING CUR:", self.current_token)
         if self.current_token.type in [TokenType.KW_PUBLIC, TokenType.KW_VARIABLE]:
             val = self.parse_variable_declaration()
         else:
@@ -183,11 +183,21 @@ class Parser:
             self.eat(TokenType.KW_INHERITS)
             inherit = self.eat(TokenType.SYM_IDENTIFIER).value
         self.eat(TokenType.KW_HAS)
-        body = []
+        
+        members = {}
+        pmembers = set()
+        body: List[VariableDeclaration] = []
         while self.current_token.type != TokenType.KW_CLOSE:
-            body.append(self.parse_node())
+            body.append(v:=self.parse_variable_declaration())
+            if v.public:
+                pmembers.add(v.name)
+            self.eat(TokenType.KW_END)
+        
+        for member in body:
+            members[member.name] = member.value
+        
         self.eat(TokenType.KW_CLOSE)
-        return ClassDefinition(body, inherit)
+        return ClassDefinition(members, inherit, pmembers)
 
     def parse_member_access(self):
         self.eat(TokenType.KW_MEMBER)
@@ -257,7 +267,7 @@ class Parser:
         self.eat(TokenType.KW_OPEN)
         body = []
         while self.current_token.type != TokenType.KW_CLOSE:
-            print("PARSING BLOCK", self.current_token, self.is_final_expr_in_block())
+            #print("PARSING BLOCK", self.current_token, self.is_final_expr_in_block())
             if self.is_final_expr_in_block():
                 body.append(self.parse_expression())
             else:

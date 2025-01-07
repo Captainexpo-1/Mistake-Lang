@@ -3,6 +3,7 @@ from parser.ast import ASTNode
 from enum import Enum
 from runtime.errors.runtime_errors import *
 import datetime, time
+import runtime.environment as rte
 class MLType: 
     def to_string(self): 
         raise NotImplementedError("to_string method not implemented")
@@ -43,16 +44,20 @@ class Function(MLType):
         return f"{'Impure' if self.impure else ''}Function({self.param}, body={self.body})"
 
 class ClassType(MLType):
-    def __init__(self, name: str, fields: dict[str, MLType]): 
+    def __init__(self, name: str, members: dict[str, MLType], public_members: set[str]): 
         self.name = name
-        self.methods = fields
+        self.members = members
+        self.public_members = public_members
     def to_string(self): 
-        return f"Class({self.name}, fields={self.methods})"
+        return f"Class({self.name}, fields={self.members}, public_fields={self.public_members})"
 
 class ClassInstance(MLType):
-    def __init__(self, class_type: ClassType, fields: dict[str, MLType]): 
+    def __init__(self, class_type: ClassType, members: dict[str, MLType], environment: 'rte.Environment'): 
         self.class_type = class_type
-        self.members = fields   
+        self.members = members
+        
+        self.environment = environment
+        #print("CLASS INSTANCE ENVIRONMENT", self.environment)
     def to_string(self):
         return f"InstanceOf({self.class_type.name}, fields={self.members})"
 
