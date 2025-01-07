@@ -1,5 +1,7 @@
 # The Mistake Language
 
+> Note that this README is out of date
+
 ## Overview
 
 Mistake is an imperative, functional, object-oriented, message-passing language.
