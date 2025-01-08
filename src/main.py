@@ -9,6 +9,10 @@ def get_args() -> tuple[str, set]:
         sys.exit(1)
 
     return sys.argv[1], set(sys.argv[2:])
+
+
+
+
 if __name__ == "__main__":
     fname, args = get_args()
     
@@ -18,15 +22,10 @@ if __name__ == "__main__":
     
     with open(fname) as f:
         code = f.read()
-        
         tokens = lexer.tokenize(code)
-        #print(lexer)
-        
-        #print("\n---------- ast ----------")
+        if "-tokens" in args: print(tokens)
         ast = parser.parse(tokens)
-       # print(ast)
-        
-        if "-e" in args:
-            e = runtime.execute(ast)
+        if "-ast" in args: print(ast)
+        if "-e" in args: runtime.execute(ast, filename=fname)
             #print(e)
         

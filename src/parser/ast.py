@@ -116,3 +116,12 @@ class ClassInstancing(ASTNode):
         
     def __str__(self):
         return f"ClassInstance({self.name})"
+    
+    
+class JumpStatement(ASTNode):
+    def __init__(self, file_expr: ASTNode, line_expr: ASTNode):
+        self.file_expr = file_expr
+        self.line_expr = line_expr
+        
+    def __str__(self):
+        return f"JumpStatement({self.file_expr}, {self.line_expr})"

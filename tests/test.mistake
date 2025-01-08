@@ -1,15 +1,2 @@
-comment Trying to get closer to hardware implementations, you are able to use a "stack" to run functions as well.
-comment "push" is a function that pushes the parameter onto the top of the stack
-comment "stack" is a function that takes in a function, and calls said function with the data at the top of the stack.
-comment "stack" also removes the data from the top of the stack.
-
-comment Pushes 5 onto the stack, then 7.
-|>| 5 end
-|>| 7 end
-
-comment Adds 7 and 5
-!? |<| |<| + end
-
-comment Multiplies 5 and the data at the top of the stack
-comment As there is no data, the multiplication function will simply not be called in order to soften your mistake
-|<| * 5 end
+variable $1 is 5 end
+jump 1 of string ./tests/other.mistake close end

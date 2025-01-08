@@ -5,6 +5,7 @@ from tokenizer.token import Token, TokenType
 from parser.ast import *
 from parser.parser import Parser
 from typing import List
+import runner
 
 import time
 
@@ -17,6 +18,7 @@ class Interpreter:
         self.parser = Parser()
         self.global_environment = Environment(None)
         self.current_line = 0
+        self.files: dict[str, List[ASTNode]] = {}
         
     def visit_function_application(self, env: Environment, node: FunctionApplication):
         
@@ -125,8 +127,9 @@ class Interpreter:
             if v == True:
                 return self.visit_node(case.expr, env)
         return self.visit_node(node.otherwise, env)
+
     
-    def visit_node(self, node: ASTNode, env: Environment, implicit=False):
+    def visit_node(self, node: ASTNode, env: Environment, imperative=False):
         #"EXECUTING WITH",env)
         #print(f"Visiting node {node} with:\n{env}")
         if isinstance(node, Unit):
@@ -159,13 +162,39 @@ class Interpreter:
             return self.visit_member_access(node, env)
         if isinstance(node, Match):
             return self.visit_match(node, env)
+        if isinstance(node, JumpStatement):
+            self.swap_file(self.visit_node(node.file_expr, env), self.visit_node(node.line_expr, env))
+            return Unit()
         raise RuntimeError(f"Node {node} not implemented")
     
-    def execute(self, ast: List[ASTNode]):
+    def swap_file(self, filename: MLType, line: int):
+        if isinstance(filename, RuntimeString):
+            filename = filename.value
+        else:
+            raise RuntimeError(f"Expected string, got {filename}")
+        
+        if isinstance(line, RuntimeNumber):
+            line = int(line.value)
+        else:
+            raise RuntimeError(f"Expected number, got {line}")
+        
+        if filename not in self.files:
+            self.files[filename] = runner.fetch_file(filename)
+        
+        #print(f"Swapping to {filename} at line {line}")
+        
+        self.ast = self.files[filename]
+        self.current_line = line-1
+    
+    def execute(self, ast: List[ASTNode], filename: str):
         self.ast = ast
         self.current_line = 1
-        for node in ast:
-            self.visit_node(node, self.global_environment, True)
+    
+        self.files[filename] = ast
+        
+        while self.current_line <= len(self.ast):
+            node = self.ast[self.current_line-1]
+            self.visit_node(node, self.global_environment, imperative=True)
             self.current_line += 1
         return self.global_environment
     

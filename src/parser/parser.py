@@ -1,6 +1,7 @@
 from utils import *
 from typing import List, Callable, Dict
 from tokenizer.token import Token, TokenType, opening_tokens
+from tokenizer.lexer import Lexer   
 from parser.ast import *
 from parser.errors.parser_errors import *
 from parser.preprocess import preprocess_tokens
@@ -12,7 +13,8 @@ class Parser:
         TokenType.KW_CLOSE, 
         TokenType.SYM_EOF, 
         TokenType.KW_CASES,
-        TokenType.KW_THEN
+        TokenType.KW_THEN,
+        TokenType.KW_OF,
     ]
 
     def __init__(self):
@@ -60,6 +62,8 @@ class Parser:
         #print("PARSING CUR:", self.current_token)
         if self.current_token.type in [TokenType.KW_PUBLIC, TokenType.KW_VARIABLE]:
             val = self.parse_variable_declaration()
+        elif self.current_token.type == TokenType.KW_JUMP:
+            val = self.parse_jump_statement()
         else:
             try:
                 val = self.parse_expression()
@@ -279,3 +283,19 @@ class Parser:
         self.eat(TokenType.KW_NEW)
         name = self.eat(TokenType.SYM_IDENTIFIER).value
         return ClassInstancing(name)
+    
+    def parse_jump_statement(self):
+        self.eat(TokenType.KW_JUMP)
+        line = self.parse_expression()
+        self.eat(TokenType.KW_OF)
+        file = self.parse_expression()
+        return JumpStatement(file, line)
+    
+def get_file_ast(file: str) -> List[ASTNode]:
+    with open(file) as f:
+        code = f.read()
+        lexer = Lexer()
+        parser = Parser()
+        tokens = lexer.tokenize(code)
+        ast = parser.parse(tokens)
+        return ast

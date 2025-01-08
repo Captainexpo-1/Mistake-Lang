@@ -1,4 +1,5 @@
 class RuntimeError(Exception): pass
+
 class VariableNotFoundError(RuntimeError): pass
 class VariableAlreadyDefinedError(RuntimeError): pass
 
@@ -9,3 +10,5 @@ class InvalidLifetimeError(RuntimeError): pass
 class LifetimeExpiredError(RuntimeError): pass
 
 class StackEmptyError(RuntimeError): pass
+
+class FileSwitchException(RuntimeError): pass
