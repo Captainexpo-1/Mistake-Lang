@@ -24,10 +24,6 @@ class Parser:
         
     def parse(self, tokens: List[Token]) -> ASTNode:
         self.tokens = tokens
-        
-        preprocess_tokens(self.tokens)
-
-        #print(self.tokens)
 
         self.position = 0
         self.current_token = self.tokens[self.position]
@@ -53,11 +49,9 @@ class Parser:
     def peek_next_is(self, token_type: TokenType):
         return self.tokens[self.position + 1].type == token_type
         
-    
     def next_is(self, token_type: TokenType):
         return self.current_token.type == token_type
     
-
     def parse_node(self):
         #print("PARSING CUR:", self.current_token)
         if self.current_token.type in [TokenType.KW_PUBLIC, TokenType.KW_VARIABLE]:

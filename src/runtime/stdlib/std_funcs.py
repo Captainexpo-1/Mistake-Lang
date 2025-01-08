@@ -2,6 +2,7 @@ from runtime.errors.runtime_errors import *
 from runtime.runtime_types import *
 import runtime.environment as environment
 import runtime.interpreter as interpreter
+from parser.ast import *
 """ 
 format:
 ! = bang
@@ -30,10 +31,15 @@ def get_type(val: any):
 
 
 THE_STACK = []
-def try_pop():
+def try_pop(arg, env, runtime: 'interpreter.Interpreter'):
     if len(THE_STACK) == 0:
-        raise StackEmptyError("Stack is empty")
-    return THE_STACK.pop()
+        return RuntimeUnit()
+    
+    val = THE_STACK.pop()
+    
+    runtime.visit_function_application(env, FunctionApplication(val, arg), visit_arg=False)
+    
+    return RuntimeUnit()
 
 def get_cur_line(rt: 'interpreter.Interpreter'):
     return RuntimeNumber(rt.current_line)
@@ -56,5 +62,7 @@ std_funcs = {
     
     # Stack functions
     '|<|': BuiltinFunction(lambda arg, *_: THE_STACK.append(arg)),
-    '|>|': BuiltinFunction(lambda *_: try_pop()),
+    '|>|': BuiltinFunction(lambda arg, env, runtime: try_pop(arg, env, runtime)),
+    
+    
 }

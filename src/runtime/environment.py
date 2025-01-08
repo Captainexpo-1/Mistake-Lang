@@ -44,5 +44,3 @@ class Environment:
             
         out += ")"
         return out
-    
-        

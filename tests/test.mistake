@@ -1,2 +1,0 @@
-variable $1 is 5 end
-jump 1 of string ./tests/other.mistake close end

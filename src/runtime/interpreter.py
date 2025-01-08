@@ -19,14 +19,15 @@ class Interpreter:
         self.global_environment = Environment(None)
         self.current_line = 0
         self.files: dict[str, List[ASTNode]] = {}
-        
-    def visit_function_application(self, env: Environment, node: FunctionApplication):
+    
+    
+    def visit_function_application(self, env: Environment, node: FunctionApplication, visit_arg=True):
         
         function = self.visit_node(node.called, env)
         if not isinstance(function, Function) and not isinstance(function, BuiltinFunction):
             raise RuntimeError(f"Variable {node.called} is not a function, but a {type(function)}")
         
-        param = self.visit_node(node.parameter, env)
+        param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
         
         if isinstance(function, BuiltinFunction):
             return function.func(param, env, self)
@@ -133,7 +134,7 @@ class Interpreter:
         #"EXECUTING WITH",env)
         #print(f"Visiting node {node} with:\n{env}")
         if isinstance(node, Unit):
-            return RuntimeNull()
+            return RuntimeUnit()
         if isinstance(node, Number):
             return RuntimeNumber(node.value)
         if isinstance(node, String):
@@ -196,5 +197,5 @@ class Interpreter:
             node = self.ast[self.current_line-1]
             self.visit_node(node, self.global_environment, imperative=True)
             self.current_line += 1
+
         return self.global_environment
-    

@@ -12,7 +12,7 @@ class MLType:
     def __repr__(self):
         return self.to_string()
 
-class RuntimeNull(MLType):
+class RuntimeUnit(MLType):
     def __init__(self): pass
     def to_string(self): 
         return "Null"
