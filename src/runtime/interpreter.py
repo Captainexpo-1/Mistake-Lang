@@ -63,7 +63,7 @@ class Interpreter:
         
         return ([
             lambda:Lifetime(LifetimeType.DECIMAL_SECONDS, int(lifetime[:-1]), time.process_time() * 0.864),
-            lambda:Lifetime(LifetimeType.LINES, int(lifetime[:-1]), 0), # TODO: ACTUAL LINE STUFF 
+            lambda:Lifetime(LifetimeType.LINES, int(lifetime[:-1]), self.current_line),
             lambda:Lifetime(LifetimeType.DMS_TIMESTAMP, int(lifetime[:-1]), get_timestamp()),
             lambda:Lifetime(LifetimeType.TICKS, int(lifetime[:-1]), get_timestamp()),
         ]['slut'.find(lifetime[-1])] if lifetime[-1] in 'slut' else a)()
@@ -74,7 +74,7 @@ class Interpreter:
         members = {}
         pmembers = set()
         if node.parent:
-            parent_class = env.get_variable(node.parent)
+            parent_class = env.get_variable(node.parent, line=self.current_line)
             if not isinstance(parent_class, ClassType):
                 raise RuntimeError(f"'{node.parent}' is not a valid class.")
             
@@ -92,7 +92,7 @@ class Interpreter:
     
     def visit_class_instancing(self, node: ClassInstancing, env: Environment):
         # Lookup the class in the environment
-        class_type = env.get_variable(node.name)
+        class_type = env.get_variable(node.name, line=self.current_line)
         if not isinstance(class_type, ClassType):
             raise RuntimeError(f"'{node.name}' is not a valid class.")
 
@@ -107,7 +107,7 @@ class Interpreter:
     
     def visit_member_access(self, node: MemberAccess, env: Environment):
         # Lookup the instance in the environment
-        instance = env.get_variable(node.obj)
+        instance = env.get_variable(node.obj, line=self.current_line)
         if not isinstance(instance, ClassInstance):
             raise RuntimeError(f"'{node.obj}' is not a valid instance.")
 
@@ -144,7 +144,7 @@ class Interpreter:
         if isinstance(node, Function):
             return node
         if isinstance(node, VariableAccess):
-            return env.get_variable(node.name)
+            return env.get_variable(node.name, line=self.current_line)
         if isinstance(node, FunctionApplication):
             return self.visit_function_application(env, node)
         if isinstance(node, Block):
@@ -195,7 +195,10 @@ class Interpreter:
         
         while self.current_line <= len(self.ast):
             node = self.ast[self.current_line-1]
-            self.visit_node(node, self.global_environment, imperative=True)
+            try:
+                self.visit_node(node, self.global_environment, imperative=True)
+            except RuntimeError as e:
+                print(f"Error at line {self.current_line}, {e}")
+                return 1
             self.current_line += 1
-
-        return self.global_environment
+        return 0

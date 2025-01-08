@@ -10,9 +10,9 @@ class Environment:
         self.lifetimes: dict[str, Lifetime] = {}
         self.parent = parent
         
-    def get_variable(self, name: str, force_purity=True) -> MLType:
+    def get_variable(self, name: str, force_purity=True, line: int = 0) -> MLType:
         if name in self.variables:
-            if self.lifetimes[name].is_expired():
+            if self.lifetimes[name].is_expired(line):
                 del self.variables[name]
                 del self.lifetimes[name]
                 raise LifetimeExpiredError(f"Lifetime for variable {name} has expired")

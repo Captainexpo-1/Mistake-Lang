@@ -1,3 +1,4 @@
-variable $1 type number lifetime 25l is 1 end
-
+variable $1 type number lifetime 2l is 1 end
+!? $1 end
+!? $1 end
 !? $1 end
