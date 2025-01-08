@@ -58,8 +58,10 @@ class Lexer:
         return contains_non_number
             
     def get_token(self, s: str) -> TokenType:
-        if re.fullmatch(r"\-?[0-9]+(\.[0-9]+)?", s) != None: return TokenType.SYM_NUMBER
-        if s[:-1].isdigit() and s[-1] in ['s', 'u', 'l']: return TokenType.SYM_DURATION
+        if re.fullmatch(r"\-?[0-9]+(\.[0-9]+)?", s) != None: 
+            return TokenType.SYM_NUMBER
+        if s[:-1].isdigit() and s[-1] in 'lust':
+            return TokenType.SYM_DURATION
         if self.is_identifier(s):
             return TokenType.SYM_IDENTIFIER
         

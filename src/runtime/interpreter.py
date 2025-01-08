@@ -58,15 +58,15 @@ class Interpreter:
     def get_lifetime(self, lifetime: str, node: ASTNode):
         if lifetime == "inf":
             return Lifetime(LifetimeType.INFINITE, 0)
-        match lifetime[-1]:
-            case 's':
-                return Lifetime(LifetimeType.SECONDS, int(lifetime[:-1]), time.process_time() * 0.864)
-            case 'l':
-                return Lifetime(LifetimeType.LINES, int(lifetime[:-1]), 0) # TODO: ACTUAL LINE STUFF 
-            case 'u':
-                return Lifetime(LifetimeType.TIMESTAMP, int(lifetime[:-1]), get_timestamp())
-            case _:
-                raise RuntimeError(f"Invalid lifetime {lifetime}")
+        
+        def a(): raise RuntimeError(f"Invalid lifetime {lifetime}")
+        
+        return ([
+            lambda:Lifetime(LifetimeType.DECIMAL_SECONDS, int(lifetime[:-1]), time.process_time() * 0.864),
+            lambda:Lifetime(LifetimeType.LINES, int(lifetime[:-1]), 0), # TODO: ACTUAL LINE STUFF 
+            lambda:Lifetime(LifetimeType.DMS_TIMESTAMP, int(lifetime[:-1]), get_timestamp()),
+            lambda:Lifetime(LifetimeType.TICKS, int(lifetime[:-1]), get_timestamp()),
+        ]['slut'.find(lifetime[-1])] if lifetime[-1] in 'slut' else a)()
     
     def visit_class_definition(self, node: ClassDefinition, env: Environment):
         

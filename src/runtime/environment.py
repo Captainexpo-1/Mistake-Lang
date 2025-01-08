@@ -8,8 +8,6 @@ class Environment:
     def __init__(self, parent: 'Environment'):
         self.variables: dict[str, MLType] = {}
         self.lifetimes: dict[str, Lifetime] = {}
-        
-        #print(f"Creating environment {id(self)} with parent {id(parent)}")
         self.parent = parent
         
     def get_variable(self, name: str, force_purity=True) -> MLType:
@@ -31,10 +29,11 @@ class Environment:
     def add_variable(self, name: str, value: MLType, lifetime: Lifetime, ignore_duplicate=False):
         if not ignore_duplicate and name in self.variables:
             raise VariableAlreadyDefinedError(f"Variable {name} already defined in this scope")
-        
-        #print(f"Adding variable {name} with value {value} and lifetime {lifetime} to {id(self)}")
-        
+
         self.variables[name] = value
+        
+        if not isinstance(lifetime, Lifetime):
+            raise TypeError(f"{lifetime} must be of type Lifetime")
         self.lifetimes[name] = lifetime
     
     def __repr__(self):

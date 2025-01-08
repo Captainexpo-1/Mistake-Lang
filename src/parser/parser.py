@@ -4,7 +4,6 @@ from tokenizer.token import Token, TokenType, opening_tokens
 from tokenizer.lexer import Lexer   
 from parser.ast import *
 from parser.errors.parser_errors import *
-from parser.preprocess import preprocess_tokens
 
 class Parser:
     
@@ -53,7 +52,6 @@ class Parser:
         return self.current_token.type == token_type
     
     def parse_node(self):
-        #print("PARSING CUR:", self.current_token)
         if self.current_token.type in [TokenType.KW_PUBLIC, TokenType.KW_VARIABLE]:
             val = self.parse_variable_declaration()
         elif self.current_token.type == TokenType.KW_JUMP:

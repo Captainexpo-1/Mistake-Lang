@@ -2,7 +2,8 @@ from typing import List
 from parser.ast import ASTNode
 from enum import Enum
 from runtime.errors.runtime_errors import *
-import datetime, time
+from datetime import datetime
+import time
 import runtime.environment as rte
 class MLType: 
     def to_string(self): 
@@ -71,14 +72,15 @@ class BuiltinFunction(MLType):
         return f"BuiltinFunction({self.func}, impure={self.impure})"
 
 class LifetimeType(Enum):
-    TIMESTAMP = 0 # given in miliseconds since jan 1st 2020   
-    SECONDS = 1
+    DMS_TIMESTAMP = 0 # given in miliseconds since jan 1st 2020   
+    DECIMAL_SECONDS = 1
     LINES = 2
     INFINITE = 3
+    TICKS = 4
 
 def get_timestamp():
     reference_date = datetime(2020, 1, 1)
-    current_time = datetime.utcnow()
+    current_time = datetime.now()
     time_difference = current_time - reference_date
     milliseconds = int(time_difference.total_seconds() * 1000)
     decimal_milliseconds = int(milliseconds * 0.864)
@@ -92,7 +94,7 @@ class Lifetime(MLType):
         
         if self.value < 0:
             raise InvalidLifetimeError("Lifetime value must be greater than 0")
-        if int(self.value) != self.value and self.type in [LifetimeType.LINES, LifetimeType.TIMESTAMP]:
+        if int(self.value) != self.value and self.type in [LifetimeType.LINES, LifetimeType.DMS_TIMESTAMP]:
             raise InvalidLifetimeError("Lifetime value must be an integer")
         elif int(self.value) == self.value:
             self.value = int(self.value)
@@ -104,10 +106,12 @@ class Lifetime(MLType):
         match self.type:
             case LifetimeType.INFINITE:
                 return False
-            case LifetimeType.TIMESTAMP:
+            case LifetimeType.DMS_TIMESTAMP:
                 return get_timestamp() >= self.value
-            case LifetimeType.SECONDS:
+            case LifetimeType.DECIMAL_SECONDS:
                 return (time.process_time()*0.864) - self.start >= self.value # 0.864 is the conversion from seconds to decimal seconds
+            case LifetimeType.TICKS:
+                return time.process_time()*20 - self.start >= self.value
             case LifetimeType.LINES:
                 if line == None:
                     raise InvalidLifetimeError("Line number must be provided for line lifetime")
