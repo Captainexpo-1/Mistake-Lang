@@ -65,8 +65,13 @@ def create_regex_func(arg: RuntimeString, *_):
 
 def get_group_from_match(arg: RuntimeMatchObject, *_):
     return BuiltinFunction(lambda x, *_: RuntimeString(arg.group(x.value)), imp=False)
+
 def get_string_from_match(arg: RuntimeMatchObject, *_):
     return RuntimeString(str(arg.match))
+
+def start_new_task(arg: Function, env, runtime: 'interpreter.Interpreter'):
+    
+    return BuiltinFunction(lambda x, *_: runtime.tasks.append(RuntimeAsyncTask(arg, x, env)), imp=False)
 
 std_funcs = {
     '?!': BuiltinFunction(lambda arg, *_: print(arg)),
@@ -110,6 +115,7 @@ std_funcs = {
                     lambda x1, *_: arg.get(x1.value),
                     imp=False
                 )
-            )
+            ),
 
+    '<!>': BuiltinFunction(start_new_task, imp=False),
 }

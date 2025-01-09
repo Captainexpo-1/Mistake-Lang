@@ -1,10 +1,11 @@
 from typing import List
-from parser.ast import ASTNode
+from parser.ast import *
 from enum import Enum
 from runtime.errors.runtime_errors import InvalidLifetimeError
 from datetime import datetime
 import time
 import runtime.environment as rte
+
 import re
 
 class MLType:
@@ -110,9 +111,10 @@ class ClassMemberReference(MLType):
         return RuntimeUnit()
 
 class BuiltinFunction(MLType):
-    def __init__(self, func: callable, imp=True):
+    def __init__(self, func: callable, imp=True, subtype=None):
         self.func = func
         self.impure = imp
+        self.subtype = subtype
 
     def to_string(self):
         return f"BuiltinFunction({self.func}, impure={self.impure})"
@@ -214,4 +216,15 @@ class RuntimeMatchObject(MLType):
     
     def to_string(self):
         return f"MatchObject({self.match})"
+
+class RuntimeAsyncTask(MLType):
+    def __init__(self, func: Function, arg: MLType, env: "rte.Environment"):
+        self.func = func
+        self.param = arg
+        self.env = env
     
+    def to_string(self):
+        return f"AsyncTask({self.func}, {self.param})"
+    
+    def run(self, interpreter):
+        interpreter.visit_function_application(self.env, FunctionApplication(self.func, self.param), visit_arg=False)

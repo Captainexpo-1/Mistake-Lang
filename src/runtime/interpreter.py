@@ -10,10 +10,6 @@ from runtime.runtime_types import *  # noqa: F403
 from tokenizer.token import Token
 
 
-class ReturnValueException(Exception):
-    def __init__(self, value: MLType):
-        self.value = value
-
 
 class Interpreter:
     def __init__(self):
@@ -21,21 +17,27 @@ class Interpreter:
         self.global_environment = Environment(None)
         self.current_line = 1
         self.files: dict[str, List[ASTNode]] = {}
+        self.tasks: List[RuntimeAsyncTask] = []
 
-    def visit_function_application(
-        self, env: Environment, node: FunctionApplication, visit_arg=True
-    ):
+    def run_all_tasks(self):
+        while len(self.tasks) > 0:
+            task = self.tasks.pop(0)
+            task.run(self)
+
+
+    def visit_function_application(self, env: Environment, node: FunctionApplication, visit_arg=True):
         function = self.visit_node(node.called, env)
-        if not isinstance(function, Function) and not isinstance(
-            function, BuiltinFunction
-        ):
-            raise RuntimeError(
-                f"Variable {node.called} is not a function, but a {type(function)}"
-            )
+        is_builtin = False
+        if not isinstance(function, Function):
+            if not isinstance(function, BuiltinFunction):    
+                raise RuntimeError(
+                    f"Variable {node.called} is not a function, but a {type(function)}"
+                )
+            else: is_builtin = True
 
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
-        if isinstance(function, BuiltinFunction):
+        if is_builtin:
             return function.func(param, env, self)
 
         new_env = Environment(env)
@@ -84,7 +86,7 @@ class Interpreter:
                     ),
                 ]["luts".find(lifetime[-1])]
                 if lifetime[-1] in "luts"
-                else exec("raise RuntimeError(f'Invalid lifetime {lifetime}')")
+                else exec(f"raise RuntimeError(f'Invalid lifetime {lifetime}')")
             )()
         )
 
@@ -226,9 +228,16 @@ class Interpreter:
             node = self.ast[self.current_line - 1]
             try:
                 self.visit_node(node, self.global_environment, imperative=True)
+                print(self.tasks)
+                self.run_all_tasks()
+
             except RuntimeError as e:
                 print(f"Error at line {self.current_line}, {e}")
                 return 1
+            
             self.current_line += 1
             self.lines_executed += 1
+            
+            
+            
         return 0
