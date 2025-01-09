@@ -47,51 +47,69 @@ def get_length(arg: MLType, *_):
             return RuntimeNumber(len(value))
         case RuntimeNumber(value):
             return len(str(value))
+        case RuntimeMatchObject(value):
+            return RuntimeNumber(len(value.groups()))
         case _:
             return RuntimeNumber(0)
-
-def find_all_matches(pat: re.Pattern, string, group=0):
-    return [m.group(group) for m in pat.finditer(string)]
 
 def create_regex_func(arg: RuntimeString, *_):
     try:
         comp = re.compile(arg.value)
         return BuiltinFunction(
-            lambda arg, *_: RuntimeListType([RuntimeString(m) for m in find_all_matches(comp, arg.value)])
+            lambda arg, *_: RuntimeListType({(i+1):RuntimeMatchObject(m) for i,m in enumerate(comp.findall(arg.value))}),
+            imp=False
         )   
     except re.error:
         return RuntimeUnit()
 
-def get_capture_group(regex_func: BuiltinFunction, group: int):
-    def inner(arg: RuntimeString, *_):
-        matches = regex_func.func(arg)
-        if isinstance(matches, RuntimeListType):
-            return RuntimeListType([RuntimeString(m.value) for m in matches.list])
-        return RuntimeUnit()
-    return BuiltinFunction(inner)
+
+def get_group_from_match(arg: RuntimeMatchObject, *_):
+    return BuiltinFunction(lambda x, *_: RuntimeString(arg.group(x.value)), imp=False)
+def get_string_from_match(arg: RuntimeMatchObject, *_):
+    return RuntimeString(str(arg.match))
 
 std_funcs = {
     '?!': BuiltinFunction(lambda arg, *_: print(arg)),
-    '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value)), False),
-    '*': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value * x.value)), False),
-    '-': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value - x.value)), False),
-    '/': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value / x.value)), False),
-    '%': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value % x.value)), False),
-    '=': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.to_string() == x.to_string())), False),
-    '>': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value > x.value)), False),
-    '≥': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value >= x.value)), False),
-    '<': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value < x.value)), False),
-    '≤': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value <= x.value)), False),
-    '≠': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.to_string() != x.to_string())), False), 
-    '->': BuiltinFunction(lambda arg, *_: get_length(arg), False),
-    '[?]': BuiltinFunction(lambda arg, env, runtime: get_cur_line(runtime)),
-    '|<|': BuiltinFunction(lambda arg, *_: THE_STACK.append(arg)),
-    '|>|': BuiltinFunction(lambda arg, env, runtime: try_pop(arg, env, runtime)),
-    '!': BuiltinFunction(lambda arg, *_: RuntimeMutableBox(arg), True),
-    '!<': BuiltinFunction(lambda arg, *_: write_to_mut_box(arg), True),
-    '!?': BuiltinFunction(lambda arg, *_: arg.value, True),
-    '??': BuiltinFunction(lambda arg, *_: arg.to_string(), False),
-    '/?/': BuiltinFunction(create_regex_func, False),
-    '/>?/': BuiltinFunction(lambda arg, *_: get_capture_group(arg, 0), False),
-    '/>"/': BuiltinFunction(lambda arg, *_: get_capture_group(arg, 0), False),
+    '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value), imp=False), imp=False),
+    '*': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value * x.value), imp=False), imp=False),
+    '-': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value - x.value), imp=False), imp=False),
+    '/': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value / x.value), imp=False), imp=False),
+    '%': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value % x.value), imp=False), imp=False),
+    '=': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.to_string() == x.to_string())), imp=False),
+    '>': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value > x.value), imp=False), imp=False),
+    '≥': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value >= x.value), imp=False), imp=False),
+    '<': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value < x.value), imp=False), imp=False),
+    '≤': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value <= x.value), imp=False), imp=False),
+    '≠': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.to_string() != x.to_string()), imp=False), imp=False), 
+    '->': BuiltinFunction(lambda arg, *_: get_length(arg), imp=False),
+    '[?]': BuiltinFunction(lambda arg, env, runtime: get_cur_line(runtime), imp=False),
+    '|<|': BuiltinFunction(lambda arg, *_: THE_STACK.append(arg), imp=True),
+    '|>|': BuiltinFunction(lambda arg, env, runtime: try_pop(arg, env, runtime), imp=True),
+    '!': BuiltinFunction(lambda arg, *_: RuntimeMutableBox(arg), imp=True),
+    '!<': BuiltinFunction(lambda arg, *_: write_to_mut_box(arg), imp=True),
+    '!?': BuiltinFunction(lambda arg, *_: arg.value, imp=True),
+    '??': BuiltinFunction(lambda arg, *_: arg.to_string(), imp=False),
+    '/?/': BuiltinFunction(create_regex_func, imp=False),
+    '/>?/': BuiltinFunction(get_group_from_match, imp=False),
+    '/>"/': BuiltinFunction(get_string_from_match, imp=False),
+    
+    # Lists
+    '[!]':  BuiltinFunction(lambda arg, *_: RuntimeListType({1: arg} if not isinstance(arg, RuntimeUnit) else {}), imp=False),
+    '[<]':  BuiltinFunction(lambda arg, *_: 
+                BuiltinFunction(
+                    lambda x1, *_: 
+                        BuiltinFunction(
+                            lambda x2, *_: arg.set(x1.value, x2),
+                            imp=False
+                        ),
+                    imp=False
+                )
+            ),
+    '[>]': BuiltinFunction(lambda arg, *_: 
+                BuiltinFunction(
+                    lambda x1, *_: arg.get(x1.value),
+                    imp=False
+                )
+            )
+
 }

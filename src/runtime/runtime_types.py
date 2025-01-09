@@ -67,13 +67,12 @@ class Function(MLType):
 
 
 class ClassType(MLType):
-    def __init__(self, name: str, members: dict[str, MLType], public_members: set[str]):
-        self.name = name
+    def __init__(self, members: dict[str, MLType], public_members: set[str]):
         self.members = members
         self.public_members = public_members
 
     def to_string(self):
-        return f"Class({self.name}, fields={self.members}, public_fields={self.public_members})"
+        return f"Class(fields={self.members}, public_fields={self.public_members})"
 
 
 
@@ -111,9 +110,9 @@ class ClassMemberReference(MLType):
         return RuntimeUnit()
 
 class BuiltinFunction(MLType):
-    def __init__(self, func: callable, is_impure=True):
+    def __init__(self, func: callable, imp=True):
         self.func = func
-        self.impure = is_impure
+        self.impure = imp
 
     def to_string(self):
         return f"BuiltinFunction({self.func}, impure={self.impure})"
@@ -190,8 +189,8 @@ class RuntimeListType(MLType):
         self.list = list
     
     def get(self, idx: int):
-        if idx < 1:
-            raise IndexError("Index must be greater than 0")
+        if idx < 1 or int(idx) != idx:
+            raise IndexError("Index must be an integer greater than 0")
         return self.list.get(idx, RuntimeUnit())
     
     def length(self):
@@ -201,17 +200,18 @@ class RuntimeListType(MLType):
         return RuntimeNumber(i)
     
     def set(self, idx: int, value: MLType):
-        if idx < 1:
-            raise IndexError("Index must be greater than 0")
+        if idx < 1 or int(idx) != idx:
+            raise IndexError("Index must be an integer greater than 0")
         self.list[idx] = value
         return RuntimeUnit()
     
     def to_string(self):
         return f"List({self.list})"
     
-class RuntimeRegexObject(MLType):
-    def __init__(self, regex: re.Pattern):
-        self.regex = regex
-        
+class RuntimeMatchObject(MLType):
+    def __init__(self, match: re.Match):
+        self.match = match
+    
     def to_string(self):
-        return f"RegexObject({self.regex})"
+        return f"MatchObject({self.match})"
+    

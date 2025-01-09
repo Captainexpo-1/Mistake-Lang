@@ -1,7 +1,7 @@
-variable $1 is /?/ string \w+ close end
+variable ()1 is /?/ string \w+ close end
 
-variable $2 is $1 string Hello 123 world close end
-
-?! $2 end
-variable &&&&&1 is />?/ $1 string Hello 123 world close end
-?! &&&&&1 end	
+comment $2 now is a list of matches
+variable $2 is ()1 string Hello 123 world close end
+variable #1 is [>] $2 3 end
+variable #2 is />"/ #1 end
+?! #2 end

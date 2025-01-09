@@ -105,8 +105,8 @@ class Interpreter:
 
         pmembers.update(node.public_members)
 
-        new_class = ClassType(node.__str__(), members, pmembers)
-        env.add_variable(node.__str__(), new_class, Lifetime(LifetimeType.INFINITE, 0))
+        new_class = ClassType(members, pmembers)
+        env.add_variable(new_class, Lifetime(LifetimeType.INFINITE, 0))
         return new_class
 
     def visit_class_instancing(self, node: ClassInstancing, env: Environment):
@@ -124,7 +124,7 @@ class Interpreter:
                 name,
                 self.visit_node(value, instance_env),
                 Lifetime(LifetimeType.INFINITE, 0),
-            )  # TODO: Add lifetimes for class members ig.
+            )  # HACK: No lifetime handling for instance members because that's stupid
 
         return ClassInstance(class_type, instance_members, instance_env)
 
