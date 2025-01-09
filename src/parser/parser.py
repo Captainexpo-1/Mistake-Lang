@@ -1,6 +1,6 @@
 from parser.ast import *
-from parser.errors.parser_errors import *
-from typing import Callable, Dict, List
+from parser.errors.parser_errors import UnexpectedTokenError
+from typing import List
 
 from tokenizer.lexer import Lexer
 from tokenizer.token import Token, TokenType, opening_tokens

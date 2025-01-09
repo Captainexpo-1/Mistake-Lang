@@ -6,7 +6,7 @@ from typing import List
 import runner
 from runtime.environment import Environment
 from runtime.errors.runtime_errors import RuntimeError
-from runtime.runtime_types import *
+from runtime.runtime_types import *  # noqa: F403
 from tokenizer.token import Token
 
 
@@ -229,5 +229,5 @@ class Interpreter:
                 return 1
             self.current_line += 1
             self.lines_executed += 1
-            print(self.lines_executed)
+            #print(self.lines_executed)
         return 0

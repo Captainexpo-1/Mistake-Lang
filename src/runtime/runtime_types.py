@@ -156,3 +156,46 @@ class Lifetime(MLType):
                         "Line number must be provided for line lifetime"
                     )
                 return line - self.start >= self.value
+
+
+class PyNativeObject(MLType):
+    def __init__(self, obj):
+        self.obj = obj
+
+    def to_string(self):
+        return f"PythonNativeObject({self.obj})"
+    
+class RuntimeMutableBox(PyNativeObject):
+    def __init__(self, value: any):   
+        self.value = value
+        
+    def to_string(self):
+        return f"MutableBox({self.value})"
+    
+    def write(self, value):
+        self.value = value
+        return RuntimeUnit()
+    
+class RuntimeListType(PyNativeObject):
+    def __init__(self, list: dict[int, MLType]):
+        self.list = list
+    
+    def get(self, idx: int):
+        if idx < 1:
+            raise IndexError("Index must be greater than 0")
+        return self.list.get(idx, RuntimeUnit())
+    
+    def length(self):
+        i = 0
+        while (i+1) in self.list:
+            i += 1
+        return RuntimeNumber(i)
+    
+    def set(self, idx: int, value: MLType):
+        if idx < 1:
+            raise IndexError("Index must be greater than 0")
+        self.list[idx] = value
+        return RuntimeUnit()
+    
+    def to_string(self):
+        return f"List({self.list})"
