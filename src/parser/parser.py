@@ -216,7 +216,7 @@ class Parser:
         self.eat(TokenType.KW_MEMBER)
         member = self.eat(TokenType.SYM_IDENTIFIER).value
         self.eat(TokenType.KW_OF)
-        obj = self.eat(TokenType.SYM_IDENTIFIER).value
+        obj = self.parse_expression()
         return MemberAccess(obj, member)
 
     def parse_function_declaration(self):

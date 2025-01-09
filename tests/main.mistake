@@ -1,0 +1,7 @@
+variable $1 is /?/ string \w+ close end
+
+variable $2 is $1 string Hello 123 world close end
+
+?! $2 end
+variable &&&&&1 is />?/ $1 string Hello 123 world close end
+?! &&&&&1 end	

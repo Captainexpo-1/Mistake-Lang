@@ -5,7 +5,7 @@ from runtime.errors.runtime_errors import InvalidLifetimeError
 from datetime import datetime
 import time
 import runtime.environment as rte
-
+import re
 
 class MLType:
     def to_string(self):
@@ -76,6 +76,7 @@ class ClassType(MLType):
         return f"Class({self.name}, fields={self.members}, public_fields={self.public_members})"
 
 
+
 class ClassInstance(MLType):
     def __init__(
         self,
@@ -92,6 +93,22 @@ class ClassInstance(MLType):
     def to_string(self):
         return f"InstanceOf({self.class_type.name}, fields={self.members})"
 
+class ClassMemberReference(MLType):
+    def __init__(self, instance: ClassInstance, member_name: str):
+        self.instance = instance
+        self.member_name = member_name
+
+    def to_string(self):
+        return f"ClassMemberReference({self.instance}, {self.member_name})"
+
+    def get(self):
+        # Get the actual value from the instance
+        return self.instance.members[self.member_name]
+
+    def set(self, value: MLType):
+        # Update the instance's member
+        self.instance.members[self.member_name] = value
+        return RuntimeUnit()
 
 class BuiltinFunction(MLType):
     def __init__(self, func: callable, is_impure=True):
@@ -156,16 +173,8 @@ class Lifetime(MLType):
                         "Line number must be provided for line lifetime"
                     )
                 return line - self.start >= self.value
-
-
-class PyNativeObject(MLType):
-    def __init__(self, obj):
-        self.obj = obj
-
-    def to_string(self):
-        return f"PythonNativeObject({self.obj})"
     
-class RuntimeMutableBox(PyNativeObject):
+class RuntimeMutableBox(MLType):
     def __init__(self, value: any):   
         self.value = value
         
@@ -176,7 +185,7 @@ class RuntimeMutableBox(PyNativeObject):
         self.value = value
         return RuntimeUnit()
     
-class RuntimeListType(PyNativeObject):
+class RuntimeListType(MLType):
     def __init__(self, list: dict[int, MLType]):
         self.list = list
     
@@ -199,3 +208,10 @@ class RuntimeListType(PyNativeObject):
     
     def to_string(self):
         return f"List({self.list})"
+    
+class RuntimeRegexObject(MLType):
+    def __init__(self, regex: re.Pattern):
+        self.regex = regex
+        
+    def to_string(self):
+        return f"RegexObject({self.regex})"

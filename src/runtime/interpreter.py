@@ -130,7 +130,7 @@ class Interpreter:
 
     def visit_member_access(self, node: MemberAccess, env: Environment):
         # Lookup the instance in the environment
-        instance = env.get_variable(node.obj, line=self.lines_executed)
+        instance = self.visit_node(node.obj, env)
         if not isinstance(instance, ClassInstance):
             raise RuntimeError(f"'{node.obj}' is not a valid instance.")
 
@@ -141,7 +141,7 @@ class Interpreter:
             raise RuntimeError(
                 f"'{node.member}' is not a public field of '{node.obj}'."
             )
-        return self.visit_node(instance.members[node.member], instance.environment)
+        return ClassMemberReference(instance, node.member)
 
     def visit_match(self, node: Match, env: Environment):
         expr = self.visit_node(node.expr, env)
@@ -182,6 +182,8 @@ class Interpreter:
             return self.visit_class_instancing(node, env)
         if isinstance(node, MemberAccess):
             return self.visit_member_access(node, env)
+        if isinstance(node, ClassMemberReference):
+            return node.get()
         if isinstance(node, Match):
             return self.visit_match(node, env)
         if isinstance(node, JumpStatement):
@@ -229,5 +231,4 @@ class Interpreter:
                 return 1
             self.current_line += 1
             self.lines_executed += 1
-            #print(self.lines_executed)
         return 0

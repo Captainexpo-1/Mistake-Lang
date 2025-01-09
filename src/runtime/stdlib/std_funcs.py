@@ -1,19 +1,9 @@
+import re
 from runtime.errors.runtime_errors import *
 from runtime.runtime_types import *
 import runtime.environment as environment
 import runtime.interpreter as interpreter
 from parser.ast import *
-""" 
-format:
-! = bang
-? = qmark
-[ = lbrack
-] = rbrack
-{ = lbrace
-} = rbrace
-( = lparen
-) = rparen
-"""
 
 def fn_bang_qmark(arg: MLType, *_):
     print(arg)
@@ -25,10 +15,8 @@ def get_type(val: any):
         return RuntimeNumber(val)
     if isinstance(val, str):
         return RuntimeString(val)
-
-    if isinstance(val, callable):
+    if callable(val):
         return BuiltinFunction(val)
-
 
 THE_STACK = []
 def try_pop(arg, env, runtime: 'interpreter.Interpreter'):
@@ -46,9 +34,10 @@ def get_cur_line(rt: 'interpreter.Interpreter'):
 
 def write_to_mut_box(box: RuntimeMutableBox, *_):
     if not isinstance(box, RuntimeMutableBox):
+        if isinstance(box, ClassMemberReference):
+            return BuiltinFunction(lambda arg, *_: box.set(arg), True)
         raise RuntimeTypeError(f"Expected mutable box, got {type(box)}")
     return BuiltinFunction(lambda arg, *_: box.write(arg), True)
-    
 
 def get_length(arg: MLType, *_):
     match arg:
@@ -61,7 +50,26 @@ def get_length(arg: MLType, *_):
         case _:
             return RuntimeNumber(0)
 
-# HACK: Using string comparison for now because it'll work. It's really slow though.
+def find_all_matches(pat: re.Pattern, string, group=0):
+    return [m.group(group) for m in pat.finditer(string)]
+
+def create_regex_func(arg: RuntimeString, *_):
+    try:
+        comp = re.compile(arg.value)
+        return BuiltinFunction(
+            lambda arg, *_: RuntimeListType([RuntimeString(m) for m in find_all_matches(comp, arg.value)])
+        )   
+    except re.error:
+        return RuntimeUnit()
+
+def get_capture_group(regex_func: BuiltinFunction, group: int):
+    def inner(arg: RuntimeString, *_):
+        matches = regex_func.func(arg)
+        if isinstance(matches, RuntimeListType):
+            return RuntimeListType([RuntimeString(m.value) for m in matches.list])
+        return RuntimeUnit()
+    return BuiltinFunction(inner)
+
 std_funcs = {
     '?!': BuiltinFunction(lambda arg, *_: print(arg)),
     '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value)), False),
@@ -75,20 +83,15 @@ std_funcs = {
     '<': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value < x.value)), False),
     '≤': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value <= x.value)), False),
     '≠': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.to_string() != x.to_string())), False), 
-    
     '->': BuiltinFunction(lambda arg, *_: get_length(arg), False),
-    
-    # Get current line
     '[?]': BuiltinFunction(lambda arg, env, runtime: get_cur_line(runtime)),
-    
-    # Stack functions
     '|<|': BuiltinFunction(lambda arg, *_: THE_STACK.append(arg)),
     '|>|': BuiltinFunction(lambda arg, env, runtime: try_pop(arg, env, runtime)),
-    
-    # Mutable box functions
     '!': BuiltinFunction(lambda arg, *_: RuntimeMutableBox(arg), True),
     '!<': BuiltinFunction(lambda arg, *_: write_to_mut_box(arg), True),
     '!?': BuiltinFunction(lambda arg, *_: arg.value, True),
-    
     '??': BuiltinFunction(lambda arg, *_: arg.to_string(), False),
+    '/?/': BuiltinFunction(create_regex_func, False),
+    '/>?/': BuiltinFunction(lambda arg, *_: get_capture_group(arg, 0), False),
+    '/>"/': BuiltinFunction(lambda arg, *_: get_capture_group(arg, 0), False),
 }
