@@ -5,6 +5,8 @@ import mistake.runtime.environment as environment
 import mistake.runtime.interpreter as interpreter
 from mistake.parser.ast import *
 import requests
+from mistake.utils import *
+import gevent
 
 def fn_bang_qmark(arg: MLType, *_):
     print(arg)
@@ -18,6 +20,7 @@ def get_type(val: any):
         return RuntimeString(val)
     if callable(val):
         return BuiltinFunction(val)
+
 
 THE_STACK = []
 def try_pop(arg, env, runtime: 'interpreter.Interpreter'):
@@ -69,6 +72,7 @@ def get_group_from_match(arg: RuntimeMatchObject, *_):
 
 def get_string_from_match(arg: RuntimeMatchObject, *_):
     return RuntimeString(str(arg.match))
+
 std_funcs = {
     '?!': BuiltinFunction(lambda arg, *_: print(arg)),
     '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value), imp=False), imp=False),
@@ -112,12 +116,10 @@ std_funcs = {
                     imp=False
                 )
             ),
-
+    '[/]': BuiltinFunction(lambda arg0, env, runtime: BuiltinFunction(lambda arg1, env, runtime: RuntimeAsyncFunctionTask(arg1, RuntimeUnit(), arg0.value, env), imp=True)),
     '<!>': BuiltinFunction(lambda *_: RuntimeUnit(), imp=False, subtype="asynccall"),
     
-    '<-%?-': BuiltinFunction(lambda arg, *_: requests.get(arg.value).text, imp=True), # GET request
-    '<-%!-': BuiltinFunction(lambda arg, *_: requests.post(arg.value).text, imp=True), # POST request
-    
+
     '=!=': BuiltinFunction(lambda arg, env, runtime: runtime.create_channel(), imp=True), # Create a channel
     '<<': BuiltinFunction(lambda arg, env, runtime: BuiltinFunction(lambda x, *_: runtime.send_to_channel(arg, x), imp=True)), # Send to channel
     '>>': BuiltinFunction(lambda arg, env, runtime: runtime.receive_from_channel(arg), imp=True), # Receive from channel

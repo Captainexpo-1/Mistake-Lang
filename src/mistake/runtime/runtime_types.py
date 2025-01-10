@@ -4,7 +4,9 @@ from enum import Enum
 from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
 from datetime import datetime
 import time
+from mistake.utils import to_decimal_seconds
 from mistake.runtime import environment as rte
+import gevent
 
 import re
 
@@ -20,7 +22,7 @@ class MLType:
 
 
 class RuntimeUnit(MLType):
-    def __init__(self):
+    def __init__(self, _=None):
         pass
 
     def to_string(self):
@@ -115,6 +117,7 @@ class BuiltinFunction(MLType):
         self.func = func
         self.impure = imp
         self.subtype = subtype
+        self.subdata = {}
 
     def to_string(self):
         return f"BuiltinFunction({self.func}, impure={self.impure})"
@@ -133,7 +136,7 @@ def get_timestamp():
     current_time = datetime.now()
     time_difference = current_time - reference_date
     milliseconds = int(time_difference.total_seconds() * 1000)
-    decimal_milliseconds = int(milliseconds * 0.864)
+    decimal_milliseconds = int(to_decimal_seconds(milliseconds))
     return decimal_milliseconds
 
 
@@ -164,7 +167,7 @@ class Lifetime(MLType):
                 return get_timestamp() >= self.value
             case LifetimeType.DECIMAL_SECONDS:
                 return (
-                    (time.process_time() * 0.864) - self.start >= self.value
+                    to_decimal_seconds(time.process_time()) - self.start >= self.value
                 )  # 0.864 is the conversion from seconds to decimal seconds
             case LifetimeType.TICKS:
                 return time.process_time() * 20 - self.start >= self.value
@@ -218,10 +221,11 @@ class RuntimeMatchObject(MLType):
         return f"MatchObject({self.match})"
 
 class RuntimeAsyncFunctionTask(MLType):
-    def __init__(self, func: Function, param: MLType, env: "rte.Environment"):
+    def __init__(self, func: Function, param: MLType, delay: float, env: "rte.Environment"):
         self.func = func
         self.param = param
         self.env = env
+        self.delay = delay
         
     def to_string(self):
         return f"AsyncTask({self.func}, {self.param})"
@@ -231,3 +235,4 @@ class RuntimeChannel(MLType):
         self.id = id
     def to_string(self):
         return f"Channel({self.id})"
+    

@@ -10,9 +10,11 @@ from mistake.runtime.environment import Environment
 from mistake.runtime.errors.runtime_errors import RuntimeError
 from mistake.runtime.runtime_types import *  # noqa: F403
 from mistake.tokenizer.token import Token
+from mistake.utils import to_decimal_seconds
 
 class Interpreter:
-    def __init__(self):
+    def __init__(self, unsafe_mode=False):
+        self.unsafe_mode = unsafe_mode
         self.parser = Parser()
         self.global_environment = Environment(None)
         self.current_line = 1
@@ -26,48 +28,56 @@ class Interpreter:
             # Run tasks asynchronously without blocking the main thread
             for task in self.tasks:
                 task.start()
-            self.tasks.clear()
+            self.tasks = [task for task in self.tasks if not task.ready()]
 
     def execute_task(self, task: RuntimeAsyncFunctionTask):
+        if task.delay > 0:
+            #print(f"Delaying task for {task.delay} seconds...")
+            gevent.sleep(task.delay)
+            
         new_env = Environment(task.env)
         new_env.add_variable(task.func.param, task.param, Lifetime(LifetimeType.INFINITE, 0))
         if isinstance(task.func.body[0], Token):
             task.func.body = self.parser.parse(task.func.body)
-
-        #print(task.env)
-        #print(new_env)
-
+        
         self.visit_block(task.func.body[0], new_env, create_env=False)
 
     def visit_function_application(self, env: Environment, node: FunctionApplication, visit_arg=True):
         function = self.visit_node(node.called, env)
         is_builtin = False
-        if not isinstance(function, Function):
-            if not isinstance(function, BuiltinFunction):
-                raise RuntimeError(
-                    f"Variable {node.called} is not a function, but a {type(function)}"
-                )
-            else:
-                is_builtin = True
 
+            
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
+        if isinstance(function, RuntimeAsyncFunctionTask):
+            function.param = param
+            task = gevent.spawn(self.execute_task, function)
+            self.tasks.append(task)
+            return RuntimeUnit()
+ 
+        if not isinstance(function, Function):
+           if not isinstance(function, BuiltinFunction):
+               raise RuntimeError(
+                   f"Called {node.called} is not a function, but a {type(function)}"
+               )
+           else: is_builtin = True
+ 
         if is_builtin:
             if function.subtype == "asynccall":
-                task = gevent.spawn(self.execute_task, RuntimeAsyncFunctionTask(param, RuntimeUnit(), env))
+                task = gevent.spawn(self.execute_task, RuntimeAsyncFunctionTask(param, RuntimeUnit(), function.subdata.get("delay", 0), env))
                 self.tasks.append(task)
-
                 return RuntimeUnit()
+                
             result = function.func(param, env, self)
             return result
         new_env = Environment(env)
         
-        print(env)
-        print(new_env)
-        
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
         if isinstance(function.body[0], Token):
             function.body = self.parser.parse(function.body)
+        
+        
+        
         return self.visit_block(function.body[0], new_env, create_env=False)
 
     def visit_function_declaration(self, node: FunctionDeclaration, env: Environment):
@@ -106,7 +116,7 @@ class Interpreter:
                     lambda: Lifetime(
                         LifetimeType.DECIMAL_SECONDS,
                         int(lifetime[:-1]),
-                        time.process_time() * 0.864,
+                        to_decimal_seconds(time.process_time())
                     ),
                 ]["luts".find(lifetime[-1])]
                 if lifetime[-1] in "luts"
@@ -193,16 +203,12 @@ class Interpreter:
         return RuntimeUnit()
     
     def receive_from_channel(self, chan: RuntimeChannel):
-
         id = chan.id
 
         if id not in self.channels:
             return RuntimeUnit()
-
-
-
         while len(self.channels[id]) == 0:
-            print(self.channels[id])
+            #print(self.channels[id])
             gevent.sleep(0.1)
 
         return self.channels[id].pop(0)
@@ -274,9 +280,7 @@ class Interpreter:
         self.files[filename] = ast
 
         while self.current_line <= len(self.ast):
-            #print(f"Executing line {self.current_line}mistake..")
             node = self.ast[self.current_line - 1]
-            #print(node)
             try:
                 result = self.visit_node(node, self.global_environment, imperative=True)
                 self.run_all_tasks()
@@ -284,7 +288,8 @@ class Interpreter:
             except RuntimeError as e:
                 print(f"Error at line {self.current_line}, {e}")
                 return 1
+
             self.current_line += 1
             self.lines_executed += 1
-
-        return 0
+            
+        gevent.joinall(self.tasks)

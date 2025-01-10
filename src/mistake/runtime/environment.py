@@ -2,7 +2,6 @@ from mistake.runtime.runtime_types import MLType, Lifetime
 from mistake.runtime.errors.runtime_errors import LifetimeExpiredError, VariableNotFoundError, VariableAlreadyDefinedError
 from mistake.runtime.stdlib import std_funcs as stdlib
 
-
 class Environment:
     def __init__(self, parent: "Environment"):
         self.variables: dict[str, MLType] = {}
