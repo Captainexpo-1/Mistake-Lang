@@ -1,10 +1,10 @@
 from typing import List
-from parser.ast import *
+from mistake.parser.ast import *
 from enum import Enum
-from runtime.errors.runtime_errors import InvalidLifetimeError
+from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
 from datetime import datetime
 import time
-import runtime.environment as rte
+from mistake.runtime import environment as rte
 
 import re
 

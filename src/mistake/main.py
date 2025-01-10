@@ -1,8 +1,8 @@
 import sys
 import os
-from tokenizer.lexer import Lexer
-from parser.parser import Parser
-from runtime.interpreter import Interpreter
+from mistake.tokenizer.lexer import Lexer
+from mistake.parser.parser import Parser
+from mistake.runtime.interpreter import Interpreter
 import asyncio
 
 def get_args() -> tuple[str, set]:

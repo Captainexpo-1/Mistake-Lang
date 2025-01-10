@@ -1,9 +1,9 @@
 import re
-from runtime.errors.runtime_errors import *
-from runtime.runtime_types import *
-import runtime.environment as environment
-import runtime.interpreter as interpreter
-from parser.ast import *
+from mistake.runtime.errors.runtime_errors import *
+from mistake.runtime.runtime_types import *
+import mistake.runtime.environment as environment
+import mistake.runtime.interpreter as interpreter
+from mistake.parser.ast import *
 import requests
 
 def fn_bang_qmark(arg: MLType, *_):

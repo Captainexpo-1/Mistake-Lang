@@ -1,15 +1,15 @@
 import time
 import gevent
 from gevent import monkey; monkey.patch_all()
-from parser.ast import *
-from parser.parser import Parser
+from mistake.parser.ast import *
+from mistake.parser.parser import Parser
 from typing import List
 
-import runner
-from runtime.environment import Environment
-from runtime.errors.runtime_errors import RuntimeError
-from runtime.runtime_types import *  # noqa: F403
-from tokenizer.token import Token
+from mistake import runner
+from mistake.runtime.environment import Environment
+from mistake.runtime.errors.runtime_errors import RuntimeError
+from mistake.runtime.runtime_types import *  # noqa: F403
+from mistake.tokenizer.token import Token
 
 class Interpreter:
     def __init__(self):
@@ -274,7 +274,7 @@ class Interpreter:
         self.files[filename] = ast
 
         while self.current_line <= len(self.ast):
-            #print(f"Executing line {self.current_line}...")
+            #print(f"Executing line {self.current_line}mistake..")
             node = self.ast[self.current_line - 1]
             #print(node)
             try:
@@ -284,9 +284,6 @@ class Interpreter:
             except RuntimeError as e:
                 print(f"Error at line {self.current_line}, {e}")
                 return 1
-
-            print("Executed line", self.current_line)
-
             self.current_line += 1
             self.lines_executed += 1
 

@@ -1,7 +1,7 @@
-from tokenizer.token import *
-from utils import *
+from mistake.tokenizer.token import *
+from mistake.utils import *
 from typing import List
-from parser.errors.parser_errors import *
+from mistake.parser.errors.parser_errors import *
 import re
 import html
 

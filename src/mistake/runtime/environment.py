@@ -1,6 +1,6 @@
-from runtime.runtime_types import MLType, Lifetime
-from runtime.errors.runtime_errors import LifetimeExpiredError, VariableNotFoundError, VariableAlreadyDefinedError
-import runtime.stdlib.std_funcs as stdlib
+from mistake.runtime.runtime_types import MLType, Lifetime
+from mistake.runtime.errors.runtime_errors import LifetimeExpiredError, VariableNotFoundError, VariableAlreadyDefinedError
+from mistake.runtime.stdlib import std_funcs as stdlib
 
 
 class Environment:

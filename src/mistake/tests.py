@@ -1,7 +1,7 @@
-from parser import parser
-from parser.ast import *
+from mistake.parser import parser
+from mistake.parser.ast import *
 
-from tokenizer.lexer import Lexer
+from mistake.tokenizer.lexer import Lexer
 
 
 def do_test(src: str, expected: List[ASTNode]):

@@ -1,10 +1,10 @@
-from parser.ast import *
-from parser.errors.parser_errors import UnexpectedTokenError
+from mistake.parser.ast import *
+from mistake.parser.errors.parser_errors import UnexpectedTokenError
 from typing import List
 
-from tokenizer.lexer import Lexer
-from tokenizer.token import Token, TokenType, opening_tokens
-from utils import *
+from mistake.tokenizer.lexer import Lexer
+from mistake.tokenizer.token import Token, TokenType, opening_tokens
+from mistake.utils import *
 
 
 class Parser:
@@ -151,7 +151,7 @@ class Parser:
         return MatchCase(condition, body)
 
     def parse_match_expression(self):
-        # match <expression> cases [case <expression> then <expression> close]...? otherwise <expression> close
+        # match <expression> cases [case <expression> then <expression> close]mistake..? otherwise <expression> close
 
         self.eat(TokenType.KW_MATCH)
         expr = self.parse_expression()
