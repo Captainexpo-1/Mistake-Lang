@@ -217,14 +217,17 @@ class RuntimeMatchObject(MLType):
     def to_string(self):
         return f"MatchObject({self.match})"
 
-class RuntimeAsyncTask(MLType):
-    def __init__(self, func: Function, arg: MLType, env: "rte.Environment"):
+class RuntimeAsyncFunctionTask(MLType):
+    def __init__(self, func: Function, param: MLType, env: "rte.Environment"):
         self.func = func
-        self.param = arg
+        self.param = param
         self.env = env
-    
+        
     def to_string(self):
         return f"AsyncTask({self.func}, {self.param})"
     
-    def run(self, interpreter):
-        interpreter.visit_function_application(self.env, FunctionApplication(self.func, self.param), visit_arg=False)
+class RuntimeChannel(MLType):
+    def __init__(self, id: int):
+        self.id = id
+    def to_string(self):
+        return f"Channel({self.id})"

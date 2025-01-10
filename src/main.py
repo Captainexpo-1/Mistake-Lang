@@ -3,7 +3,7 @@ import os
 from tokenizer.lexer import Lexer
 from parser.parser import Parser
 from runtime.interpreter import Interpreter
-
+import asyncio
 
 def get_args() -> tuple[str, set]:
     if len(sys.argv) < 2:
@@ -13,7 +13,7 @@ def get_args() -> tuple[str, set]:
     return sys.argv[1], set(sys.argv[2:])
 
 
-if __name__ == "__main__":
+def main():
     fname, args = get_args()
 
     lexer = Lexer()
@@ -31,3 +31,5 @@ if __name__ == "__main__":
             print(ast)
         if "-e" in args:
             runtime.execute(ast, filename=fname)
+if __name__ == "__main__":
+    main()

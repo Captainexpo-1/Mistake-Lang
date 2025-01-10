@@ -9,7 +9,7 @@ class Environment:
         self.lifetimes: dict[str, Lifetime] = {}
         self.parent = parent
 
-    def get_variable(self, name: str, force_purity=True, line: int = 0) -> MLType:
+    def get_variable(self, name: str, force_purity=False, line: int = 0) -> MLType:
         if name in self.variables:
             if self.lifetimes[name].is_expired(line):
                 del self.variables[name]
@@ -25,9 +25,8 @@ class Environment:
 
         raise VariableNotFoundError(f"Variable {name} not found in {self}")
 
-    def add_variable(
-        self, name: str, value: MLType, lifetime: Lifetime, ignore_duplicate=False
-    ):
+    def add_variable(self, name: str, value: MLType, lifetime: Lifetime, ignore_duplicate=False):
+        if name == "_": return
         if not ignore_duplicate and name in self.variables:
             raise VariableAlreadyDefinedError(
                 f"Variable {name} already defined in this scope"

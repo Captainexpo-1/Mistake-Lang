@@ -1,4 +1,6 @@
 import time
+import gevent
+from gevent import monkey; monkey.patch_all()
 from parser.ast import *
 from parser.parser import Parser
 from typing import List
@@ -9,39 +11,60 @@ from runtime.errors.runtime_errors import RuntimeError
 from runtime.runtime_types import *  # noqa: F403
 from tokenizer.token import Token
 
-import asyncio
-
 class Interpreter:
     def __init__(self):
         self.parser = Parser()
         self.global_environment = Environment(None)
         self.current_line = 1
         self.files: dict[str, List[ASTNode]] = {}
-        self.tasks: List[asyncio.Task] = []
+        self.tasks: List[gevent.Greenlet] = []
+        self.channel_id = 0
+        self.channels: dict[int, List[MLType]] = {}
 
-    async def run_all_tasks(self):
-        while self.tasks:
-            task = self.tasks.pop(0)
-            await task
+    def run_all_tasks(self):
+        if self.tasks:
+            # Run tasks asynchronously without blocking the main thread
+            for task in self.tasks:
+                task.start()
+            self.tasks.clear()
 
+    def execute_task(self, task: RuntimeAsyncFunctionTask):
+        new_env = Environment(task.env)
+        new_env.add_variable(task.func.param, task.param, Lifetime(LifetimeType.INFINITE, 0))
+        if isinstance(task.func.body[0], Token):
+            task.func.body = self.parser.parse(task.func.body)
 
+        #print(task.env)
+        #print(new_env)
+
+        self.visit_block(task.func.body[0], new_env, create_env=False)
 
     def visit_function_application(self, env: Environment, node: FunctionApplication, visit_arg=True):
         function = self.visit_node(node.called, env)
         is_builtin = False
         if not isinstance(function, Function):
-            if not isinstance(function, BuiltinFunction):    
+            if not isinstance(function, BuiltinFunction):
                 raise RuntimeError(
                     f"Variable {node.called} is not a function, but a {type(function)}"
                 )
-            else: is_builtin = True
+            else:
+                is_builtin = True
 
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
         if is_builtin:
-            return function.func(param, env, self)
+            if function.subtype == "asynccall":
+                task = gevent.spawn(self.execute_task, RuntimeAsyncFunctionTask(param, RuntimeUnit(), env))
+                self.tasks.append(task)
 
+                return RuntimeUnit()
+            result = function.func(param, env, self)
+            return result
         new_env = Environment(env)
+        
+        print(env)
+        print(new_env)
+        
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
         if isinstance(function.body[0], Token):
             function.body = self.parser.parse(function.body)
@@ -156,6 +179,34 @@ class Interpreter:
                 return self.visit_node(case.expr, env)
         return self.visit_node(node.otherwise, env)
 
+    def create_channel(self):
+        self.channel_id += 1
+        self.channels[self.channel_id] = []
+        return RuntimeChannel(self.channel_id)
+    
+    def send_to_channel(self, chan: RuntimeChannel, value: MLType):
+        id = chan.id
+        if id not in self.channels:
+            return RuntimeUnit()
+
+        self.channels[id].append(value)
+        return RuntimeUnit()
+    
+    def receive_from_channel(self, chan: RuntimeChannel):
+
+        id = chan.id
+
+        if id not in self.channels:
+            return RuntimeUnit()
+
+
+
+        while len(self.channels[id]) == 0:
+            print(self.channels[id])
+            gevent.sleep(0.1)
+
+        return self.channels[id].pop(0)
+    
     def visit_node(self, node: ASTNode, env: Environment, imperative=False):
         if isinstance(node, Unit):
             return RuntimeUnit()
@@ -211,10 +262,7 @@ class Interpreter:
         if filename not in self.files:
             self.files[filename] = runner.fetch_file(filename)
 
-        # print(f"Swapping to {filename} at line {line}")
-
         self.ast = self.files[filename]
-
         self.current_line = line - 1
         if self.current_line > len(self.ast):
             raise RuntimeError(f"Line {line} is out of bounds in file {filename}")
@@ -226,19 +274,20 @@ class Interpreter:
         self.files[filename] = ast
 
         while self.current_line <= len(self.ast):
+            #print(f"Executing line {self.current_line}...")
             node = self.ast[self.current_line - 1]
+            #print(node)
             try:
-                self.visit_node(node, self.global_environment, imperative=True)
-                print(self.tasks)
+                result = self.visit_node(node, self.global_environment, imperative=True)
                 self.run_all_tasks()
 
             except RuntimeError as e:
                 print(f"Error at line {self.current_line}, {e}")
                 return 1
-            
+
+            print("Executed line", self.current_line)
+
             self.current_line += 1
             self.lines_executed += 1
-            
-            
-            
+
         return 0

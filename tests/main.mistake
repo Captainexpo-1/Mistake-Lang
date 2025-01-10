@@ -1,1 +1,12 @@
-variable 
+variable [%%] is =!= unit end
+
+variable &1 is function _ returns 
+	open 
+		variable >1 is >> [%%] end
+		?! >1 end
+	close 
+close end
+
+<!> &1 end
+
+<< [%%] 125 end

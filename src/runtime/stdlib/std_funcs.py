@@ -69,11 +69,6 @@ def get_group_from_match(arg: RuntimeMatchObject, *_):
 
 def get_string_from_match(arg: RuntimeMatchObject, *_):
     return RuntimeString(str(arg.match))
-
-def start_new_task(arg: Function, env, runtime: 'interpreter.Interpreter'):
-    
-    return BuiltinFunction(lambda x, *_: runtime.tasks.append(RuntimeAsyncTask(arg, x, env)), imp=False)
-
 std_funcs = {
     '?!': BuiltinFunction(lambda arg, *_: print(arg)),
     '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value), imp=False), imp=False),
@@ -118,8 +113,12 @@ std_funcs = {
                 )
             ),
 
-    '<!>': BuiltinFunction(start_new_task, imp=False),
+    '<!>': BuiltinFunction(lambda *_: RuntimeUnit(), imp=False, subtype="asynccall"),
     
     '<-%?-': BuiltinFunction(lambda arg, *_: requests.get(arg.value).text, imp=True), # GET request
     '<-%!-': BuiltinFunction(lambda arg, *_: requests.post(arg.value).text, imp=True), # POST request
+    
+    '=!=': BuiltinFunction(lambda arg, env, runtime: runtime.create_channel(), imp=True), # Create a channel
+    '<<': BuiltinFunction(lambda arg, env, runtime: BuiltinFunction(lambda x, *_: runtime.send_to_channel(arg, x), imp=True)), # Send to channel
+    '>>': BuiltinFunction(lambda arg, env, runtime: runtime.receive_from_channel(arg), imp=True), # Receive from channel
 }
