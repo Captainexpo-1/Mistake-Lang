@@ -1,5 +1,1 @@
-variable %1 is function _ returns open 
-	?! string This is async close 
-close close end
-
-<!> %1 unit end
+variable 

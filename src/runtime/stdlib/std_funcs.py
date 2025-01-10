@@ -4,6 +4,7 @@ from runtime.runtime_types import *
 import runtime.environment as environment
 import runtime.interpreter as interpreter
 from parser.ast import *
+import requests
 
 def fn_bang_qmark(arg: MLType, *_):
     print(arg)
@@ -118,4 +119,7 @@ std_funcs = {
             ),
 
     '<!>': BuiltinFunction(start_new_task, imp=False),
+    
+    '<-%?-': BuiltinFunction(lambda arg, *_: requests.get(arg.value).text, imp=True), # GET request
+    '<-%!-': BuiltinFunction(lambda arg, *_: requests.post(arg.value).text, imp=True), # POST request
 }

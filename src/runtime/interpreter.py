@@ -9,7 +9,7 @@ from runtime.errors.runtime_errors import RuntimeError
 from runtime.runtime_types import *  # noqa: F403
 from tokenizer.token import Token
 
-
+import asyncio
 
 class Interpreter:
     def __init__(self):
@@ -17,12 +17,13 @@ class Interpreter:
         self.global_environment = Environment(None)
         self.current_line = 1
         self.files: dict[str, List[ASTNode]] = {}
-        self.tasks: List[RuntimeAsyncTask] = []
+        self.tasks: List[asyncio.Task] = []
 
-    def run_all_tasks(self):
-        while len(self.tasks) > 0:
+    async def run_all_tasks(self):
+        while self.tasks:
             task = self.tasks.pop(0)
-            task.run(self)
+            await task
+
 
 
     def visit_function_application(self, env: Environment, node: FunctionApplication, visit_arg=True):
