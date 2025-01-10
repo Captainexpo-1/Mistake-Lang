@@ -1,12 +1,11 @@
-variable [%%] is =!= unit end
 
-variable &1 is function _ returns 
-	open 
-		variable >1 is >> [%%] end
-		?! >1 end
-	close 
-close end
 
-<!> &1 end
+variable &1 is function _ returns open
 
-<< [%%] 125 end
+?! string The callback has run close 
+
+close close end 
+
+
+[/] 50 &1 5 end
+?! string This comes before close end
