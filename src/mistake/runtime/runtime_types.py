@@ -31,23 +31,31 @@ class RuntimeUnit(MLType):
 
 class RuntimeNumber(MLType):
     def __init__(self, value: float):
-        self.value = value
+        self.value: float = value
 
     def to_string(self):
         return f"{self.value}"
 
 
 class RuntimeString(MLType):
-    def __init__(self, value: str):
-        self.value = value
-
+    def __init__(self, value):   
+        self._value: str = str(value)
+    
+    @property
+    def value(self):
+        return self._value
+    
+    @value.setter
+    def value(self, new_value):
+        self._value = str(new_value)
+    
     def to_string(self):
         return f'{self.value}'
 
 
 class RuntimeBoolean(MLType):
     def __init__(self, value: bool | str):
-        self.value = value in ["true", "True", True]
+        self.value: bool = value in ["true", "True", True]
 
     def to_string(self):
         return "true" if self.value else "false"
@@ -246,7 +254,7 @@ class RuntimeChannel(MLType):
 class RuntimeTask(MLType):
     def __init__(self, task_ref: gevent.Greenlet):
         self.task_ref = task_ref
-        
+        self.start_time = time.time()
     def kill(self):
         if self.task_ref:
             self.task_ref.kill()
@@ -446,19 +454,26 @@ class RuntimeTCPSocket(RuntimeSocket):
         self.runtime = runtime
         self.hostname: Optional[str] = None
         self.port: Optional[int] = None
+        self.closed = False
 
     def set_port(self, port: RuntimeString):
+        if self.closed: return RuntimeBoolean(False)
         try:
             self.hostname = socket.gethostname()
             self.port = int(port.value)
             self.socket.connect((self.hostname, self.port))
+            return RuntimeBoolean(True)
         except Exception as e:
             self.close()
+            return RuntimeBoolean(False)
 
     def set_socket(self, socket: socket.socket):
         self.socket = socket
+        self.closed = False
 
     def send(self, message: RuntimeString):
+        if self.closed: return RuntimeBoolean(False)
+
         if not self.socket:
             return RuntimeBoolean(False)
         try:
@@ -470,10 +485,12 @@ class RuntimeTCPSocket(RuntimeSocket):
             return RuntimeBoolean(False)
 
     def close(self):
+        if self.closed: return RuntimeBoolean(False)
         try:
             self.socket.close()
             if self.channel:
                 self.runtime.close_channel(self.channel)
+            self.closed = True
             return RuntimeBoolean(True)
         except Exception as e:
             print(f"Error closing socket: {e}")
@@ -483,6 +500,7 @@ class RuntimeTCPSocket(RuntimeSocket):
         self.close()
 
     def receive(self):
+        if self.closed: return RuntimeUnit()
         try:
             data = self.socket.recv(1024)
             return RuntimeString(data.decode())

@@ -48,13 +48,16 @@ def write_to_mut_box(box: RuntimeMutableBox, *_):
 def get_length(arg: MLType, *_):
     match arg:
         case RuntimeString(value):
-            return RuntimeNumber(len(value))
+            # Length of string in bytes
+            return RuntimeNumber(len(value.encode()))
         case RuntimeListType(value):
             return RuntimeNumber(len(value))
         case RuntimeNumber(value):
             return len(str(value))
         case RuntimeMatchObject(value):
             return RuntimeNumber(len(value.groups()))
+        case RuntimeTask(task_ref, start_time):
+            return RuntimeNumber(time.time() - start_time)
         case _:
             return RuntimeNumber(0)
 
@@ -91,6 +94,17 @@ def new_task_from_func(func: callable, runtime: 'interpreter.Interpreter', delay
     runtime.add_task(spawn)
     return RuntimeTask(spawn)
 
+
+def is_truthy(arg: MLType, *_):
+    if isinstance(arg, RuntimeBoolean):
+        return arg.value
+    return not isinstance(arg, RuntimeUnit)
+
+def assert_true(arg: MLType, *_):
+    if not is_truthy(arg):
+        raise AssertionError("Assertion failed")
+    return RuntimeUnit()
+
 std_funcs = {
     '?!': BuiltinFunction(lambda arg, *_: print(arg)),
     '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value), imp=False), imp=False),
@@ -116,6 +130,7 @@ std_funcs = {
     '/>?/': BuiltinFunction(get_group_from_match, imp=False),
     '/>"/': BuiltinFunction(get_string_from_match, imp=False),
     '??': BuiltinFunction(lambda arg, *_: RuntimeString(arg.to_string()), imp=False),
+    '!!': BuiltinFunction(lambda arg, *_: assert_true(arg), imp=False),
     
     # Lists
     '[!]':  BuiltinFunction(lambda arg, *_: RuntimeListType({1: arg} if not isinstance(arg, RuntimeUnit) else {}), imp=False),
@@ -154,4 +169,10 @@ std_funcs = {
     '==>#': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.bind_port(x1), imp=True)),
     '==>?': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.set_hostname(x1)), imp=True),
     '==>!': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.set_callback(lambda callback_arg: runtime.visit_function_application(env, FunctionApplication(x1, callback_arg), visit_arg=False)), imp=True)),
+
+    '>|<': BuiltinFunction(lambda arg, *_: arg.close(), imp=True),
+
+
+    # MISC HELPERS
+    '>"<': BuiltinFunction(lambda arg, *_: RuntimeString(arg.value.strip()), imp=False),
 }
