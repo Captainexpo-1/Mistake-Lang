@@ -230,7 +230,6 @@ class RuntimeChannel(MLType):
     def send(self, value: MLType):
         self.values.append(value)
         self.sent_callback(value)
-        print(f"Sent {value} to {self.id}")
     
     def receive(self):
         self.receive_callback()
@@ -304,9 +303,7 @@ class RuntimeUDPServer(RuntimeServer):
         self.listen_task = gevent.spawn(listen)
         
         self.runtime.add_task(self.listen_task)
-        
-        print(f"UDP Listening on {self.hostname}:{self.port}")
-        
+                
         return RuntimeBoolean(True)
 
     def receive(self, buffer_size=1024):
@@ -356,7 +353,6 @@ class RuntimeUDPSocket(RuntimeSocket):
     def send(self, message: RuntimeString):
         if not self.socket:
             return RuntimeBoolean(False)
-        print(f"Sending {message} to {self.hostname}:{self.port}")
         value = message.value.encode()
         self.socket.send(value)
         return RuntimeBoolean(True)
@@ -403,31 +399,24 @@ class RuntimeTCPServer(RuntimeServer):
         self.listen_task = gevent.spawn(listen)
         self.runtime.add_task(self.listen_task)
         
-        print(f"TCP Listening on {self.hostname}:{self.port}")
         
         return RuntimeBoolean(True)
 
     def receive(self, buffer_size=1024):
-        print("Receiving...")
         if not self.socket:
             return RuntimeBoolean(False)
         
         client_socket, client_address = self.socket.accept()
-        print(f"New connection from {client_address}")
         
         new_sock = RuntimeTCPSocket(self.runtime)
         new_sock.set_socket(client_socket)
 
         if self.callback:
             self.callback_task = gevent.spawn(self.callback, new_sock)
-            print(f"Callback task started with {new_sock}")
             self.runtime.add_task(self.callback_task)
-        else:
-            print("No callback set")
         return RuntimeUnit()
 
     def set_callback(self, callback: callable):
-        print("Callback has been set")
         self.callback = callback
         return RuntimeUnit()
 
@@ -464,7 +453,6 @@ class RuntimeTCPSocket(RuntimeSocket):
             self.port = int(port.value)
             self.socket.connect((self.hostname, self.port))
         except Exception as e:
-            print(f"Error setting port: {e}")
             self.close()
 
     def set_socket(self, socket: socket.socket):
@@ -474,7 +462,6 @@ class RuntimeTCPSocket(RuntimeSocket):
         if not self.socket:
             return RuntimeBoolean(False)
         try:
-            print(f"Sending {message} to {self.hostname}:{self.port}")
             value = message.value.encode()
             self.socket.send(value)
             return RuntimeBoolean(True)

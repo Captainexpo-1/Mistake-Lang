@@ -255,9 +255,10 @@ class Interpreter:
                 self.run_all_tasks()
 
             except RuntimeError as e:
+                if self.unsafe_mode:
+                    raise e
                 print(f"Error at line {self.current_line}, {e}")
                 return 1
-            print(f"Result at line {self.current_line}: {result}")
             self.current_line += 1
             self.lines_executed += 1
             

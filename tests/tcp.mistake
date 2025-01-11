@@ -1,7 +1,6 @@
 variable $^&* is <=#=> unit end
 
 variable &&& is function <% returns open 
-
 	variable !*! is function _ returns open
 		<< <% string Hello, World! close end
 		?! open >> <% close end
@@ -11,6 +10,8 @@ variable &&& is function <% returns open
 	!*! unit end
 close close end
 
-==># $^&* 8080 end
-?! string Server is running on port 125215 close end
+variable #() is 8080 end
+
+==># $^&* #() end
+?! open + string Server is running on port:  close open ?? #() close close end
 ==>! $^&* &&& end
