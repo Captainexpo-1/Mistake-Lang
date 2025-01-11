@@ -28,8 +28,13 @@ class Interpreter:
         self.channels[self.channel_id] = RuntimeChannel(self.channel_id, cb_s, cb_r)
         return self.channels[self.channel_id]
     
-    def send_to_channel(self, chan: RuntimeChannel, value: MLType):
-        id = chan.id
+    def register_new_channel(self, channel: RuntimeChannel):
+        if channel.id in self.channels:
+            raise RuntimeError(f"Channel {channel.id} already exists")
+        self.channels[channel.id] = channel
+    
+    def send_to_channel(self, channel: RuntimeChannel, value: MLType):
+        id = channel.id
         if id not in self.channels:
             return RuntimeUnit()
         
@@ -38,8 +43,8 @@ class Interpreter:
         c.sent_callback(value)
         return RuntimeUnit()
     
-    def receive_from_channel(self, chan: RuntimeChannel):
-        id = chan.id
+    def receive_from_channel(self, channel: RuntimeChannel):
+        id = channel.id
 
         if id not in self.channels:
             return RuntimeUnit()

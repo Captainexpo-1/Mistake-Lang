@@ -8,6 +8,7 @@ import requests
 from mistake.utils import *
 import gevent
 import socket
+from mistake.runtime.stdlib.networking import *
 
 def fn_bang_qmark(arg: MLType, *_):
     print(arg)
@@ -136,9 +137,16 @@ std_funcs = {
             ),
     '[/]': BuiltinFunction(lambda arg0, *_: BuiltinFunction(lambda arg1, env, runtime: new_task_from_function_app(arg1, env, runtime, arg0.value), imp=True)),
     '<!>': BuiltinFunction(lambda arg, env, runtime: new_task_from_function_app(arg, env, runtime, 0), imp=False),
-    '</>': BuiltinFunction(lambda arg, env, runtime: arg.task_ref.kill(), imp=False),
+    '</>': BuiltinFunction(lambda arg, env, runtime: arg.kill(), imp=False),
 
     '=!=': BuiltinFunction(lambda arg, env, runtime: runtime.create_channel(), imp=True), # Create a channel
     '<<': BuiltinFunction(lambda arg, env, runtime: BuiltinFunction(lambda x, *_: runtime.send_to_channel(arg, x), imp=True)), # Send to channel
     '>>': BuiltinFunction(lambda arg, env, runtime: runtime.receive_from_channel(arg), imp=True), # Receive from channel
+
+    # NETWORKING
+    #'<=#=>': BuiltinFunction(lambda arg, env, runtime: create_TCP_server(arg, env, runtime), imp=True),
+    '<=?=>': BuiltinFunction(lambda arg, env, runtime: create_UDP_server(arg, env, runtime), imp=True),
+
+    '==>?': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.set_hostname(x1)), imp=True),
+    '==>!': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.set_callback(lambda s: runtime.visit_function_application(env, FunctionApplication(x1, String(s)))), imp=True)),
 }

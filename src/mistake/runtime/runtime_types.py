@@ -7,7 +7,7 @@ import time
 from mistake.utils import to_decimal_seconds
 from mistake.runtime import environment as rte
 import gevent
-
+import socket
 import re
 
 class MLType:
@@ -233,7 +233,90 @@ class RuntimeChannel(MLType):
 class RuntimeTask(MLType):
     def __init__(self, task_ref: gevent.Greenlet):
         self.task_ref = task_ref
-    
+        
+    def kill(self):
+        if self.task_ref:
+            self.task_ref.kill()
+            
     def to_string(self):
         return f"Task({self.task_ref})"
     
+    
+# NETWORKING
+# ADD NEW CLASSES HERE
+
+class RuntimeServer:
+    def set_callback(self, callback: callable):
+        raise NotImplementedError("Must implement set_callback method")
+
+class RuntimeSocket:
+    buffer_size = 1024
+    
+    def send(self, message: str):
+        raise NotImplementedError("Must implement send method")
+    
+    def close(self):
+        raise NotImplementedError("Must implement close method")
+    
+    def recieve(self):
+        raise NotImplementedError("Must implement recieve method")
+
+class RuntimeUDPServer(RuntimeServer):
+    def __init__(self, runtime):
+        self.runtime = runtime
+        self.hostname: str = None
+        self.port: int = None
+        self.socket: socket.socket = None
+        self.listen_task = None
+        self.callback: callable = None
+
+    def set_hostname(self, hostname):
+        
+        hostname, port = hostname.value.split(":")
+        
+        self.hostname = hostname
+        self.port = int(port)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket.bind((self.hostname, self.port))
+        
+        def listen():
+            while True:
+                try:
+                    self.receive()
+                except gevent._socketcommon.cancel_wait_ex as e:
+                    break
+                gevent.sleep(0.01)
+        self.listen_task = gevent.spawn(listen)
+        
+        self.runtime.add_task(self.listen_task)
+        
+        print(f"Listening on {self.hostname}:{self.port}")
+        
+        return RuntimeBoolean(True)
+
+    def receive(self, buffer_size=1024):
+        if not self.socket:
+            return RuntimeBoolean(False)
+        data = self.socket.recvfrom(buffer_size)[0]
+        message = data.decode()
+        if self.callback: 
+            self.callback(message)
+
+    def set_callback(self, callback: callable):
+        self.callback = callback
+        return RuntimeUnit()
+
+    def close(self):
+        if self.socket:
+            self.socket.close()
+            self.socket = None
+        if self.listen_task:
+            self.listen_task.kill()
+            self.listen_task = None
+        return RuntimeBoolean(True)
+    
+    def kill(self):
+        self.close()
+
+    def to_string(self):
+        return f"UDPServer(hostname={self.hostname}, port={self.port})"
