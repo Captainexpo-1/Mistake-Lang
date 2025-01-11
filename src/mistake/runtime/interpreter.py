@@ -30,17 +30,9 @@ class Interpreter:
                 task.start()
             self.tasks = [task for task in self.tasks if not task.ready()]
 
-    def execute_task(self, task: RuntimeAsyncFunctionTask):
-        if task.delay > 0:
-            #print(f"Delaying task for {task.delay} seconds...")
-            gevent.sleep(task.delay)
-            
-        new_env = Environment(task.env)
-        new_env.add_variable(task.func.param, task.param, Lifetime(LifetimeType.INFINITE, 0))
-        if isinstance(task.func.body[0], Token):
-            task.func.body = self.parser.parse(task.func.body)
-        
-        self.visit_block(task.func.body[0], new_env, create_env=False)
+    def add_task(self, task: gevent.Greenlet):
+        self.tasks.append(task)
+
 
     def visit_function_application(self, env: Environment, node: FunctionApplication, visit_arg=True):
         function = self.visit_node(node.called, env)
@@ -49,12 +41,6 @@ class Interpreter:
             
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
-        if isinstance(function, RuntimeAsyncFunctionTask):
-            function.param = param
-            task = gevent.spawn(self.execute_task, function)
-            self.tasks.append(task)
-            return RuntimeUnit()
- 
         if not isinstance(function, Function):
            if not isinstance(function, BuiltinFunction):
                raise RuntimeError(
@@ -63,11 +49,6 @@ class Interpreter:
            else: is_builtin = True
  
         if is_builtin:
-            if function.subtype == "asynccall":
-                task = gevent.spawn(self.execute_task, RuntimeAsyncFunctionTask(param, RuntimeUnit(), function.subdata.get("delay", 0), env))
-                self.tasks.append(task)
-                return RuntimeUnit()
-                
             result = function.func(param, env, self)
             return result
         new_env = Environment(env)

@@ -7,6 +7,7 @@ from mistake.parser.ast import *
 import requests
 from mistake.utils import *
 import gevent
+import socket
 
 def fn_bang_qmark(arg: MLType, *_):
     print(arg)
@@ -73,6 +74,20 @@ def get_group_from_match(arg: RuntimeMatchObject, *_):
 def get_string_from_match(arg: RuntimeMatchObject, *_):
     return RuntimeString(str(arg.match))
 
+def new_task_from_function_app(function: Function, env, runtime: 'interpreter.Interpreter', delay: float = 0.0):
+    def task():
+        gevent.sleep(from_decimal_seconds(delay))
+        runtime.visit_function_application(env, FunctionApplication(function, RuntimeUnit()), visit_arg=False)
+    runtime.add_task(gevent.spawn(task))
+    return RuntimeUnit()
+
+def new_task_from_func(func: callable, runtime: 'interpreter.Interpreter', delay: float = 0.0):
+    def task():
+        gevent.sleep(from_decimal_seconds(delay))
+        func()
+    runtime.add_task(gevent.spawn(task))
+    return RuntimeUnit()
+
 std_funcs = {
     '?!': BuiltinFunction(lambda arg, *_: print(arg)),
     '+': BuiltinFunction(lambda arg, *_: BuiltinFunction(lambda x, *_: get_type(arg.value + x.value), imp=False), imp=False),
@@ -116,8 +131,8 @@ std_funcs = {
                     imp=False
                 )
             ),
-    '[/]': BuiltinFunction(lambda arg0, env, runtime: BuiltinFunction(lambda arg1, env, runtime: RuntimeAsyncFunctionTask(arg1, RuntimeUnit(), arg0.value, env), imp=True)),
-    '<!>': BuiltinFunction(lambda *_: RuntimeUnit(), imp=False, subtype="asynccall"),
+    '[/]': BuiltinFunction(lambda arg0, *_: BuiltinFunction(lambda arg1, env, runtime: new_task_from_function_app(arg1, env, runtime, arg0.value), imp=True)),
+    '<!>': BuiltinFunction(lambda arg, env, runtime: new_task_from_function_app(arg, env, runtime, 0), imp=False),
     
 
     '=!=': BuiltinFunction(lambda arg, env, runtime: runtime.create_channel(), imp=True), # Create a channel

@@ -34,7 +34,7 @@ class RuntimeNumber(MLType):
         self.value = value
 
     def to_string(self):
-        return f"Number({self.value})"
+        return f"{self.value}"
 
 
 class RuntimeString(MLType):
@@ -42,7 +42,7 @@ class RuntimeString(MLType):
         self.value = value
 
     def to_string(self):
-        return f'String("{self.value}")'
+        return f'{self.value}'
 
 
 class RuntimeBoolean(MLType):
@@ -50,7 +50,7 @@ class RuntimeBoolean(MLType):
         self.value = value in ["true", "True", True]
 
     def to_string(self):
-        return f"Boolean({self.value})"
+        return "true" if self.value else "false"
 
     def __eq__(self, other):
         ov = other.value if isinstance(other, RuntimeBoolean) else other
@@ -220,16 +220,6 @@ class RuntimeMatchObject(MLType):
     def to_string(self):
         return f"MatchObject({self.match})"
 
-class RuntimeAsyncFunctionTask(MLType):
-    def __init__(self, func: Function, param: MLType, delay: float, env: "rte.Environment"):
-        self.func = func
-        self.param = param
-        self.env = env
-        self.delay = delay
-        
-    def to_string(self):
-        return f"AsyncTask({self.func}, {self.param})"
-    
 class RuntimeChannel(MLType):
     def __init__(self, id: int):
         self.id = id

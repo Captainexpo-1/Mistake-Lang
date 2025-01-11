@@ -22,7 +22,7 @@ def main():
     p_time = "--time" in args
     with open(fname) as f:
         if p_time: print("Read file:", time.process_time())
-        start = time.process_time()
+        start = time.time()
 
         os.chdir(os.path.dirname(os.path.abspath(fname)))
         code = f.read()
@@ -40,7 +40,6 @@ def main():
         if "-e" in args:
             runtime.execute(ast, filename=fname)
             
-        if p_time: print("Executed:", time.process_time())
-        if p_time: print(f"Total runtime: {time.process_time() - start}s")
+        if p_time: print(f"Total runtime: {time.time() - start} seconds")
 if __name__ == "__main__":
     main()
