@@ -190,7 +190,7 @@ class Interpreter:
             return RuntimeUnit()
         while len(self.channels[id]) == 0:
             #print(self.channels[id])
-            gevent.sleep(0.1)
+            gevent.sleep(0.01)
 
         return self.channels[id].pop(0)
     

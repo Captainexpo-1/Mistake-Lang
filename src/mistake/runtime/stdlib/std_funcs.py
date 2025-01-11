@@ -78,15 +78,17 @@ def new_task_from_function_app(function: Function, env, runtime: 'interpreter.In
     def task():
         gevent.sleep(from_decimal_seconds(delay))
         runtime.visit_function_application(env, FunctionApplication(function, RuntimeUnit()), visit_arg=False)
-    runtime.add_task(gevent.spawn(task))
-    return RuntimeUnit()
+    spawn = gevent.spawn(task)
+    runtime.add_task(spawn)
+    return RuntimeTask(spawn)
 
 def new_task_from_func(func: callable, runtime: 'interpreter.Interpreter', delay: float = 0.0):
     def task():
         gevent.sleep(from_decimal_seconds(delay))
         func()
-    runtime.add_task(gevent.spawn(task))
-    return RuntimeUnit()
+    spawn = gevent.spawn(task)
+    runtime.add_task(spawn)
+    return RuntimeTask(spawn)
 
 std_funcs = {
     '?!': BuiltinFunction(lambda arg, *_: print(arg)),
@@ -112,6 +114,7 @@ std_funcs = {
     '/?/': BuiltinFunction(create_regex_func, imp=False),
     '/>?/': BuiltinFunction(get_group_from_match, imp=False),
     '/>"/': BuiltinFunction(get_string_from_match, imp=False),
+    '??': BuiltinFunction(lambda arg, *_: RuntimeString(arg.to_string()), imp=False),
     
     # Lists
     '[!]':  BuiltinFunction(lambda arg, *_: RuntimeListType({1: arg} if not isinstance(arg, RuntimeUnit) else {}), imp=False),
@@ -133,7 +136,7 @@ std_funcs = {
             ),
     '[/]': BuiltinFunction(lambda arg0, *_: BuiltinFunction(lambda arg1, env, runtime: new_task_from_function_app(arg1, env, runtime, arg0.value), imp=True)),
     '<!>': BuiltinFunction(lambda arg, env, runtime: new_task_from_function_app(arg, env, runtime, 0), imp=False),
-    
+    '</>': BuiltinFunction(lambda arg, env, runtime: arg.task_ref.kill(), imp=False),
 
     '=!=': BuiltinFunction(lambda arg, env, runtime: runtime.create_channel(), imp=True), # Create a channel
     '<<': BuiltinFunction(lambda arg, env, runtime: BuiltinFunction(lambda x, *_: runtime.send_to_channel(arg, x), imp=True)), # Send to channel

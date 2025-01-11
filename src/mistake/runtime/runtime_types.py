@@ -221,8 +221,18 @@ class RuntimeMatchObject(MLType):
         return f"MatchObject({self.match})"
 
 class RuntimeChannel(MLType):
-    def __init__(self, id: int):
+    def __init__(self, id: int, sent_callback: callable = None, recieve_callback: callable = None):
         self.id = id
+        self.sent_callback: callable = sent_callback
+        self.recieve_callback: callable = recieve_callback
     def to_string(self):
         return f"Channel({self.id})"
+    
+    
+class RuntimeTask(MLType):
+    def __init__(self, task_ref: gevent.Greenlet):
+        self.task_ref = task_ref
+    
+    def to_string(self):
+        return f"Task({self.task_ref})"
     
