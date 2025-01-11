@@ -21,8 +21,36 @@ class Interpreter:
         self.files: dict[str, List[ASTNode]] = {}
         self.tasks: List[gevent.Greenlet] = []
         self.channel_id = 0
-        self.channels: dict[int, List[MLType]] = {}
+        self.channels: dict[int, RuntimeChannel] = {}
+        
+    def create_channel(self, cb_s=lambda *_: None, cb_r=lambda: None):
+        self.channel_id += 1
+        self.channels[self.channel_id] = RuntimeChannel(self.channel_id, cb_s, cb_r)
+        return self.channels[self.channel_id]
+    
+    def send_to_channel(self, chan: RuntimeChannel, value: MLType):
+        id = chan.id
+        if id not in self.channels:
+            return RuntimeUnit()
+        
+        c: RuntimeChannel = self.channels[id]
+        c.values.append(value)
+        c.sent_callback(value)
+        return RuntimeUnit()
+    
+    def receive_from_channel(self, chan: RuntimeChannel):
+        id = chan.id
 
+        if id not in self.channels:
+            return RuntimeUnit()
+        c = self.channels[id]
+        c.recieve_callback()
+
+        while len(c.values) == 0:
+            #print(self.channels[id])
+            gevent.sleep(0.01)
+        return c.values.pop(0)
+    
     def run_all_tasks(self):
         if self.tasks:
             # Run tasks asynchronously without blocking the main thread
@@ -170,30 +198,7 @@ class Interpreter:
                 return self.visit_node(case.expr, env)
         return self.visit_node(node.otherwise, env)
 
-    def create_channel(self):
-        self.channel_id += 1
-        self.channels[self.channel_id] = []
-        return RuntimeChannel(self.channel_id)
-    
-    def send_to_channel(self, chan: RuntimeChannel, value: MLType):
-        id = chan.id
-        if id not in self.channels:
-            return RuntimeUnit()
 
-        self.channels[id].append(value)
-        return RuntimeUnit()
-    
-    def receive_from_channel(self, chan: RuntimeChannel):
-        id = chan.id
-
-        if id not in self.channels:
-            return RuntimeUnit()
-        while len(self.channels[id]) == 0:
-            #print(self.channels[id])
-            gevent.sleep(0.01)
-
-        return self.channels[id].pop(0)
-    
     def visit_node(self, node: ASTNode, env: Environment, imperative=False):
         if isinstance(node, Unit):
             return RuntimeUnit()

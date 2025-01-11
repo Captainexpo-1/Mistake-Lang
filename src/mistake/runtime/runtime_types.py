@@ -221,10 +221,11 @@ class RuntimeMatchObject(MLType):
         return f"MatchObject({self.match})"
 
 class RuntimeChannel(MLType):
-    def __init__(self, id: int, sent_callback: callable = None, recieve_callback: callable = None):
+    def __init__(self, id: int, sent_callback: callable = lambda _: None, recieve_callback: callable = lambda: None):
         self.id = id
         self.sent_callback: callable = sent_callback
         self.recieve_callback: callable = recieve_callback
+        self.values: List[MLType] = []
     def to_string(self):
         return f"Channel({self.id})"
     
