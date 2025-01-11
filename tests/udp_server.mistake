@@ -1,0 +1,6 @@
+variable <()> is <=?=> unit end
+
+==>? <()> string 127.0.0.1:8080 close end
+==>! <()> function %1 returns open ?! %1 close close end
+
+[/] 3 function _ returns </> <()> close end

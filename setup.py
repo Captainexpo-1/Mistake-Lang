@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mistake-lang",
-    version="0.1.1",
+    version="0.1.3",
     author="Elliot",
     author_email="captainexpo@gmail.com",
     description="A Mistake",
