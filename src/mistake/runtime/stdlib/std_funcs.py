@@ -146,9 +146,12 @@ std_funcs = {
     # NETWORKING
     #'<=#=>': BuiltinFunction(lambda arg, env, runtime: create_TCP_server(arg, env, runtime), imp=True),
     '<=?=>': BuiltinFunction(lambda arg, env, runtime: create_UDP_server(arg, env, runtime), imp=True),
-
+    '<=#=>': BuiltinFunction(lambda arg, env, runtime: create_TCP_server(arg, env, runtime), imp=True),
+    
     '<=?=': BuiltinFunction(lambda arg, env, runtime: create_UDP_socket(arg, env, runtime), imp=True),
+    '<=#=': BuiltinFunction(lambda arg, env, runtime: create_TCP_socket(arg, env, runtime), imp=True),
 
+    '==>#': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.bind_port(x1), imp=True)),
     '==>?': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.set_hostname(x1)), imp=True),
-    '==>!': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.set_callback(lambda s: runtime.visit_function_application(env, FunctionApplication(x1, String(s)))), imp=True)),
+    '==>!': BuiltinFunction(lambda x0, *_: BuiltinFunction(lambda x1, env, runtime: x0.set_callback(lambda callback_arg: runtime.visit_function_application(env, FunctionApplication(x1, callback_arg), visit_arg=False)), imp=True)),
 }

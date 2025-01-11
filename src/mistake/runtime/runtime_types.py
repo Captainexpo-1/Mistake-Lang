@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from mistake.parser.ast import *
 from enum import Enum
 from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
@@ -224,7 +224,7 @@ class RuntimeChannel(MLType):
     def __init__(self, id: int, sent_callback: callable = lambda _: None, recieve_callback: callable = lambda: None):
         self.id = id
         self.sent_callback: callable = sent_callback
-        self.recieve_callback: callable = recieve_callback
+        self.receive_callback: callable = recieve_callback
         self.values: List[MLType] = []
     
     def send(self, value: MLType):
@@ -232,8 +232,8 @@ class RuntimeChannel(MLType):
         self.sent_callback(value)
         print(f"Sent {value} to {self.id}")
     
-    def get(self):
-        self.recieve_callback()
+    def receive(self):
+        self.receive_callback()
 
         while len(self.values) == 0:
             #print(self.channels[id])
@@ -305,7 +305,7 @@ class RuntimeUDPServer(RuntimeServer):
         
         self.runtime.add_task(self.listen_task)
         
-        print(f"Listening on {self.hostname}:{self.port}")
+        print(f"UDP Listening on {self.hostname}:{self.port}")
         
         return RuntimeBoolean(True)
 
@@ -315,7 +315,7 @@ class RuntimeUDPServer(RuntimeServer):
         data = self.socket.recvfrom(buffer_size)[0]
         message = data.decode()
         if self.callback: 
-            task = gevent.spawn(self.callback, message)
+            task = gevent.spawn(self.callback, RuntimeString(message))
             self.runtime.add_task(task)
             self.callback_task = task
 
@@ -345,22 +345,13 @@ class RuntimeUDPServer(RuntimeServer):
 class RuntimeUDPSocket(RuntimeSocket):
     def __init__(self, runtime):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.channel: RuntimeChannel = None
         self.runtime = runtime
         self.hostname = None
         self.port: int = None
     def set_hostname(self, hostname: str):
-    
-        
         self.hostname, self.port = hostname.value.split(":")
     
-
-    
         self.socket.connect((self.hostname, int(self.port)))
-        self.channel = self.runtime.create_channel()
-
-        self.channel.sent_callback = lambda message: self.send(message)
-        self.channel.recieve_callback = self.receive
         
     def send(self, message: RuntimeString):
         if not self.socket:
@@ -372,11 +363,145 @@ class RuntimeUDPSocket(RuntimeSocket):
     
     def close(self):
         self.socket.close()
-        self.runtime.close_channel(self.channel)
         return RuntimeBoolean(True)
+    
+    def kill(self):
+        self.close()
     
     def receive(self):
         return RuntimeUnit()
     
     def to_string(self):
         return f"UDPSocket(id={self.id})"
+    
+    
+class RuntimeTCPServer(RuntimeServer):
+    def __init__(self, runtime):
+        self.runtime = runtime
+        self.hostname: str = None
+        self.port: int = None
+        self.socket: socket.socket = None
+        self.listen_task = None
+        self.callback: callable = None
+        self.callback_task = None
+
+    def bind_port(self, port: RuntimeString):
+        self.hostname = "127.0.0.1"
+        self.port = int(port.value)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket.bind((self.hostname, self.port))
+        self.socket.listen(5)
+        
+        def listen():
+            while True:
+                try:
+                    self.receive()
+                except gevent._socketcommon.cancel_wait_ex as e:
+                    break
+                                
+        self.listen_task = gevent.spawn(listen)
+        self.runtime.add_task(self.listen_task)
+        
+        print(f"TCP Listening on {self.hostname}:{self.port}")
+        
+        return RuntimeBoolean(True)
+
+    def receive(self, buffer_size=1024):
+        print("Receiving...")
+        if not self.socket:
+            return RuntimeBoolean(False)
+        
+        client_socket, client_address = self.socket.accept()
+        print(f"New connection from {client_address}")
+        
+        new_sock = RuntimeTCPSocket(self.runtime)
+        new_sock.set_socket(client_socket)
+
+        if self.callback:
+            self.callback_task = gevent.spawn(self.callback, new_sock)
+            print(f"Callback task started with {new_sock}")
+            self.runtime.add_task(self.callback_task)
+        else:
+            print("No callback set")
+        return RuntimeUnit()
+
+    def set_callback(self, callback: callable):
+        print("Callback has been set")
+        self.callback = callback
+        return RuntimeUnit()
+
+    def close(self):
+        if self.socket:
+            self.socket.close()
+            self.socket = None
+        if self.listen_task:
+            self.listen_task.kill()
+            self.listen_task = None
+        if self.callback_task:
+            self.callback_task.kill()
+            self.callback_task = None
+        return RuntimeBoolean(True)
+    
+    def kill(self):
+        self.close()
+
+    def to_string(self):
+        return f"TCPServer(hostname={self.hostname}, port={self.port})"
+    
+    
+class RuntimeTCPSocket(RuntimeSocket):
+    def __init__(self, runtime):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.channel: Optional[RuntimeChannel] = None
+        self.runtime = runtime
+        self.hostname: Optional[str] = None
+        self.port: Optional[int] = None
+
+    def set_port(self, port: RuntimeString):
+        try:
+            self.hostname = socket.gethostname()
+            self.port = int(port.value)
+            self.socket.connect((self.hostname, self.port))
+        except Exception as e:
+            print(f"Error setting port: {e}")
+            self.close()
+
+    def set_socket(self, socket: socket.socket):
+        self.socket = socket
+
+    def send(self, message: RuntimeString):
+        if not self.socket:
+            return RuntimeBoolean(False)
+        try:
+            print(f"Sending {message} to {self.hostname}:{self.port}")
+            value = message.value.encode()
+            self.socket.send(value)
+            return RuntimeBoolean(True)
+        except Exception as e:
+            print(f"Error sending message: {e}")
+            return RuntimeBoolean(False)
+
+    def close(self):
+        try:
+            self.socket.close()
+            if self.channel:
+                self.runtime.close_channel(self.channel)
+            return RuntimeBoolean(True)
+        except Exception as e:
+            print(f"Error closing socket: {e}")
+            return RuntimeBoolean(False)
+
+    def kill(self):
+        self.close()
+
+    def receive(self):
+        try:
+            data = self.socket.recv(1024)
+            return RuntimeString(data.decode())
+        except Exception as e:
+            print(f"Error receiving data: {e}")
+            return RuntimeString("")
+
+    def to_string(self):
+        return f"TCPSocket(hostname={self.hostname}, port={self.port})"

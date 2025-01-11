@@ -84,7 +84,7 @@ class Lexer:
         while self.current_position < len(self.code) and self.code[self.current_position:self.current_position+5] != "close":
             self.current_position += 1
             
-        return html.unescape(self.code[start+1:self.current_position-1])
+        return html.unescape(self.code[start+1:self.current_position-1]).replace("<br>", "\n")
     
     def tokenize(self, code: str) -> List[Token]:
         self.code = code

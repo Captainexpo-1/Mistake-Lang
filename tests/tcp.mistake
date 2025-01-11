@@ -1,0 +1,16 @@
+variable $^&* is <=#=> unit end
+
+variable &&& is function <% returns open 
+
+	variable !*! is function _ returns open
+		<< <% string Hello, World! close end
+		?! open >> <% close end
+		!*! unit end
+	close close end
+	?! string Callback has run close end
+	!*! unit end
+close close end
+
+==># $^&* 8080 end
+?! string Server is running on port 125215 close end
+==>! $^&* &&& end

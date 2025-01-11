@@ -32,7 +32,7 @@ class Interpreter:
         return RuntimeUnit()
     
     def receive_from_channel(self, channel: RuntimeChannel):
-        return channel.get()
+        return channel.receive()
     
     def run_all_tasks(self):
         if self.tasks:
@@ -257,7 +257,7 @@ class Interpreter:
             except RuntimeError as e:
                 print(f"Error at line {self.current_line}, {e}")
                 return 1
-
+            print(f"Result at line {self.current_line}: {result}")
             self.current_line += 1
             self.lines_executed += 1
             
