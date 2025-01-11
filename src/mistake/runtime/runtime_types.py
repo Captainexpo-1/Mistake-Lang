@@ -226,6 +226,20 @@ class RuntimeChannel(MLType):
         self.sent_callback: callable = sent_callback
         self.recieve_callback: callable = recieve_callback
         self.values: List[MLType] = []
+    
+    def send(self, value: MLType):
+        self.values.append(value)
+        self.sent_callback(value)
+        print(f"Sent {value} to {self.id}")
+    
+    def get(self):
+        self.recieve_callback()
+
+        while len(self.values) == 0:
+            #print(self.channels[id])
+            gevent.sleep(0.01)
+        return self.values.pop(0)
+    
     def to_string(self):
         return f"Channel({self.id})"
     
@@ -258,7 +272,7 @@ class RuntimeSocket:
     def close(self):
         raise NotImplementedError("Must implement close method")
     
-    def recieve(self):
+    def receive(self):
         raise NotImplementedError("Must implement recieve method")
 
 class RuntimeUDPServer(RuntimeServer):
@@ -269,9 +283,10 @@ class RuntimeUDPServer(RuntimeServer):
         self.socket: socket.socket = None
         self.listen_task = None
         self.callback: callable = None
-
-    def set_hostname(self, hostname):
+        self.callback_task = None
         
+        
+    def set_hostname(self, hostname):
         hostname, port = hostname.value.split(":")
         
         self.hostname = hostname
@@ -300,7 +315,9 @@ class RuntimeUDPServer(RuntimeServer):
         data = self.socket.recvfrom(buffer_size)[0]
         message = data.decode()
         if self.callback: 
-            self.callback(message)
+            task = gevent.spawn(self.callback, message)
+            self.runtime.add_task(task)
+            self.callback_task = task
 
     def set_callback(self, callback: callable):
         self.callback = callback
@@ -313,6 +330,9 @@ class RuntimeUDPServer(RuntimeServer):
         if self.listen_task:
             self.listen_task.kill()
             self.listen_task = None
+        if self.callback_task:
+            self.callback_task.kill()
+            self.callback_task = None
         return RuntimeBoolean(True)
     
     def kill(self):
@@ -320,3 +340,43 @@ class RuntimeUDPServer(RuntimeServer):
 
     def to_string(self):
         return f"UDPServer(hostname={self.hostname}, port={self.port})"
+    
+    
+class RuntimeUDPSocket(RuntimeSocket):
+    def __init__(self, runtime):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.channel: RuntimeChannel = None
+        self.runtime = runtime
+        self.hostname = None
+        self.port: int = None
+    def set_hostname(self, hostname: str):
+    
+        
+        self.hostname, self.port = hostname.value.split(":")
+    
+
+    
+        self.socket.connect((self.hostname, int(self.port)))
+        self.channel = self.runtime.create_channel()
+
+        self.channel.sent_callback = lambda message: self.send(message)
+        self.channel.recieve_callback = self.receive
+        
+    def send(self, message: RuntimeString):
+        if not self.socket:
+            return RuntimeBoolean(False)
+        print(f"Sending {message} to {self.hostname}:{self.port}")
+        value = message.value.encode()
+        self.socket.send(value)
+        return RuntimeBoolean(True)
+    
+    def close(self):
+        self.socket.close()
+        self.runtime.close_channel(self.channel)
+        return RuntimeBoolean(True)
+    
+    def receive(self):
+        return RuntimeUnit()
+    
+    def to_string(self):
+        return f"UDPSocket(id={self.id})"

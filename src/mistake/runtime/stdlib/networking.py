@@ -42,3 +42,6 @@ import socket
 
 def create_UDP_server(arg, env, runtime):
     return RuntimeUDPServer(runtime)
+
+def create_UDP_socket(arg, env, runtime):
+    return RuntimeUDPSocket(runtime)

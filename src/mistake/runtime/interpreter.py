@@ -21,40 +21,18 @@ class Interpreter:
         self.files: dict[str, List[ASTNode]] = {}
         self.tasks: List[gevent.Greenlet] = []
         self.channel_id = 0
-        self.channels: dict[int, RuntimeChannel] = {}
         
     def create_channel(self, cb_s=lambda *_: None, cb_r=lambda: None):
         self.channel_id += 1
-        self.channels[self.channel_id] = RuntimeChannel(self.channel_id, cb_s, cb_r)
-        return self.channels[self.channel_id]
+        return RuntimeChannel(self.channel_id, cb_s, cb_r)
     
-    def register_new_channel(self, channel: RuntimeChannel):
-        if channel.id in self.channels:
-            raise RuntimeError(f"Channel {channel.id} already exists")
-        self.channels[channel.id] = channel
     
     def send_to_channel(self, channel: RuntimeChannel, value: MLType):
-        id = channel.id
-        if id not in self.channels:
-            return RuntimeUnit()
-        
-        c: RuntimeChannel = self.channels[id]
-        c.values.append(value)
-        c.sent_callback(value)
+        channel.send(value)
         return RuntimeUnit()
     
     def receive_from_channel(self, channel: RuntimeChannel):
-        id = channel.id
-
-        if id not in self.channels:
-            return RuntimeUnit()
-        c = self.channels[id]
-        c.recieve_callback()
-
-        while len(c.values) == 0:
-            #print(self.channels[id])
-            gevent.sleep(0.01)
-        return c.values.pop(0)
+        return channel.get()
     
     def run_all_tasks(self):
         if self.tasks:
