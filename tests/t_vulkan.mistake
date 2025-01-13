@@ -1,0 +1,48 @@
+variable [0] is [!] unit end
+[<] [0] 1 1 end
+[<] [0] 2 2 end
+[<] [0] 3 3 end
+
+variable [1] is [!] unit end
+[<] [1] 1 9 end
+[<] [1] 2 18 end
+[<] [1] 3 27 end
+
+?! [1] end
+
+variable 🔥() is function _ returns open 
+
+#version 460    
+layout(local_size_x = 1) in;
+
+layout(set = 0, binding = 0) buffer buf_in_a { uint in_a[]; };
+layout(set = 0, binding = 1) buffer buf_in_b { uint in_b[]; };
+layout(set = 0, binding = 2) buffer buf_out_a { uint out_a[]; };
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    out_a[idx] = in_a[idx] * in_b[idx];
+}
+
+close close end
+
+variable <#[0] is 🔥[!] 🔥+32 [0] end
+variable <#[1] is 🔥[!] 🔥+32 [1] end
+
+variable >[!] is [!] unit end
+[<] >[!] 1 0 end
+[<] >[!] 2 0 end
+[<] >[!] 3 0 end
+
+variable >#[] is 🔥[!] 🔥+32 >[!] end
+
+variable $$$ is 🔥🔥 end
+
+variable %%% is [!] unit end
+variable *** is [!] unit end
+[<] %%% 1 >#[] end
+
+[<] *** 1 <#[0] end
+[<] *** 2 <#[1] end
+
+?! open 🔥🔥() 🔥() $$$ *** %%% close end

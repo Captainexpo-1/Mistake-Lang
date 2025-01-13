@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 
 
 class TokenType(Enum):
@@ -17,17 +18,17 @@ class TokenType(Enum):
     KW_END = 16
     KW_RETURNS = 17
 
-    SYM_NEWLINE = 19
+    SYM_WHITESPACE = 19
     SYM_DURATION = 20
     KW_LIFETIME = 21
 
     KW_PUBLIC = 24
     KW_RANDOMIZE = 25
     KW_TYPE = 26
-    
+
     # TYPES
     TYPE_NUMBER = 27
-    TYPE_BOOLEAN = 29    
+    TYPE_BOOLEAN = 29
 
     # LITERALS
     KW_UNIT = 31
@@ -36,7 +37,7 @@ class TokenType(Enum):
     KW_FUNCTION = 10
     SYM_STRING = 18
     SYM_NUMBER = 13
-    
+
     KW_JUMP = 30
     KW_NEW = 32
     KW_CLASS = 33
@@ -49,24 +50,29 @@ class TokenType(Enum):
     KW_MEMBER = 40
     KW_THEN = 41
     KW_OF = 42
-    
+
     SYM_EOF = 100
-    
+
+
 opening_tokens = [
-    TokenType.KW_OPEN, 
-    TokenType.KW_CASES, 
-    TokenType.KW_CASE, 
+    TokenType.KW_OPEN,
+    TokenType.KW_CASES,
+    TokenType.KW_CASE,
     TokenType.KW_OTHERWISE,
-    TokenType.KW_RETURNS, 
+    TokenType.KW_RETURNS,
     TokenType.KW_HAS,
     TokenType.SYM_STRING,
 ]
 
+
 class Token:
-    def __init__(self, type: TokenType, value: any, line: int = 0):
+    def __init__(self, type: TokenType, value: Any, line: int = 0):
         self.value = value
         self.type = type
         self.line = line
-    
-    def __str__(self) -> str: return f"Token({self.type}: \"{self.value}\")"
-    def __repr__(self) -> str: return str(self)
+
+    def __str__(self) -> str:
+        return f'Token({self.type}: "{self.value}")'
+
+    def __repr__(self) -> str:
+        return str(self)

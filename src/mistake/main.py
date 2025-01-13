@@ -5,12 +5,14 @@ from mistake.parser.parser import Parser
 from mistake.runtime.interpreter import Interpreter
 import time
 
+
 def get_args() -> tuple[str, set]:
     if len(sys.argv) < 2:
         print("Usage: python main.py <file>")
         sys.exit(1)
 
     return sys.argv[1], set(sys.argv[2:])
+
 
 def main():
     fname, args = get_args()
@@ -32,14 +34,14 @@ def main():
         if p_time:
             print("Tokenized:", time.process_time())
 
-        if "-tokens" in args:
+        if "--tokens" in args:
             print(tokens)
 
         ast = parser.parse(tokens)
         if p_time:
             print("Parsed:", time.process_time())
 
-        if "-ast" in args:
+        if "--ast" in args:
             print(ast)
 
         if "--no-exe" not in args:
@@ -47,6 +49,7 @@ def main():
 
         if p_time:
             print(f"Total runtime: {time.time() - start} seconds")
-        
+
+
 if __name__ == "__main__":
     main()
