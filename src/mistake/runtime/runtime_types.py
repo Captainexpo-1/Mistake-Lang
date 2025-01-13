@@ -207,8 +207,8 @@ class RuntimeMutableBox(MLType):
 
 
 class RuntimeListType(MLType):
-    def __init__(self):
-        self.list = {}
+    def __init__(self, inp: List[MLType] = []):
+        self.list = {i + 1: inp[i] for i in range(len(inp))}
 
     def get(self, idx: int):
         if idx < 1 or int(idx) != idx:

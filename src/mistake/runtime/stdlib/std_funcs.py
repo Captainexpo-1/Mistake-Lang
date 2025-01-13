@@ -150,11 +150,11 @@ def actually_run_vulkan_shader(
 
     def on_finish(result: List[List]):
         for new, cur in zip(result, out_buffs):
-            cur.data = {i + 1: get_type(j) for i, j in enumerate(new)}
+            cur.data = [i for i in new]
             
     kompute(shader_code, in_buffs, out_buffs, device, on_finish)
 
-    return RuntimeUnit()
+    return RuntimeUnit()    
 
 
 def run_vulkan_shader(shader_func: Function, *_):
@@ -334,5 +334,6 @@ std_funcs = {
     "🔥+32": np.uint32,
     "🔥[!]": BuiltinFunction(lambda *args: new_vulkan_buffer(*args)),
     "🔥🔥": RuntimeVulkanDevice(),
-    '🔥🔥()': BuiltinFunction(lambda *args: run_vulkan_shader(*args))
+    '🔥🔥()': BuiltinFunction(lambda *args: run_vulkan_shader(*args)),
+    '🔥[<]': BuiltinFunction(lambda buffer, *_: RuntimeListType([(get_type(i) if not isinstance(i, MLType) else i) for i in buffer.data]))
 }

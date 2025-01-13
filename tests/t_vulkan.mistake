@@ -46,3 +46,9 @@ variable *** is [!] unit end
 [<] *** 2 <#[1] end
 
 ?! open 🔥🔥() 🔥() $$$ *** %%% close end
+
+[/] 1 function _ returns open 
+?! open 🔥[<] <#[0] close end
+?! open 🔥[<] <#[1] close end
+?! open 🔥[<] >#[] close  
+close close end
