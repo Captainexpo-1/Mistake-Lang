@@ -11,3 +11,4 @@ def to_decimal_seconds(seconds: float):
 
 def from_decimal_seconds(seconds: float):
     return seconds / 0.864
+

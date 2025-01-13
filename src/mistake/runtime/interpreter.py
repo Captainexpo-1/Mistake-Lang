@@ -56,7 +56,7 @@ class Interpreter:
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
         if not isinstance(function, Function):
-            if not isinstance(function, BuiltinFunction):
+            if not isinstance(function, BuiltinFunction) and not isinstance(function, MLCallable):  
                 raise RuntimeError(
                     f"Called {node.called} is not a function, but a {type(function)}"
                 )
@@ -64,7 +64,7 @@ class Interpreter:
                 is_builtin = True
 
         if is_builtin:
-            result = function.func(param, env, self)
+            result = function(param, env, self)
             return result
         new_env = Environment(env)
 

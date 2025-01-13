@@ -9,11 +9,7 @@ from mistake.runtime.stdlib.networking import *
 from mistake.runtime.stdlib.vulkan_api import *
 from typing import List
 from copy import deepcopy
-
-
-def fn_bang_qmark(arg: MLType, *_):
-    print(arg)
-
+from mistake.runtime.stdlib.airtable_api import *
 
 def get_type(val: Any):
     if isinstance(val, bool):
@@ -175,6 +171,7 @@ def run_vulkan_shader(shader_func: Function, *_):
     )
 
 
+
 std_funcs = {
     "?!": BuiltinFunction(lambda arg, *_: print(arg)),
     "+": BuiltinFunction(
@@ -328,6 +325,12 @@ std_funcs = {
         )
     ),
     ">|<": BuiltinFunction(lambda arg, *_: arg.close(), imp=True),
+    
+    # DICTIONARIES
+    '{+}': BuiltinFunction(lambda *_: RuntimeDictType(), imp=False),
+    '>{}': BuiltinFunction(lambda d, *_: BuiltinFunction(lambda key, *_: BuiltinFunction(lambda value, *_: d.set(key, value))), imp=False),
+    '<{}': BuiltinFunction(lambda d, *_: BuiltinFunction(lambda key, *_: d.get(key), imp=False)),
+    
     # MISC HELPERS
     '>"<': BuiltinFunction(lambda arg, *_: RuntimeString(arg.value.strip()), imp=False),
     # VULKAN
@@ -335,5 +338,13 @@ std_funcs = {
     "🔥[!]": BuiltinFunction(lambda *args: new_vulkan_buffer(*args)),
     "🔥🔥": RuntimeVulkanDevice(),
     '🔥🔥()': BuiltinFunction(lambda *args: run_vulkan_shader(*args)),
-    '🔥[<]': BuiltinFunction(lambda buffer, *_: RuntimeListType([(get_type(i) if not isinstance(i, MLType) else i) for i in buffer.data]))
+    '🔥[<]': BuiltinFunction(lambda buffer, *_: RuntimeListType([(get_type(i) if not isinstance(i, MLType) else i) for i in buffer.data])),
+    
+    # AIRTABLE
+    '{>!<}': BuiltinFunction(lambda arg, *_: create_airtable_api_instance(arg)),
+    '{!}': BuiltinFunction(lambda arg, *_: create_base(arg)),
+    '{?}': BuiltinFunction(lambda table, *_: list_table_records(table)),
+    '{>}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda id, *_: get_record(table, id))),
+    '{<}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record, *_: create_record(table, record))),
+    '{:': BuiltinFunction(lambda fields, *_: new_record(de_runtime_dictify(fields))),
 }

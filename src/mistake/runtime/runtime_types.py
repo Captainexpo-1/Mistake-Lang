@@ -11,7 +11,8 @@ import socket
 import re
 import kp
 import numpy as np
-
+import pyairtable as airtable
+import mistake.runtime.stdlib.airtable_api as airtb
 
 class MLType:
     def to_string(self):
@@ -23,7 +24,10 @@ class MLType:
     def __repr__(self):
         return self.to_string()
 
-
+class MLCallable(MLType):
+    def __call__(self, arg: MLType, env: 'rte.Environment', runtime) -> MLType:
+        raise NotImplementedError("Callable must implement __call__ method")
+    
 class RuntimeUnit(MLType):
     def __init__(self, _=None):
         pass
@@ -134,6 +138,9 @@ class BuiltinFunction(MLType):
         self.subtype = subtype
         self.subdata = {}
 
+    def __call__(self, *args):
+        return self.func(*args)
+
     def to_string(self):
         return f"BuiltinFunction({self.func}, impure={self.impure})"
 
@@ -233,6 +240,66 @@ class RuntimeListType(MLType):
     def to_string(self):
         return f"List({self.list}, {id(self)})"
 
+def runtime_dictify(d: dict):
+    def convert_type(val: Any):
+        if isinstance(val, dict):
+            return runtime_dictify(val)
+        elif isinstance(val, list):
+            return RuntimeListType([convert_type(v) for v in val])
+        elif isinstance(val, str):
+            return RuntimeString(val)
+        elif isinstance(val, int) or isinstance(val, float):
+            return RuntimeNumber(val)
+        elif isinstance(val, bool):
+            return RuntimeBoolean(val)
+        else:
+            return val
+    
+    for k, v in d.items():
+        d[convert_type(k)] = convert_type(v)
+
+    return d
+
+
+
+class RuntimeDictType(MLType):
+    def __init__(self, inp: dict = {}):
+        self.dict = {k: inp[k] for k in inp}
+
+    def get(self, key: str):
+        return self.dict.get(key, RuntimeUnit())
+
+    def set(self, key: str, value: MLType):
+        self.dict[key] = value
+        return RuntimeUnit()
+
+    def as_regular_dict(self):
+        return de_runtime_dictify(self)
+
+    def to_string(self):
+        return f"Dict({self.dict}, {id(self)})"
+
+def de_runtime_dictify(d: RuntimeDictType):
+    def convert_type(val: MLType) -> Any:
+        if isinstance(val, RuntimeDictType):
+            return de_runtime_dictify(val)
+        elif isinstance(val, RuntimeListType):
+            return [convert_type(v) for v in val.continuous()]
+        elif isinstance(val, RuntimeString):
+            return val.value
+        elif isinstance(val, RuntimeNumber):
+            return val.value
+        elif isinstance(val, RuntimeBoolean):
+            return val.value
+        else:
+            return val
+    
+    new_d = {}
+    
+    for k, v in d.dict.items():
+        new_d[convert_type(k)] = convert_type(v)
+    
+    return new_d
 
 class RuntimeMatchObject(MLType):
     def __init__(self, match: re.Match):
@@ -557,3 +624,38 @@ class RuntimeVulkanDevice(MLType):
 
     def to_string(self):
         return "VulkanDevice()"
+
+
+# AIRTABLE
+
+
+class RuntimeAirtableBase(MLCallable):
+    def __init__(self, base):
+        self.base: airtable.Base = base
+
+    def __call__(self, table_name: RuntimeString, env: 'rte.Environment', runtime) -> MLType:
+        # get table instance
+        return airtb.create_table(self, table_name.value)
+    
+    def to_string(self):
+        return f"AirtableBase({self.base.name}, {self.base.id})"
+    
+class RuntimeAirtableTable(MLType):
+    def __init__(self, table: airtable.Table):
+        self.table: airtable.Table = table
+        
+    def to_string(self):
+        return f"AirtableTable({self.table.id}, {self.table.base.id})"
+
+
+class RuntimeAirtableRecord(MLType):
+    def __init__(self, record: dict):
+        self.id = record["id"]
+        self.creation_time = record["createdTime"]
+        self.fields = record["fields"]
+    
+    def to_record_dict(self) -> dict:
+        return de_runtime_dictify(RuntimeDictType(self.fields))
+    
+    def to_string(self):
+        return f"AirtableRecord({self.id}, {self.creation_time}, {self.fields})"
