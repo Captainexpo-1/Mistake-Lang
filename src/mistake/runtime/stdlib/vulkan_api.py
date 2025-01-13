@@ -42,13 +42,10 @@ def kompute(
     # 1. Create Kompute Manager with default settings (device 0, first queue and no extensions)
     mgr = manager.manager()
 
-    print("IN:", raw_in)
-    print("OUT:",raw_out)
 
     # 2. Create and initialise Kompute Tensors through manager
     #print(shader)
     in_tensors = [mgr.tensor_t(np.array([i.value for i in buf.data], dtype=buf.dtype)) for buf in raw_in]
-    print([i.data() for i in in_tensors])
     out_tensors = [
         mgr.tensor_t(np.array([i.value for i in buf.data], dtype=buf.dtype)) for buf in raw_out
     ]
@@ -75,9 +72,6 @@ def kompute(
     sq = mgr.sequence()
     sq.eval_async(kp.OpTensorSyncLocal(params))
     sq.eval_await()
-
-    print([i.data() for i in in_tensors])
-    print([i.data() for i in out_tensors])
 
     out = [i.data().tolist() for i in out_tensors]
 

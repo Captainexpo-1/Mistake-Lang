@@ -149,7 +149,6 @@ def actually_run_vulkan_shader(
     out_buffs: List[RuntimeVulkanBuffer] = out_buffers.continuous()
 
     def on_finish(result: List[List]):
-        print("FINISHED", result)
         for new, cur in zip(result, out_buffs):
             cur.data = {i + 1: get_type(j) for i, j in enumerate(new)}
             
