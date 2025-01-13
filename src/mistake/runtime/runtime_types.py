@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Any
 from mistake.parser.ast import *
 from enum import Enum
 from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
@@ -9,6 +9,9 @@ from mistake.runtime import environment as rte
 import gevent
 import socket
 import re
+import kp
+import numpy as np
+
 
 class MLType:
     def to_string(self):
@@ -38,19 +41,19 @@ class RuntimeNumber(MLType):
 
 
 class RuntimeString(MLType):
-    def __init__(self, value):   
+    def __init__(self, value):
         self._value: str = str(value)
-    
+
     @property
     def value(self):
         return self._value
-    
+
     @value.setter
     def value(self, new_value):
         self._value = str(new_value)
-    
+
     def to_string(self):
-        return f'{self.value}'
+        return f"{self.value}"
 
 
 class RuntimeBoolean(MLType):
@@ -66,10 +69,13 @@ class RuntimeBoolean(MLType):
 
 
 class Function(MLType):
-    def __init__(self, parameter: str, body: List[ASTNode], impure: bool = False):
-        self.param = parameter
-        self.body = body
-        self.impure = impure
+    def __init__(
+        self, parameter: str, body: List[ASTNode], impure: bool = False, raw_body=""
+    ):
+        self.param: str = parameter
+        self.body: List[ASTNode] = body
+        self.impure: bool = impure
+        self.raw_body: str = raw_body
 
     def to_string(self):
         return (
@@ -84,7 +90,6 @@ class ClassType(MLType):
 
     def to_string(self):
         return f"Class(fields={self.members}, public_fields={self.public_members})"
-
 
 
 class ClassInstance(MLType):
@@ -103,6 +108,7 @@ class ClassInstance(MLType):
     def to_string(self):
         return f"InstanceOf({self.class_type.name}, fields={self.members})"
 
+
 class ClassMemberReference(MLType):
     def __init__(self, instance: ClassInstance, member_name: str):
         self.instance = instance
@@ -119,6 +125,7 @@ class ClassMemberReference(MLType):
         # Update the instance's member
         self.instance.members[self.member_name] = value
         return RuntimeUnit()
+
 
 class BuiltinFunction(MLType):
     def __init__(self, func: callable, imp=True, subtype=None):
@@ -185,102 +192,118 @@ class Lifetime(MLType):
                         "Line number must be provided for line lifetime"
                     )
                 return line - self.start >= self.value
-    
+
+
 class RuntimeMutableBox(MLType):
-    def __init__(self, value: any):   
+    def __init__(self, value: Any):
         self.value = value
-        
+
     def to_string(self):
         return f"MutableBox({self.value})"
-    
+
     def write(self, value):
         self.value = value
         return RuntimeUnit()
-    
+
+
 class RuntimeListType(MLType):
-    def __init__(self, list: dict[int, MLType]):
-        self.list = list
-    
+    def __init__(self):
+        self.list = {}
+
     def get(self, idx: int):
         if idx < 1 or int(idx) != idx:
             raise IndexError("Index must be an integer greater than 0")
         return self.list.get(idx, RuntimeUnit())
-    
+
+    def continuous(self) -> List[MLType]:
+        return [self.list.get(i, RuntimeUnit()) for i in range(1, len(self.list) + 1)]
+
     def length(self):
         i = 0
-        while (i+1) in self.list:
+        while (i + 1) in self.list:
             i += 1
         return RuntimeNumber(i)
-    
+
     def set(self, idx: int, value: MLType):
         if idx < 1 or int(idx) != idx:
             raise IndexError("Index must be an integer greater than 0")
         self.list[idx] = value
         return RuntimeUnit()
-    
+
     def to_string(self):
-        return f"List({self.list})"
-    
+        return f"List({self.list}, {id(self)})"
+
+
 class RuntimeMatchObject(MLType):
     def __init__(self, match: re.Match):
         self.match = match
-    
+
     def to_string(self):
         return f"MatchObject({self.match})"
 
+
 class RuntimeChannel(MLType):
-    def __init__(self, id: int, sent_callback: callable = lambda _: None, recieve_callback: callable = lambda: None):
+    def __init__(
+        self,
+        id: int,
+        sent_callback: callable = lambda _: None,
+        recieve_callback: callable = lambda: None,
+    ):
         self.id = id
         self.sent_callback: callable = sent_callback
         self.receive_callback: callable = recieve_callback
         self.values: List[MLType] = []
-    
+
     def send(self, value: MLType):
         self.values.append(value)
         self.sent_callback(value)
-    
+
     def receive(self):
         self.receive_callback()
 
         while len(self.values) == 0:
-            #print(self.channels[id])
+            # print(self.channels[id])
             gevent.sleep(0.01)
         return self.values.pop(0)
-    
+
     def to_string(self):
         return f"Channel({self.id})"
-    
-    
+
+
 class RuntimeTask(MLType):
     def __init__(self, task_ref: gevent.Greenlet):
         self.task_ref = task_ref
         self.start_time = time.time()
+
     def kill(self):
         if self.task_ref:
             self.task_ref.kill()
-            
+
     def to_string(self):
         return f"Task({self.task_ref})"
-    
-    
+
+
 # NETWORKING
 # ADD NEW CLASSES HERE
+
 
 class RuntimeServer:
     def set_callback(self, callback: callable):
         raise NotImplementedError("Must implement set_callback method")
 
+
 class RuntimeSocket:
     buffer_size = 1024
-    
+
     def send(self, message: str):
         raise NotImplementedError("Must implement send method")
-    
+
     def close(self):
         raise NotImplementedError("Must implement close method")
-    
+
     def receive(self):
         raise NotImplementedError("Must implement recieve method")
+
 
 class RuntimeUDPServer(RuntimeServer):
     def __init__(self, runtime):
@@ -291,27 +314,27 @@ class RuntimeUDPServer(RuntimeServer):
         self.listen_task = None
         self.callback: callable = None
         self.callback_task = None
-        
-        
+
     def set_hostname(self, hostname):
         hostname, port = hostname.value.split(":")
-        
+
         self.hostname = hostname
         self.port = int(port)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.hostname, self.port))
-        
+
         def listen():
             while True:
                 try:
                     self.receive()
-                except gevent._socketcommon.cancel_wait_ex as e:
+                except gevent._socketcommon.cancel_wait_ex:
                     break
                 gevent.sleep(0.01)
+
         self.listen_task = gevent.spawn(listen)
-        
+
         self.runtime.add_task(self.listen_task)
-                
+
         return RuntimeBoolean(True)
 
     def receive(self, buffer_size=1024):
@@ -319,7 +342,7 @@ class RuntimeUDPServer(RuntimeServer):
             return RuntimeBoolean(False)
         data = self.socket.recvfrom(buffer_size)[0]
         message = data.decode()
-        if self.callback: 
+        if self.callback:
             task = gevent.spawn(self.callback, RuntimeString(message))
             self.runtime.add_task(task)
             self.callback_task = task
@@ -339,46 +362,47 @@ class RuntimeUDPServer(RuntimeServer):
             self.callback_task.kill()
             self.callback_task = None
         return RuntimeBoolean(True)
-    
+
     def kill(self):
         self.close()
 
     def to_string(self):
         return f"UDPServer(hostname={self.hostname}, port={self.port})"
-    
-    
+
+
 class RuntimeUDPSocket(RuntimeSocket):
     def __init__(self, runtime):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.runtime = runtime
         self.hostname = None
         self.port: int = None
+
     def set_hostname(self, hostname: str):
         self.hostname, self.port = hostname.value.split(":")
-    
+
         self.socket.connect((self.hostname, int(self.port)))
-        
+
     def send(self, message: RuntimeString):
         if not self.socket:
             return RuntimeBoolean(False)
         value = message.value.encode()
         self.socket.send(value)
         return RuntimeBoolean(True)
-    
+
     def close(self):
         self.socket.close()
         return RuntimeBoolean(True)
-    
+
     def kill(self):
         self.close()
-    
+
     def receive(self):
         return RuntimeUnit()
-    
+
     def to_string(self):
-        return f"UDPSocket(id={self.id})"
-    
-    
+        return f"UDPSocket(id={self.socket.fileno()})"
+
+
 class RuntimeTCPServer(RuntimeServer):
     def __init__(self, runtime):
         self.runtime = runtime
@@ -396,26 +420,25 @@ class RuntimeTCPServer(RuntimeServer):
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.hostname, self.port))
         self.socket.listen(5)
-        
+
         def listen():
             while True:
                 try:
                     self.receive()
-                except gevent._socketcommon.cancel_wait_ex as e:
+                except gevent._socketcommon.cancel_wait_ex:
                     break
-                                
+
         self.listen_task = gevent.spawn(listen)
         self.runtime.add_task(self.listen_task)
-        
-        
+
         return RuntimeBoolean(True)
 
     def receive(self, buffer_size=1024):
         if not self.socket:
             return RuntimeBoolean(False)
-        
+
         client_socket, client_address = self.socket.accept()
-        
+
         new_sock = RuntimeTCPSocket(self.runtime)
         new_sock.set_socket(client_socket)
 
@@ -439,14 +462,14 @@ class RuntimeTCPServer(RuntimeServer):
             self.callback_task.kill()
             self.callback_task = None
         return RuntimeBoolean(True)
-    
+
     def kill(self):
         self.close()
 
     def to_string(self):
         return f"TCPServer(hostname={self.hostname}, port={self.port})"
-    
-    
+
+
 class RuntimeTCPSocket(RuntimeSocket):
     def __init__(self, runtime):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -457,13 +480,14 @@ class RuntimeTCPSocket(RuntimeSocket):
         self.closed = False
 
     def set_port(self, port: RuntimeString):
-        if self.closed: return RuntimeBoolean(False)
+        if self.closed:
+            return RuntimeBoolean(False)
         try:
             self.hostname = socket.gethostname()
             self.port = int(port.value)
             self.socket.connect((self.hostname, self.port))
             return RuntimeBoolean(True)
-        except Exception as e:
+        except Exception:
             self.close()
             return RuntimeBoolean(False)
 
@@ -472,7 +496,8 @@ class RuntimeTCPSocket(RuntimeSocket):
         self.closed = False
 
     def send(self, message: RuntimeString):
-        if self.closed: return RuntimeBoolean(False)
+        if self.closed:
+            return RuntimeBoolean(False)
 
         if not self.socket:
             return RuntimeBoolean(False)
@@ -485,7 +510,8 @@ class RuntimeTCPSocket(RuntimeSocket):
             return RuntimeBoolean(False)
 
     def close(self):
-        if self.closed: return RuntimeBoolean(False)
+        if self.closed:
+            return RuntimeBoolean(False)
         try:
             self.socket.close()
             if self.channel:
@@ -500,7 +526,8 @@ class RuntimeTCPSocket(RuntimeSocket):
         self.close()
 
     def receive(self):
-        if self.closed: return RuntimeUnit()
+        if self.closed:
+            return RuntimeUnit()
         try:
             data = self.socket.recv(1024)
             return RuntimeString(data.decode())
@@ -510,3 +537,23 @@ class RuntimeTCPSocket(RuntimeSocket):
 
     def to_string(self):
         return f"TCPSocket(hostname={self.hostname}, port={self.port})"
+
+
+class RuntimeVulkanBuffer(MLType):
+    def __init__(self, data: list, dtype: np.dtype):
+        self.data = data
+        self.dtype = dtype
+
+    def to_string(self):
+        return f"VulkanBuffer({self.data}, {repr(self.dtype)})"
+
+
+class RuntimeVulkanDevice(MLType):
+    def __init__(self):
+        pass
+
+    def manager(self):
+        return kp.Manager()
+
+    def to_string(self):
+        return "VulkanDevice()"

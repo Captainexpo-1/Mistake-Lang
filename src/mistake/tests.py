@@ -52,7 +52,7 @@ def test_parser():
     )
     do_test(
         """
-            open 
+            open
                 variable $1 is 1 end
                 $1
             close end""",

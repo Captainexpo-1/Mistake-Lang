@@ -37,15 +37,23 @@ class Parser:
         return nodes
 
     def eat(self, token_type: TokenType):
+        start = self.position
         if self.current_token.type == token_type:
-            self.position += 1
-            if self.position < len(self.tokens):
-                self.current_token = self.tokens[self.position]
-            return self.tokens[self.position - 1]
+            self.advance()
+            return self.tokens[start]
         else:
             raise UnexpectedTokenError(
                 f"Unexpected token {self.current_token} at position {self.position}, expected {token_type}"
             )
+
+    def advance(self, allow_ws=False):
+        self.position += 1
+        while (
+            self.tokens[self.position].type == TokenType.SYM_WHITESPACE and not allow_ws
+        ):
+            self.position += 1
+        if self.position < len(self.tokens):
+            self.current_token = self.tokens[self.position]
 
     def peek_next_is(self, token_type: TokenType):
         return self.tokens[self.position + 1].type == token_type
@@ -65,11 +73,6 @@ class Parser:
                 raise e
         self.eat(TokenType.KW_END)
         return val
-
-    def advance(self):
-        self.position += 1
-        if self.position < len(self.tokens):
-            self.current_token = self.tokens[self.position]
 
     def parse_single_expr(self, atom: ASTNode, allow_function_application=True):
         if (
@@ -178,7 +181,7 @@ class Parser:
                 break
 
             body.append(self.current_token)
-            self.advance()
+            self.advance(allow_ws=True)
 
         if body[0].type != TokenType.KW_OPEN:
             body = (
@@ -233,7 +236,9 @@ class Parser:
         self.eat(TokenType.KW_RETURNS)
         body = self.get_unparsed_body()
         self.eat(TokenType.KW_CLOSE)
-        return FunctionDeclaration(parameters, body, impure)
+        return FunctionDeclaration(
+            parameters, body, impure, raw_body="".join(i.value for i in body)
+        )
 
     def parse_id_expression(self, allow_function_application=True):
         if (

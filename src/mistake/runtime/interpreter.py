@@ -1,16 +1,20 @@
 import time
+
 import gevent
-from gevent import monkey; monkey.patch_all()
-from mistake.parser.ast import *
-from mistake.parser.parser import Parser
+from gevent import monkey
+
+monkey.patch_all()
 from typing import List
 
 from mistake import runner
+from mistake.parser.ast import *
+from mistake.parser.parser import Parser
 from mistake.runtime.environment import Environment
 from mistake.runtime.errors.runtime_errors import RuntimeError
 from mistake.runtime.runtime_types import *  # noqa: F403
 from mistake.tokenizer.token import Token
 from mistake.utils import to_decimal_seconds
+
 
 class Interpreter:
     def __init__(self, unsafe_mode=False):
@@ -21,19 +25,18 @@ class Interpreter:
         self.files: dict[str, List[ASTNode]] = {}
         self.tasks: List[gevent.Greenlet] = []
         self.channel_id = 0
-        
+
     def create_channel(self, cb_s=lambda *_: None, cb_r=lambda: None):
         self.channel_id += 1
         return RuntimeChannel(self.channel_id, cb_s, cb_r)
-    
-    
+
     def send_to_channel(self, channel: RuntimeChannel, value: MLType):
         channel.send(value)
         return RuntimeUnit()
-    
+
     def receive_from_channel(self, channel: RuntimeChannel):
         return channel.receive()
-    
+
     def run_all_tasks(self):
         if self.tasks:
             # Run tasks asynchronously without blocking the main thread
@@ -44,32 +47,31 @@ class Interpreter:
     def add_task(self, task: gevent.Greenlet):
         self.tasks.append(task)
 
-
-    def visit_function_application(self, env: Environment, node: FunctionApplication, visit_arg=True):
+    def visit_function_application(
+        self, env: Environment, node: FunctionApplication, visit_arg=True
+    ):
         function = self.visit_node(node.called, env)
         is_builtin = False
 
-            
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
         if not isinstance(function, Function):
-           if not isinstance(function, BuiltinFunction):
-               raise RuntimeError(
-                   f"Called {node.called} is not a function, but a {type(function)}"
-               )
-           else: is_builtin = True
- 
+            if not isinstance(function, BuiltinFunction):
+                raise RuntimeError(
+                    f"Called {node.called} is not a function, but a {type(function)}"
+                )
+            else:
+                is_builtin = True
+
         if is_builtin:
             result = function.func(param, env, self)
             return result
         new_env = Environment(env)
-        
+
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
         if isinstance(function.body[0], Token):
             function.body = self.parser.parse(function.body)
-        
-        
-        
+
         return self.visit_block(function.body[0], new_env, create_env=False)
 
     def visit_function_declaration(self, node: FunctionDeclaration, env: Environment):
@@ -108,7 +110,7 @@ class Interpreter:
                     lambda: Lifetime(
                         LifetimeType.DECIMAL_SECONDS,
                         int(lifetime[:-1]),
-                        to_decimal_seconds(time.process_time())
+                        to_decimal_seconds(time.process_time()),
                     ),
                 ]["luts".find(lifetime[-1])]
                 if lifetime[-1] in "luts"
@@ -180,7 +182,6 @@ class Interpreter:
             if v == True:
                 return self.visit_node(case.expr, env)
         return self.visit_node(node.otherwise, env)
-
 
     def visit_node(self, node: ASTNode, env: Environment, imperative=False):
         if isinstance(node, Unit):
@@ -261,5 +262,5 @@ class Interpreter:
                 return 1
             self.current_line += 1
             self.lines_executed += 1
-            
+
         gevent.joinall(self.tasks)
