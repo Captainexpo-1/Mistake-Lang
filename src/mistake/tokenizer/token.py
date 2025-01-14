@@ -50,7 +50,10 @@ class TokenType(Enum):
     KW_MEMBER = 40
     KW_THEN = 41
     KW_OF = 42
-
+    KW_DO = 43
+    KW_USE = 44
+    KW_FROM = 45
+    KW_WITH = 46
     SYM_EOF = 100
 
 

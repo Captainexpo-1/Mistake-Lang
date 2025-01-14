@@ -24,7 +24,7 @@ class VariableAccess(ASTNode):
 
 
 class FunctionApplication(ASTNode):
-    def __init__(self, called: ASTNode, parameter: str):
+    def __init__(self, called: ASTNode, parameter: ASTNode):
         self.called = called
         self.parameter = parameter
 
@@ -87,13 +87,13 @@ class VariableDeclaration(ASTNode):
 
 class FunctionDeclaration(ASTNode):
     def __init__(
-        self, parameters: List[str], body: ASTNode, impure: bool = False, raw_body=""
+        self, parameters: List[str], body: ASTNode, impure: bool = False, raw_body="", is_unparsed=True
     ):
         self.parameters = parameters
         self.body = body
         self.impure = impure
         self.raw_body = raw_body
-
+        self.is_unparsed = is_unparsed
     def __str__(self):
         return f"FunctionDeclaration({self.parameters}, body={self.body}, impure={self.impure})"
 

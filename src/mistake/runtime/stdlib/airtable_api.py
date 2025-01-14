@@ -15,7 +15,6 @@ def create_airtable_api_instance(key: 'rt.RuntimeString', *_):
     return rt.RuntimeUnit()
 
 
-
 def create_base(base_id: 'rt.RuntimeString'):
     if isinstance(base_id, rt.RuntimeString):
         base_id = base_id.value

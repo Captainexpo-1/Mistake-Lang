@@ -15,6 +15,8 @@ class Parser:
         TokenType.KW_CASES,
         TokenType.KW_THEN,
         TokenType.KW_OF,
+        TokenType.KW_DO,
+        TokenType.KW_FROM,
     ]
 
     def __init__(self):
@@ -117,6 +119,8 @@ class Parser:
                 val = self.parse_member_access()
             case TokenType.KW_NEW:
                 val = self.parse_class_instancing()
+            case TokenType.KW_USE:
+                val = self.parse_use()
             case _:
                 raise UnexpectedTokenError(
                     f"Unexpected token {self.current_token} at position {self.position}"
@@ -125,6 +129,7 @@ class Parser:
         return self.parse_single_expr(
             val, allow_function_application=allow_function_application
         )
+
 
     def parse_variable_declaration(self):
         public = False
@@ -237,8 +242,25 @@ class Parser:
         body = self.get_unparsed_body()
         self.eat(TokenType.KW_CLOSE)
         return FunctionDeclaration(
-            parameters, body, impure, raw_body="".join(i.value for i in body)
+            parameters, body, impure, raw_body="".join(i.value for i in body), is_unparsed=True
         )
+
+    def parse_use(self):
+        self.eat(TokenType.KW_USE)
+        parameters: List[str] = []
+        while self.current_token.type != TokenType.KW_FROM:
+            parameters.append(self.eat(TokenType.SYM_IDENTIFIER).value)
+        self.eat(TokenType.KW_FROM)
+        call_expr = self.parse_expression()
+        self.eat(TokenType.KW_DO)
+        body_expr = self.parse_expression()
+        
+        callback = FunctionDeclaration(parameters, [Block([body_expr])], impure=True, is_unparsed=False)
+        return FunctionApplication(call_expr, callback)
+
+    def parse_with(self):
+        self.eat(TokenType.KW_WITH)
+        raise NotImplementedError("With statements are not yet implemented")
 
     def parse_id_expression(self, allow_function_application=True):
         if (

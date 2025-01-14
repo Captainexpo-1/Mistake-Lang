@@ -38,6 +38,10 @@ class Lexer:
         "member": TokenType.KW_MEMBER,
         "then": TokenType.KW_THEN,
         "of": TokenType.KW_OF,
+        "do": TokenType.KW_DO,
+        "use": TokenType.KW_USE,
+        "from": TokenType.KW_FROM,
+        "with": TokenType.KW_WITH,
     }
 
     def __init__(self):

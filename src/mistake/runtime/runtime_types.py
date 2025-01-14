@@ -74,16 +74,17 @@ class RuntimeBoolean(MLType):
 
 class Function(MLType):
     def __init__(
-        self, parameter: str, body: List[ASTNode], impure: bool = False, raw_body=""
+        self, parameter: str, body: List[ASTNode], impure: bool = False, raw_body="", is_unparsed=False
     ):
         self.param: str = parameter
         self.body: List[ASTNode] = body
         self.impure: bool = impure
         self.raw_body: str = raw_body
+        self.is_unparsed = is_unparsed
 
     def to_string(self):
         return (
-            f"{'Impure' if self.impure else ''}Function({self.param}, body={self.body})"
+            f"{'Impure' if self.impure else ''}Function({self.param}, body={self.body}, is_unparsed={self.is_unparsed})"
         )
 
 

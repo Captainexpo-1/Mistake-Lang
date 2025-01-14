@@ -69,7 +69,8 @@ class Interpreter:
         new_env = Environment(env)
 
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
-        if isinstance(function.body[0], Token):
+        if function.is_unparsed == True:
+            function.is_unparsed = False
             function.body = self.parser.parse(function.body)
 
         return self.visit_block(function.body[0], new_env, create_env=False)
@@ -81,7 +82,7 @@ class Interpreter:
         def get_curried(params, body):
             if len(params) == 1:
                 return Function(params[0], body)
-            return Function(params[0], [get_curried(params[1:], body)])
+            return Function(params[0], [get_curried(params[1:], body)], is_unparsed=node.is_unparsed)
 
         return get_curried(params, node.body)
 
