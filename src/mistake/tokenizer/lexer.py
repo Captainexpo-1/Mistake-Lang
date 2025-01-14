@@ -143,6 +143,10 @@ class Lexer:
                 self.add_token(Token(token_type, t, self.current_line))
 
         self.add_token(Token(TokenType.SYM_EOF, "EOF", self.current_line))
+        
+        # remove all prefix whitespace tokens
+        while self.tokens[0].type == TokenType.SYM_WHITESPACE:
+            self.tokens.pop(0)
         return self.tokens
 
     def __str__(self):

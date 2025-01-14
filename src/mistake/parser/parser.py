@@ -121,6 +121,8 @@ class Parser:
                 val = self.parse_class_instancing()
             case TokenType.KW_USE:
                 val = self.parse_use()
+            case TokenType.KW_WITH:
+                val = self.parse_with()
             case _:
                 raise UnexpectedTokenError(
                     f"Unexpected token {self.current_token} at position {self.position}"
@@ -260,8 +262,21 @@ class Parser:
 
     def parse_with(self):
         self.eat(TokenType.KW_WITH)
-        raise NotImplementedError("With statements are not yet implemented")
-
+        raw = [self.parse_expression()]
+        while self.current_token.type != TokenType.KW_CLOSE:
+            self.eat(TokenType.KW_DO)
+            raw.append(self.parse_expression())
+        self.eat(TokenType.KW_CLOSE)
+        
+        # instead of a(b)(c)(d) we want d(c(b(a)))
+        
+        def build_nested_call(exprs: List[ASTNode]):
+            if len(exprs) == 1:
+                return exprs[0]
+            return FunctionApplication(build_nested_call(exprs[1:]), exprs[0])
+        res = build_nested_call(raw)
+        return res
+        
     def parse_id_expression(self, allow_function_application=True):
         if (
             self.tokens[self.position + 1].type not in self.breaking_tokens

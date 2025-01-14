@@ -50,6 +50,7 @@ def main():
             print("Parsed:", time.process_time())
 
         if "--ast" in args:
+            open("ast.txt", "w").write(str(ast))
             print(ast)
 
         if "--no-exe" not in args:
