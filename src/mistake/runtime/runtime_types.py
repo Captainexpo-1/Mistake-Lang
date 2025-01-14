@@ -240,25 +240,40 @@ class RuntimeListType(MLType):
     def to_string(self):
         return f"List({self.list}, {id(self)})"
 
-def runtime_dictify(d: dict):
-    def convert_type(val: Any):
-        if isinstance(val, dict):
-            return runtime_dictify(val)
-        elif isinstance(val, list):
-            return RuntimeListType([convert_type(v) for v in val])
-        elif isinstance(val, str):
-            return RuntimeString(val)
-        elif isinstance(val, int) or isinstance(val, float):
-            return RuntimeNumber(val)
-        elif isinstance(val, bool):
-            return RuntimeBoolean(val)
-        else:
-            return val
-    
-    for k, v in d.items():
-        d[convert_type(k)] = convert_type(v)
+def convert_type(val: Any):
+    if isinstance(val, dict):
+        return runtime_dictify(val)
+    elif isinstance(val, list):
+        return RuntimeListType([convert_type(v) for v in val])
+    elif isinstance(val, str):
+        return RuntimeString(val)
+    elif isinstance(val, int) or isinstance(val, float):
+        return RuntimeNumber(val)
+    elif isinstance(val, bool):
+        return RuntimeBoolean(val)
+    else:
+        return val
 
-    return d
+def un_convert_type(val: Any):
+    if isinstance(val, RuntimeDictType):
+        return de_runtime_dictify(val)
+    elif isinstance(val, RuntimeListType):
+        return [un_convert_type(v) for v in val.continuous()]
+    elif isinstance(val, RuntimeString):
+        return val.value
+    elif isinstance(val, RuntimeNumber):
+        return val.value
+    elif isinstance(val, RuntimeBoolean):
+        return val.value
+    else:
+        return val
+
+def runtime_dictify(d: dict):
+    new_d = {}
+    for k, v in d.items():
+        new_d[convert_type(k)] = convert_type(v)
+
+    return new_d
 
 
 
@@ -652,10 +667,24 @@ class RuntimeAirtableRecord(MLType):
     def __init__(self, record: dict):
         self.id = record["id"]
         self.creation_time = record["createdTime"]
-        self.fields = record["fields"]
+        self.fields: dict = record["fields"]
+    
+    def set_id(self, id: str):
+        self.id = convert_type(id)
+        return RuntimeUnit()
+
+    
+    def set_field(self, field: MLType, value: Any):
+        self.fields[un_convert_type(field)] = un_convert_type(value)
+        return RuntimeUnit()
+    
+    def get_field(self, field: MLType):
+        print("GETTING FIELD", field)
+        return convert_type(self.fields.get(field, RuntimeUnit()))
     
     def to_record_dict(self) -> dict:
-        return de_runtime_dictify(RuntimeDictType(self.fields))
+        return self.fields
     
     def to_string(self):
         return f"AirtableRecord({self.id}, {self.creation_time}, {self.fields})"
+    

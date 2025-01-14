@@ -1,0 +1,48 @@
+?! string Starting close end
+
+{>!<} open [@@@] string AIRTABLE_ACCESS_KEY close close end
+
+variable {{}} is {!} open [@@@] string BASE_ID close close end  
+
+?! {{}} end
+variable ({0}) is {{}} open [@@@] string TABLE_ID close close end
+?! ({0}) end
+
+
+variable {1} is {+} unit end
+
+>{} {1} string Age close 50 end
+>{} {1} string Name close string Jake Smith close end
+>{} {1} string Email close string person@hackclub.com close end
+
+?! {1} end
+
+variable <{5}> is {! {1} end 
+
+{< <{5}> string Name close string Bingus Bongus close end
+?! <{5}> end
+
+{<} ({0}) <{5}> end
+
+{< <{5}> string Name close string Bingus Bongus 2 close end
+
+[/] 2 function _ returns open {\} ({0}) <{5}> close close end
+
+[/] 4 function _ returns open {-} ({0}) open {#> <{5}> close close close end
+
+?! open {{? ({0}) close end
+
+variable ()++ is {+} unit end
+
+>{} ()++ string color close string greenBright close end
+>{} ()++ string icon close string check close end
+
+variable $$ is {{+ ({0}) string Visited close string checkbox close ()++ end
+
+variable (00) is {+} unit end
+
+>{} (00) string name close string Boo close end
+>{} (00) string description close string This is a field, wow! close end
+
+
+[/] 2 function _ returns open {{= ({0}) $$ (00) close close end

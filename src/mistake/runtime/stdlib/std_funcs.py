@@ -10,6 +10,8 @@ from mistake.runtime.stdlib.vulkan_api import *
 from typing import List
 from copy import deepcopy
 from mistake.runtime.stdlib.airtable_api import *
+import os
+
 
 def get_type(val: Any):
     if isinstance(val, bool):
@@ -341,10 +343,24 @@ std_funcs = {
     '🔥[<]': BuiltinFunction(lambda buffer, *_: RuntimeListType([(get_type(i) if not isinstance(i, MLType) else i) for i in buffer.data])),
     
     # AIRTABLE
-    '{>!<}': BuiltinFunction(lambda arg, *_: create_airtable_api_instance(arg)),
-    '{!}': BuiltinFunction(lambda arg, *_: create_base(arg)),
-    '{?}': BuiltinFunction(lambda table, *_: list_table_records(table)),
-    '{>}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda id, *_: get_record(table, id))),
-    '{<}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record, *_: create_record(table, record))),
-    '{:': BuiltinFunction(lambda fields, *_: new_record(de_runtime_dictify(fields))),
+    '{>!<}': BuiltinFunction(lambda arg, *_: create_airtable_api_instance(arg)), # create airtable api
+    '{!}': BuiltinFunction(lambda arg, *_: create_base(arg)), # create base
+    '{?}': BuiltinFunction(lambda table, *_: list_table_records(table)), # get all records
+    '{>}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda id, *_: get_record(table, id))), # get record
+    '{<}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record, *_: create_record(table, record))), # put record
+    '{!': BuiltinFunction(lambda fields, *_: new_record(de_runtime_dictify(fields))), # create local record instance
+    '{-}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record_id, *_: delete_record(table, record_id.value))), # delete record
+    '{\\}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record, *_: update_record(table, record))), # update record
+    # Schema editing
+    '{{?': BuiltinFunction(lambda table, *_: RuntimeDictType(runtime_dictify(table.table.schema().dict()))), # get schema
+    '{{+': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda field, *_: BuiltinFunction(lambda field_type, *_: BuiltinFunction(lambda options, *_: create_new_field(table, field, field_type, options))))), # add field    # Record editing 
+    '{{=': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda field_id, *_: BuiltinFunction(lambda new_options, *_: update_field(table, field_id, new_options)))),  # update field
+    
+    # RECORD EDITING
+    '{<': BuiltinFunction(lambda record, *_: BuiltinFunction(lambda field, *_: BuiltinFunction(lambda value, *_: record.set_field(field, value)))), # create airtable api
+    '{>': BuiltinFunction(lambda record, *_: BuiltinFunction(lambda field, *_: field.fields[record])), # create airtable api
+    '{#>': BuiltinFunction(lambda record, *_: convert_type(record.id)), # get ID
+    '{#<': BuiltinFunction(lambda record, *_: BuiltinFunction(lambda ID, *_: record.set_id(ID))), # set ID 
+    
+    '[@@@]': BuiltinFunction(lambda key, *_: RuntimeString(os.getenv(key.value))),
 }
