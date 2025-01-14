@@ -362,5 +362,10 @@ std_funcs = {
     '{#>': BuiltinFunction(lambda record, *_: convert_type(record.id)), # get ID
     '{#<': BuiltinFunction(lambda record, *_: BuiltinFunction(lambda ID, *_: record.set_id(ID))), # set ID 
     
+    # BASE MANIPULATION
+    '{}?': BuiltinFunction(lambda *args: all_bases(*args)),
+    '{}??': BuiltinFunction(lambda base, *_: base_schema(base)),
+    
+    # ENV
     '[@@@]': BuiltinFunction(lambda key, *_: RuntimeString(os.getenv(key.value))),
 }

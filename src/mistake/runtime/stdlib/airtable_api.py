@@ -84,4 +84,12 @@ def update_field(raw_table: 'rt.RuntimeAirtableTable', field_id: 'rt.RuntimeStri
 
     # PATCH request
     response = requests.patch(url, json=data, headers=headers)
+    if response.status_code != 200:
+        raise RuntimeError(f"Failed to update field: {response.text}")
     return rt.RuntimeUnit()
+
+def all_bases():
+    return rt.RuntimeListType([rt.RuntimeAirtableBase(base) for base in AIRTABLE_API.bases()])
+
+def base_schema(base: 'rt.RuntimeAirtableBase'):
+    return rt.RuntimeDictType(rt.runtime_dictify(base.base.schema().model_dump()))
