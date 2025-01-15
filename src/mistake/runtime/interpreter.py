@@ -73,7 +73,6 @@ class Interpreter:
             function.is_unparsed = False
             function.body = self.parser.parse(function.body)
 
-        print("VISITING FUNCTION APPLICATION", function.body)
         return self.visit_block(function.body[0], new_env, create_env=False)
 
     def visit_function_declaration(self, node: FunctionDeclaration, env: Environment):
