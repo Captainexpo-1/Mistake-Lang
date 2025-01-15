@@ -868,10 +868,10 @@ Our buffer will now contain the data. Simply use 🔥[<] to read the buffer and 
 
 ```go
 comment Print the result
-  [/] 1 function _ returns open 
-  ?! open 🔥[<] <#[0] close end
-  ?! open 🔥[<] <#[1] close end
-  ?! open 🔥[<] >#[] close  
+[/] 1 function _ returns open 
+?! open 🔥[<] <#[0] close end
+?! open 🔥[<] <#[1] close end
+?! open 🔥[<] >#[] close  
 close close end
 ```
 
