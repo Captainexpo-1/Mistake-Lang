@@ -1,1 +1,0 @@
-[VariableDeclaration(?5, value=5.0, lifetime=inf, public=False), FunctionApplication(VariableAccess(?!), FunctionApplication(FunctionApplication(VariableAccess(*), 5.0), VariableAccess(?5)))]

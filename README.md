@@ -1,6 +1,5 @@
-# The Mistake Language
-
-> Note that this README is out of date
+# :rac_wtf: The Mistake Language
+https://www.github.com/Captainexpo-1/Mistake-Lang 
 
 ## Overview
 
@@ -9,172 +8,137 @@ Through the use of human language, it is easy to write for beginners.
 
 All language constructs are in the user's language because it makes programs self-documenting and readable. This document is in American English.
 
-## Core data types
+### Core data types
 
 These are some core data types:
 
-* `function`
-* `string`
-* `number`
+* function
+* string
+* number
 
 Users can also create classes.
-
 In Mistake, all numbers are double precision floating point numbers.
 
-# Syntax reference
+## Syntax reference
 
-## Meta-syntax
+### Meta-syntax
 
 Note that keywords must be translated to the user's preferred language. In this document, we assume American English.
-
-`blah` matches `blah`, but also `Blah` and `bLaH`. All keywords are case-insensitive in Mistake.
-
-`[blah]` also matches blah
-
-`[blah]?`  matches blah or nothing
-
-`[blah]...` matches one or more blah s in between spaces
-
-`[blah]?...` matches zero or more blahs in between spaces
-
-`<something>` is a class of character
+blah matches blah, but also Blah and bLaH. All keywords are case-insensitive in Mistake.
+[blah] also matches blah
+[blah]?  matches blah or nothing
+[blah]... matches one or more blah s in between spaces
+[blah]?... matches zero or more blahs in between spaces
+<something> is a class of character
 For the avoidance of doubt, a character is a Unicode grapheme.
 
-## Classes of characters
+### Classes of characters
 
-* `<identifier>` is any character that is not whitespace or in the Latin alphabet (a to z). Identifiers must contain at least one non-numeric character to distinguish them from number literals.
-    * `-67.42!` is an identifier.
-    * `-67.42` is a number.
-    * `67.42.128.6` is an identifier, not an invalid number.
-* `<expression>` is, well, an expression.
-* `<string>`  is a set of characters. See the specific syntax element for what the string is terminated by.
-* `<lifetime>` is a number that ends in s, l or u (meaning seconds, lines and a timestamp respectively).
+* <identifier> is any character that is not whitespace or in the Latin alphabet (a to z). Identifiers must contain at least one non-numeric character to distinguish them from number literals.
+    * -67.42! is an identifier.
+    * -67.42 is a number.
+    * 67.42.128.6 is an identifier, not an invalid number.
+* <expression> is, well, an expression.
+* <string>  is a set of characters. See the specific syntax element for what the string is terminated by.
+* <lifetime> is a number that ends in s, l or u (meaning seconds, lines and a timestamp respectively).
     * Timestamps are given in milliseconds since Jan 1, 2020 (which is the Mistake epoch).
 * Anything else refers to another syntax element.
 
-## Lines
+### Lines
 
 A "line" is one statement in the imperative section.
 
-## Comments
+Comments
 
-Comments end at the end of a line (at a `\n`).
-
+Comments end at the end of a line (at a \n).
 Comments may exist anywhere. Comment bodies may contain anything.
-
 Comments are simply ignored.
 
-```
 comment <string>
-```
 
-## Statements
+### Statements
 
 An entire Mistake file is just a set of statements. A top-level statement is said to be in the "imperative section".
 
-```
 [<statement>]...?
-```
 
-### Expression statements
+#### Expression statements
 
 A statement can be an expression terminated by end. Whatever the expression returns is simply discarded.
 
-```
 <expression> end
-```
 
-### Class statements
-
-Classes are impure.
-
-```
-class [<identifier>] [inherits <identifier>]? has [<statement>]...? end
-```
-
-### Variable statement
+#### Variable statement
 
 public is only valid in a class statement.
 
-```
 [public] variable <identifier> [lifetime <lifetime>]? [type <string>] is <expression> end
-```
 
-### Jump statements
+#### Jump statements
 
 Note that jump statements are only valid in the imperative section.
 
-```
-jump <expression> <expression> end
-```
+jump <expression> of <expression> end
 
-## Expressions
+### Expressions
 
-### Functions
+#### Functions
 
-```
 [impure] function [<identifier>]... returns <expression> close
-```
 
-### Open blocks
+#### Open blocks
 
-```
 open [<statement>]...? <expression> close
-```
 
-### Function application
+#### Function application
 
-```
 <identifier> <expression>
-```
 
-Note that `; 1 2 3 4` is `;(1)(2)(3)(4)`, not `;(1(2(3(4)))`.
+Note that ; 1 2 3 4 is ;(1)(2)(3)(4), not ;(1(2(3(4))).
 
-### String expressions
+#### String expressions
 
 String expressions are terminated with close. This means that string expressions can't have "close" in them.
 
-```
 string <string> close
-```
 
 Strings in Mistake can have escape sequences. For familiarity, Mistake uses a familiar syntax for escape sequences:
 
-```
 string Bits &amp; bytes close
-```
 
 Note that Mistake strings may contain arbitrary bytes.
 
-```
 string Bits &#0; bytes close
-```
 
-### Match expressions
+#### Match expressions
 
-```
-match <identifier> cases [case <expression> then <expression>]...? otherwise <expression> close
-```
+The output of the match expression is stored in a special variable @.
 
-### Member expressions
+match <expression> cases [case <expression> then <expression> close]...? otherwise <expression> close
+
+#### Class expressions
+
+Class bodies inherit the purity of its environment.
+
+class [inherits <identifier> has]? [<statement>]...? end
+
+#### Member expressions
 
 member <identifier> of <identifier>
 
-### New expressions
+#### New expressions
 
 new <identifier>
 
-### Unit expressions
+#### Unit expressions
 
-```
 unit
-```
 
-### Number literal
+#### Number literal
 
-A number literal is a number like `-6` or `420.68` or `82`.
+A number literal is a number like -6 or 420.68 or 82.
 
-## Builtin functions
+### Builtin functions
 
 Functions that don't return anything return unit.
 
@@ -197,7 +161,7 @@ Operators
     * `≤`  evaluates to true if its second argument is less than or equal to its first
 * `->` gets the "length" of something.
     * For strings, it is the length of the string in bytes.
-    * For match objects, it is the amount of matches.
+    * For match objects, it is the amount of match groups.
     * For numbers, it is the length of the number printed out in Base 10.
     * For unit, it is 0.
     * For lists, it is the length of the list.
@@ -205,46 +169,51 @@ Operators
     * And so on. For things which don't have an obvious "length", it is 0.
 * `??` formats something as a string, like `?!` does.
 
-Other functions
+### Other functions
 
 * `?!` prints its only argument. Impure.
 * `!` creates a mutable box.
-    * `?`  gets the contents of a mutable box.
-    * `<`  sets them. Impure.
-* `!=!`  creates a channel.
-    * `<<`  writes to a channel. Impure.
-        * If the argument passed is not a channel, it does nothing.
-    * `>>` reads from a channel, blocking and returning what it got. Also impure.
-        * If the argument passed is not a channel. it returns unit.
+    * `!?`  gets the contents of a mutable box.
+    * `!<`  sets them. Impure.
 * `|>|` pushes its only argument to the stack. Impure.
 * `|<|` pops the top of the stack and calls its argument with the value. Where there is no value, the function does nothing. Impure.
-* `!!` asserts that a value is truthy (not `false` or `unit`). If the value is not truthy, crashes the program.
+* `!!` asserts that a value is truthy (not false or unit). If the value is not truthy, crashes the program.
 * `[/]` runs a callback in an amount of seconds. Returns a task object. When killed before the callback has run, the callback is never run. When killed while the callback is running, the callback is killed. Note that Mistake uses decimal seconds.
 
-## Networking
+### Async
+
+*  `=!=` creates a channel.
+*  `<<` writes to a channel. Impure.
+    * If the argument passed is not a channel, it does nothing.
+* `>>` reads from a channel, blocking and returning what it got. Also impure.
+    * If the argument passed is not a channel. it returns unit.
+* `<!>` runs a new task asynchronously.
+* `</>` kills a task.
+
+Networking
 
 All networking functions are impure.
 
 * `<=#=>` creates a TCP server. `<=?=>` creates a UDP server.
-    * `==>#` binds the server to the port set by its argument. Returns `true` if successful and `false` otherwise.
-    * `==>?` binds the server to the hostname set by its argument. Returns `true` if successful and `false` otherwise.
+    * Servers are task objects and can also be killed. When they are killed, they stop listening on its port and any running callbacks are killed too.
+    * `==>#` binds the server to the port set by its argument. Returns true if successful and false otherwise.
+    * `==>?` binds the server to the hostname set by its argument. Returns true if successful and false otherwise.
     * `==>!` sets the server's callback. 
-        * Returns a task object representing the server. When it is killed, the server stops listening and any existing server callbacks are killed.
         * For TCP servers, the server callback is called asynchronously with a TCP socket object. Callbacks may be impure.
         * For UDP servers, the server callback is called asynchronously with a string object containing the message content. Callbacks may be impure.
 * `<=#=` creates a TCP socket. `<=?=` creates a UDP socket.
-    * If a connection could not be made, returns `unit` instead.
+    * If a connection could not be made, returns unit instead.
     * `<<` on a TCP and UDP socket sends a string. Blocking.
-        * Returns `true` if successful and `false` otherwise.
+        * Returns true if successful and false otherwise.
     * `>|<` closes the socket on both TCP and UDP sockets.
-    * `>>` on TCP sockets receives a string. **Blocking**. On a UDP socket, does nothing.
+    * `>>` on TCP sockets receives a string. Blocking. On a UDP socket, does nothing.
 
-## Airtable
+### Airtable
 
 Mistake is a language for Hack Clubbers. Therefore, it has native Airtable integration for maximum development flow.
-All functions except {=} are impure and blocking.
+All functions except `{!}` are impure and blocking.
 
-* `{=}` creates a base object. A base object can be called to return a table object.
+* `{!}` creates a base object. A base object can be called to return a table object.
 * `{?}` lists records in a table. Returns a list of record object.
 * `{>}` fetches a specific record from a table. Returns a record object.
 * `{<}` puts a record into a table. Returns the new record object.
@@ -259,6 +228,30 @@ You can use these functions to work with record objects.
 * `{#<` sets the record's ID.
 * `{#>` gets the record's ID.
 
+You can use these functions to manipulate your schema
+
+* `{{?` gets the schema
+* `{{+` creates a field
+* `{{=` updates a field
+
+You can use these functions to manipulate bases
+
+* `{}?` lists bases
+* `{}??` get base schema
+* `{}+` create base
+
+### Lists
+
+* `[!]` creates a new list object.
+* `[<]` sets an item in a list.
+* `[>]` gets an item in a list.
+
+### Regex
+
+* `/?/` creates a new compiled regex, taking a string as the regex source. Returns a compiled regex function or unit if it failed.
+* Calling a regex function returns a list of match objects. May have a length of zero if there were no matches.
+* `/>?/` gets a capture group.
+* `/>"/` gets the entire match as a string.
 
 ## The basics of Mistake
 
@@ -276,64 +269,71 @@ Mistake has a few datatypes:
 * boolean
 * unit (which is like null/None/undefined/etc)
 
-Comments
+### Comments
 
-```
+```go
 comment Comments terminate with a newline.
 sylw Wrth gwrs, gallwch chi siarad eich iaith eich hun os yw'n defnyddio'r wyddor Ladin.
 comment The interpreter should check the user's locale.
 ```
-
 ### Functions
 
 To call a function in Mistake, just write the function name and then its parameters.
 
-```
+```go
 + 5 6 end  comment Is 11.
+comment +(5)(6)
 ```
-
 ### Variables
 
-```
+```go
 variable ?? is 5 end
 ?! ?? end  comment Prints 5. ?! prints its argument to the console.
 ```
 
 In Mistake, variables can only be assigned to once.
 
-```
+```go
 variable ?1 is 5 end
 variable ?1 is 6 end  comment Throws a compilation error.
 ```
 
 `_` is a special identifier. You can assign to it multiple times:
 
-```
+```go
 variable _ is 5 end
 variable _ is 6 end
 ```
 
 However, you can't use it as a normal variable. It discards whatever is written to it.
 
-```
+```go
 ?! _  comment Throws a compilation error.
 ```
+
+`@` is also a special identifier. You can't assign to it.
+
+```go
+variable @ is 5 end  comment Throws a compilation error.
+```
+
+You'll understand what @ is later.
 
 ### Open / close statements
 
 Open blocks create a new scope. The last expression in an open block is returned from the block.
 
-```
+```go
 variable 5+6 is open
-  variable ! is 5 end
+  variable !1 is 5 end
   
   comment The last thing is returned.
   comment So, the last thing does not have an "end" after it.
-  + ! 6
+  + !1 6
 close end
 
 ?! 5+6 end
-?! !  comment Throws a compilation error, because ! isn't in this scope!
+?! !1  comment Throws a compilation error, because ! isn't in this scope!
 ```
 
 ### Function application
@@ -341,7 +341,7 @@ close end
 In Mistake, all functions are curried.
 For example, `+ 5` returns a function that, when called with a number, will add 5 to it and return it.
 
-```
+```go
 variable +5 is + 5 end
 
 comment The below prints 11.
@@ -352,7 +352,7 @@ comment The below prints 11.
 
 For example:
 
-```
+```go
 comment The below prints "Hello, world! What a great comment."
 ?! string Hello, world! What a great comment. close end
 ```
@@ -360,13 +360,13 @@ comment The below prints "Hello, world! What a great comment."
 Note that you can't write "close" in a string.
 Luckily, Mistake supports escape sequences.
 
-```
-?! open + string Please clos&#101; the door. close end
+```go
+?! string Please clos&#101; the door. close end
 ```
 
 You can use other mathematical operations with strings too:
 
-```
+```go
 ?! open * string Hello close 5 end  comment This print HelloHelloHelloHelloHello
 ?! open / string Hello close 5 end  comment This prints H
 ```
@@ -375,14 +375,13 @@ You can use other mathematical operations with strings too:
 
 Mistake has lifetimes. You can specify how long a variable lasts in either seconds or lines.
 
-```
-variable ??2 lifetime 20s is 5 end          comment lasts for 20 seconds
+```go
+variable ??2 lifetime 20s is 5 end          comment lasts for 20 decimal seconds
 variable ??3 lifetime 1l is 5 end           comment lasts for 1 line
 
 comment Lasts until 2069.
-comment Timestamps are given in milliseconds relative to the Mistake epoch,
+comment Timestamps are given in decimal milliseconds relative to the Mistake epoch,
 comment which is January 1, 2020.
-comment Note that Mistake uses decimal seconds.
 variable ??4 lifetime 1343656342u is 5 end
 
 comment Trying to access an expired variable crashes the program.
@@ -394,25 +393,25 @@ comment Trying to access an expired variable crashes the program.
 In Mistake, functions are just values.
 You can use the function keyword to create one. Here's a function that discards its only parameter and returns 5:
 
-```
+```go
 function _ returns 5 close
 ```
 
 You can write curried functions like this:
 
-```
+```go
 function $1 $2 returns 5 close
 ```
 
 Which is syntactic sugar for:
 
-```
+```go
 function $1 returns function $2 returns 5 close close
 ```
 
 Assign functions to variables to use them again later.
 
-```
+```go
 comment JavaScript does this, so it must be good.
 comment (*+5) takes two numbers, multiplies them together and adds 5.
 variable (*+5) is function ? ! returns + open * ? ! close 5 close end
@@ -427,11 +426,8 @@ variable ?!(*+5) is impure function ? ! returns ?! open (*+5) close close end
 
 In order to present a familiar interface to those coming from stack-based languages, Mistake provides a global stack.
 
-```
+```go
 comment Trying to get closer to hardware implementations, you are able to use a "stack" to run functions as well.
-comment "push" is a function that pushes the parameter onto the top of the stack
-comment "stack" is a function that takes in a function, and calls said function with the data at the top of the stack.
-comment "stack" also removes the data from the top of the stack.
 
 comment Pushes 5 onto the stack, then 7.
 |>| 5 end
@@ -453,38 +449,38 @@ In Mistake, there are no imports.
 However, you can jump to lines of other programs.
 Here's a file:
 
-```
+```go
 comment This is utils.mistake
 
 variable (&&) is 5 end
 
 comment jump can only be used at the top-level, in the imperative section.
-jump $<" $<? end
+jump $<? of $<" end
 ```
 
 And another file:
 
-```
+```go
 comment This is main.mistake
 
 comment [?] is a function that, when called, returns the current line.
 variable $<" is string main.mistake end
-variable $<? is + open [?] unit close 1 end
-jump string utils.mistake close end
+variable $<? is + open [?] unit close 2 end
+jump 1 of string utils.mistake close end
 
 comment Okay, utils.mistake should've jumped back now.
-?! (&&)  comment Prints 5
+?! (&&) end  comment Prints 5
 ```
 
 Jumps may only be used in the imperative section.
 
-> Note that different Mistake programs may use different calling conventions.
+Note that different Mistake programs may use different calling conventions.
 
 Lines in Mistake are different to what you may expect them to be.
 In Mistake, a "line" is anything that ends in "end". An entire class definition is one "line". A comment is not a line.
 For example:
 
-```
+```go
 open 
   ?! open [?] unit close end comment Prints 1
   ?! open [?] unit close end comment Still prints 1
@@ -496,7 +492,7 @@ Lines start from 1.
 
 ### Pattern matching
 
-```
+```go
 variable # is 5 end
 
 comment The below prints "# is 5 :)".
@@ -515,53 +511,51 @@ close end
 Mistake supports asynchronous programming for building Web Scale:tm: applications. 
 Let's create a channel:
 
-```
-variable [] is !=! end
+```go
+variable [] is =!= end
 
 You can send a message to a channel with <<.
 
 << [] 5 end
 ```
 
-However, our message is simply lost. If nothing is listening on the channel, Mistake will just discard the message. Let's write a function to listen to messages on the channel with <<:
+However, our message is simply lost. If nothing is listening on the channel, Mistake will just discard the message. Let's write a function to listen to messages on the channel with >>:
 
-```
+```go
 variable <[] is function _ open
-  variable $ is << [] end
+  variable $ is >> [] end
   ?! $ end
   <[] unit end
-close end
+close close end
 ```
 
-If we called this function now, the program would hang forever as `<<` simply waits for a new message indefinitely. Let's instead run this function asynchronously, with `<+>`.
+If we called this function now, the program would hang forever as `<<` simply waits for a new message indefinitely. Let's instead run this function asynchronously, with `<!>.`
 
-```
-variable ?< is open <+> <[] close end
-```
+```go
+variable ?< is open <!> <[] close end
 
-`<+>` returns a task object that we can later cancel. Mistake will wait for all tasks to complete before exiting, so if we don't cancel the task it will simply hang forever. If we run the statement from earlier:
+<!> returns a task object that we can later cancel. Mistake will wait for all tasks to complete before exiting, so if we don't cancel the task it will simply hang forever. If we run the statement from earlier:
 
-```
 << [] 5 end  comment Prints 5 to the screen!
 ```
 
-5 will be printed to the screen! Now that our task has served its purpose, we can kill it with `!+!`.
+5 will be printed to the screen! Now that our task has served its purpose, we can kill it with </>.
 
-```
-!+! ?< end
+```go
+</> ?< end
 ```
 
 ### Typing
 
 Some programmers feel that types make programming easier. Luckily, the built in Mistake type solver can figure out most of your types.
 
-```
+```go
 variable ? is + 5 6 end
 ```
 
-The built-in type solver would infer `?` as being a number. You can state this explicitly:
+The built-in type solver would infer ? as being a number. You can state this explicitly:
 
-```
+```go
 variable ? type number is + 5 6 end
 ```
 
@@ -569,28 +563,26 @@ However, type hints are just for you. They aren't checked at runtime.
 
 ### Mutable boxes
 
-Sometimes you want mutability. That's fine. Use `!` to create a mutable box:
+Sometimes you want mutability. That's fine. Use ! to create a mutable box:
 
-```
+```go
 variable [] is ! 5 end  comment Creates a mutable box with initial value 5
+
+Use !? and !< to read and write to a mutable box respectively:
+
+?! open !? [] close end  comment Prints 5
+!< [] 6 end              comment Sets the box's content to 6
+?! open !? [] close end  comment Now prints 6
 ```
 
-Use `?` and `<` to read and write to a mutable box respectively:
-
-```
-?! open ? [] close end  comment Prints 5
-< [] 6 end              comment Sets the box's content to 6
-?! open ? [] close end  comment Now prints 6
-```
-
-Note that `<` is impure.
+Note that < is impure.
 
 ### Classes
 
 Mistake is an enterprise language, which is why it has classes. Here's a simple counter class:
 
-```
-class #++ has
+```go
+variable #++ is class has
   variable [#] is 0 end
 
   public variable ++ is impure function $ returns open
@@ -602,18 +594,18 @@ class #++ has
     comment And return it:
     ? [#]
   close close end
- end
+close end
 ```
 
-Create a new instance of it with `new`:
+Create a new instance of it with new:
 
-```
+```go
 variable [#] is new #++ end  comment We can reuse [#] because class creates a new scope
 ```
 
-And access members on it with `member ... of ...`
+And access members on it with member ... of ...
 
-```
+```go
 member ++ of [#] 55 end
 
 ?! member [#] of [#] end  comment Can't do this -- isn't public variable
@@ -621,34 +613,35 @@ member ++ of [#] 55 end
 
 Classes can also be subclassed:
 
-```
-class 5++ inherits #++ has
+```go
+variable 5++ is class inherits #++ has
   public variable +5 is impure function _ returns open
     comment Still can access all of #++'s variables
     ++ 5
   close close end
-end
+close end
 ```
 
-### Web Scale™
+### Web Scale:tm:
 
 Mistake supports building highly scalable web applications with green threading.
 
-```
+```go
 variable =#= is <=#=> unit end
 
 comment Listen on localhost:8080, aborting if that port is taken already.
 !! open ==># =#= 8080 close end
 !! open ==>? =#= string localhost close close end
 
-==>! impure function <=> returns open
+==>! =#= impure function <=> returns open
   ?! open << <=> close end
   >> <=> string Fuck off close end
   >!< <=>
 close close end
 
 comment Close the server in 10 decimal seconds, or about eight normal seconds
-[/] 10 function _ returns open
+comment https://en.wikipedia.org/wiki/Decimal_time
+[/] 10 impure function _ returns open
   !+! <=> end
 close close end
 
@@ -657,64 +650,63 @@ comment Mistake will wait for all tasks to complete before shutting down.
 
 ### Lists
 
-To create a list, use [!]. [<] sets an item of a list, [>] gets them. Note that in Mistake, list indexes start from 1 to be more friendly to new developers.
+To create a list, use `[!]`. `[<]` sets an item of a list, `[>]` gets them. Note that in Mistake, list indexes start from 1 to be more friendly to new developers.
 
-```
+```go
 variable [] is [!] unit end
 
 [<] [] 1 5              comment Set the first list item to 1.
 ?! open [>] [] 1 close  comment Prints "5"
 ```
 
+### Advanced string manipulation
 
-### Advanced String Manipulation
+Mistake supports regex. The `/?/` function can be used to search through a string, and returns a list of match objects.
 
-Mistake supports regex. The `/?/` function can be used to search through a string.
-
-```
+```go
 variable <> is /?/ string /^Hello (\w+)?/ close string Hello, Sarah! close end
-?! "" end  comment Prints "matchlist"
+?! "" end  comment Prints "list"
 ```
 
-Use `/>/` to get the nth match of a matchlist, starting from `1`.
+Use `[>]` to get the nth match of a list, starting from 1.
 
-```
+```go
 variable "" is />/ <> 1 end
 ?! "" end  comment Prints "match"
 ```
 
-Because there were no more than `1` match, `/>/ <> 2` would return unit.
+Because there were no more than 1 match, `[>] <> 2` would return unit.
 Use `/>"/` to get the string that was matched.
 
-```
-?! open />"/ "" close end comment Prints "Hello, Sarah"
+```go
+?! open />"/ "" close end  Prints "Hello, Sarah"
 ```
 
 Use `/>?/` to get a specific capture group, or unit if no such capture group exists or was not matched. Again, starts from 1.
 
-```
-?! open />?/ 1 close end comment prints "Sarah"
+```go
+?! open />?/ "" 1 close end  prints "Sarah"
 ```
 
 You can also search for binary values.
 
-```
-variable <0> is /?/ string &#0; close string /\x00/ close end
+```go
+variable <0> is /?/ string /\x00/ close string &#0; close end
 ```
 
 ### Airtable
 
 Mistake supports Airtable to fuel Hack Club's neverending Airtable addiction. See your interpreter's documentation on how to configure Airtable.
 
-```
+```go
 variable {_} is {=} string app60o9dkpPOkIdG4 close string people close end
 
 comment Ok, let's insert a new person into the High Seas base
 comment #? contains the new record object.
 variable #? is {<} {_} open
   variable {} is {! end
-  {< string email close string sarah@revohacks.com close end
-  {< string name close string Sarah Landtable close end
+  {< {} string email close string sarah@revohacks.com close end
+  {< {} string name close string Sarah Landtable close end
   {}
 close end
 
@@ -730,8 +722,8 @@ comment Let's change that.
 {/} {_} open
   variable {} is {! end
   
-  {< string name close string Sarah Lesbiantable close end
-  {#< open {#> #? close end
+  {< {} string name close string Sarah Lesbiantable close end
+  {#< {} open {#> #? close end
   {}
 close end
 
@@ -741,4 +733,242 @@ comment Hrm. Let me just check that I've got my email right too:
 comment Actually, I've decided that High Seas is kind of overrated.
 comment Time to delete myself.
 {-} {_} open {#> #? close end
+```
+
+### Advanced functions
+
+We can use the source code of functions to do nifty things! In Mistake, functions are parsed when they are executed, so syntax errors only happen when functions are called.
+
+```go
+variable "?" is function _
+  blah blah this is invalid syntax blah
+close  comment Note that you still need close 
+
+We can introspect the source code of a function:
+
+comment Prints function _  blah ...
+comment With the newlines, of course.
+?! member " of "?"  end
+
+Note that in function blocks, escape sequences don't work.
+
+variable "!" is function
+  Bits &amp; bytes
+close
+
+comment Prints function Bits &amp; bytes close
+?! member " of "!" end
+
+Of course, if we try execute that function, we'll get a syntax error.
+
+"!" unit end  comment Syntax error!
+
+IMPORTANT: Note that imbalanced open / close blocks are compile-time syntax errors.
+
+variable /// is function
+  open
+close
+
+comment Syntax error - we never closed the function block
+```
+
+### GPGPU
+
+Sometimes, traditional CPUs aren't enough. That's okay. Using Advanced Functions, Mistake now supports GPGPU programming through Vulkan compute shaders.
+As a simple example, let's multiply 65536 unsigned 32 bit numbers by, say, 26.
+
+All GPGPU functions and constants start with a fire emoji, because it's blazingly fast.
+
+First, let's enumerate through all of the physical devices. Thankfully, Mistake handles setting up instances for us. We'll just pick the first one.
+
+```go
+variable |=| is [<] open 
+  🔥[<=>] unitGPGPU
+Sometimes, traditional CPUs aren't enough. That's okay. Using Advanced Functions, Mistake now supports GPGPU programming through Vulkan compute shaders.
+As a simple example, let's multiply 65536 unsigned 32 bit numbers by, say, 26.
+All GPGPU functions and constants start with a fire emoji, because it's blazingly fast.
+close end
+
+comment Make sure that we have found a physical device
+!! |=|
+
+Next, we'll pick the first compute queue of that device. Right now, Mistake only supports compute queues.
+
+* 🔥<= gets a queue.
+* 🔥@ is a flag that means "compute queue".
+
+variable #<=> is [<] open
+  comment Create a list of flags
+  variable [@] is [!] end
+  [<] [@] 🔥@
+  
+  comment Query physical device for those flags
+  🔥<= |=| [@]
+close
+
+comment Make sure that we've found a queue
+!! #<=>
+```
+
+Now, let's create the actual device object with 🔥🔥. Mistake will handle enabling all of the required extensions and such for you.
+
+```go
+variable <=> is 🔥🔥 #<=> end
+
+comment Make sure that it was created
+!! <=>
+```
+
+Now, let's create a a buffer. First, let's fill a list with 65536 numbers. The algorithm we'll use to fill each list item is n * 48 mod 256.
+
+```go
+variable [] is [!] unit end
+open
+  variable ++ is impure function #, $ returns
+    comment Add 48 to $...
+    variable $1 is match + $ 48 cases
+      comment and if $ is now above 256, take 256 away
+      comment Note that in Mistake, ≥ compares the second argument first.
+      comment So, we're doing @ ≥ 256
+      case ≥ 256 @ then - @ 256 close
+
+      comment otherwise, everyting is OK :D
+      otherwise @ close
+    close end 
+
+    [<] [] # $1 end
+    
+    comment Determine whether we should break out of the loop.
+    match + # 1 cases
+      comment If @ ≤ 65536, we're still good.
+      case ≤ 65536 @ then ++ @ $ close
+
+      comment Otherwise, we can stop.
+      otherwise unit close
+    close end
+  close end
+
+  ++ 1 0
+close
+```
+
+Now, let's transfer our buffer over to the GPU.
+
+* `🔥[!]` creates a new buffer.
+* `🔥+32` is a datatype constant. It means "unsigned 32 bit integer".
+
+In Mistake, lists don't have to be contiguous. Therefore, the new buffer function will only consider the contiguous part of the array. Like Lua.
+
+```go
+variable #[] is 🔥[!] 🔥+32 [] end
+```
+
+Okay, we're almost there. Now let's write a simple GPU program with Advanced Functions:
+
+```go
+variable #$!*?# is function
+    #version 460
+    
+    layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+    
+    layout(set = 0, binding = 0) buffer Data {
+        uint data[];
+    } buf;
+    
+    void main() {
+        uint idx = gl_GlobalInvocationID.x;
+        buf.data[idx] *= 26;
+    }
+close
+```
+
+And now let's execute our program. Mistake will use sophisticated heuristical detection algorithm systems to determine the optimal workgroup parameters for your program.
+
+```go
+<=> #$!*?#
+```
+
+Our buffer will now contain the data. Simply use 🔥[<] to read the buffer and turn it into a Mistake list, and we're done!
+
+```go
+variable |[]| is 🔥[<] #[] end
+
+comment Verify that we've got everything right
+!! open = 
+  open [<] |[]| 9123 close
+  144
+close
+```
+
+### The use operator
+
+Sometimes, functions want callbacks. This can lead to unreadable code through many layers of nesting. Mistake solves this problem with the use operator.
+
+```go
+open
+  ?! string Hrm. I'm running synchronously, which isn't Web Scale. close end
+
+  use _ from <!> do
+  ?! string Hi, I'm running asynchronously! Woohoo! close end
+
+  use _ from [/] 20 do
+  ?! string Woah, it's been 20 seconds! How exciting! close end
+close
+```
+
+The use operator is syntax sugar for writing a callback. The above program is equal to:
+
+```go
+open
+  ?! string Hrm. I'm running synchronously, which isn't Web Scale. close end
+
+  <!> function _ returns open
+    ?! string Hi, I'm running asynchronously! Woohoo! close end
+
+    [/] 20 function _ returns open
+      ?! string woah, it's been 20 seconds! How exciting! close end
+    close close end
+  close close end
+close
+```
+
+You can also use use with multiple parameters:
+
+```go
+use $1 $2 $3 from [#/=\#] do
+```
+
+Which is equivalent in semantics to function $1 $2 $3 returns .
+
+```go
+with .. do .. close
+```
+
+Sometimes, Mistake's simplistic function call syntax is a bit of a bother. Not to worry. With with statements, function calls are now easier than ever.
+Let's rewrite the mutable box example to use with statements:
+
+```go
+variable [] is ! 5 end  comment Creates a mutable box with initial value 5
+
+with !? [] do ?! close end  comment Prints 5
+!< [] 6 end                 comment Sets the box's content to 6
+with !? [] do ?! close end  comment Now prints 6
+```
+
+You can chain multiple do's together:
+
+```go
+variable ?5 is 5 end
+variable ?20 is with ?5
+  do + 5
+  do + 5
+  do + 5
+close end
+```
+Every time, the thing in the with is called with the next do and that becomes the value that is then called with the next do (and on and on).
+
+This means that it is equivalent to 
+
+```go
++(+(+(5)(?5)))
 ```
