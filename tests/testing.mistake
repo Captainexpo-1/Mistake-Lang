@@ -1,4 +1,6 @@
 variable ?5 is 5 end
 ?! with ?5 
-	do * 5 
+	do + 5 
+	do + 5
+	do + 5
 close end
