@@ -626,26 +626,48 @@ close end
 
 Mistake supports building highly scalable web applications with green threading.
 
+TCP Server:
+```go 
+variable $^&* is <=#=> unit end
+
+variable &&& is function <% returns open 
+	variable !*! is function _ returns open
+		<< <% string Hello, World!<br> close end
+		variable >% is >> <% end
+		?! open >"< >% close end
+		match >"< >% cases
+			case = @ string exit close then >|< <% close 
+			otherwise !*! unit close
+		close end
+	close close end
+	?! string Callback has run close end
+	!*! unit end
+close close end
+
+variable #() is 8080 end
+
+==># $^&* #() end
+?! open + string Server is running on port:  close open ?? #() close close end
+==>! $^&* &&& end
+```
+
+UDP Server:
 ```go
-variable =#= is <=#=> unit end
+variable <()> is <=?=> unit end
 
-comment Listen on localhost:8080, aborting if that port is taken already.
-!! open ==># =#= 8080 close end
-!! open ==>? =#= string localhost close close end
+==>? <()> string 127.0.0.1:8080 close end
+==>! <()> function %1 returns open ?! %1 close close end
 
-==>! =#= impure function <=> returns open
-  ?! open << <=> close end
-  >> <=> string Fuck off close end
-  >!< <=>
-close close end
+[/] 15 function _ returns </> <()> close end
+```
 
-comment Close the server in 10 decimal seconds, or about eight normal seconds
-comment https://en.wikipedia.org/wiki/Decimal_time
-[/] 10 impure function _ returns open
-  !+! <=> end
-close close end
+UDP Socket:
+```go
+variable <()> is <=?= unit end
 
-comment Mistake will wait for all tasks to complete before shutting down.
+==>? <()> string 127.0.0.1:8080 close end
+
+<< <()> string Hello World! close end 
 ```
 
 ### Lists
