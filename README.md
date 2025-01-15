@@ -238,7 +238,7 @@ You can use these functions to manipulate bases
 
 * `{}?` lists bases
 * `{}??` get base schema
-* `{}+` create base
+* `{}+` create base [NOT IMPLEMENTED]
 
 ### Lists
 
@@ -710,10 +710,13 @@ Use `/>?/` to get a specific capture group, or unit if no such capture group exi
 ?! open />?/ "" 1 close end  prints "Sarah"
 ```
 
-You can also search for binary values.
+### Environment Variables
+
+For the sake of security, mistake supports using .env files to safely store your API keys, passwords, and other sensitive information.
 
 ```go
-variable <0> is /?/ string /\x00/ close string &#0; close end
+comment This is equivalent to os.environ("THIS_IS_A_KEY") in Python.
+[@@@] string THIS_IS_A_KEY close end
 ```
 
 ### Airtable
@@ -721,40 +724,69 @@ variable <0> is /?/ string /\x00/ close string &#0; close end
 Mistake supports Airtable to fuel Hack Club's neverending Airtable addiction. See your interpreter's documentation on how to configure Airtable.
 
 ```go
-variable {_} is {=} string app60o9dkpPOkIdG4 close string people close end
+comment Create an API instance
+{>!<} open [@@@] string AIRTABLE_ACCESS_KEY close close end
 
-comment Ok, let's insert a new person into the High Seas base
-comment #? contains the new record object.
-variable #? is {<} {_} open
-  variable {} is {! end
-  {< {} string email close string sarah@revohacks.com close end
-  {< {} string name close string Sarah Landtable close end
-  {}
-close end
+comment Create the base object
+variable {{}} is {!} open [@@@] string BASE_ID close close end  
 
-comment Great! Now, let's find someone from the High Seas base.
-comment We can just get a list of 10 arbitrary people:
-?! open {?} {_} 10 unit close  comment Prints "list"
+comment Create the table object
+variable ({0}) is {{}} open [@@@] string TABLE_ID close close end
 
-comment Or, use filterByFormula:
-?! open {?} {_} 1 string {name} = "Kestrel Bird" close close end
+comment Create a dictionary object
+variable {1} is {+} unit end
 
-comment Actually, I got my name wrong. My last name is Lesbiantable.
-comment Let's change that.
-{/} {_} open
-  variable {} is {! end
-  
-  {< {} string name close string Sarah Lesbiantable close end
-  {#< {} open {#> #? close end
-  {}
-close end
+comment Add fields to the dictionary object
+comment This will become
+comment {
+comment 	"Age": 50,
+comment 	"Name": "Jake Smith",
+comment 	"Email": "person@hackclub.com"
+comment }
+>{} {1} string Age close 50 end
+>{} {1} string Name close string Jake Smith close end
+>{} {1} string Email close string person@hackclub.com close end
 
-comment Hrm. Let me just check that I've got my email right too:
-?! open {>} {_} open {#> #? close close end  comment Prints the entire record
+comment Create the record object
+variable <{5}> is {! {1} end 
 
-comment Actually, I've decided that High Seas is kind of overrated.
-comment Time to delete myself.
-{-} {_} open {#> #? close end
+comment Change the name field to 'Bingus Bongus'
+{< <{5}> string Name close string Bingus Bongus close end
+
+comment Insert the record into the table
+{<} ({0}) <{5}> end
+
+comment Update the name field in the local record to 'Bingus Bongus 2'
+{< <{5}> string Name close string Bingus Bongus 2 close end
+
+comment In 2 seconds, update the record on airtable
+[/] 2 function _ returns open {\} ({0}) <{5}> close close end
+
+comment In 4 seconds, delete the record on airtable
+[/] 4 function _ returns open {-} ({0}) open {#> <{5}> close close close end
+
+comment Get the table schema
+?! open {{? ({0}) close end
+
+comment Create a new dictionary
+variable ()++ is {+} unit end
+
+comment Add fields to the dictionary
+>{} ()++ string color close string greenBright close end
+>{} ()++ string icon close string check close end
+
+comment Add a new field to the table schema
+variable $$ is {{+ ({0}) string Visited close string checkbox close ()++ end
+
+comment Create a new dictionary
+variable (00) is {+} unit end
+
+comment Add fields to the dictionary
+>{} (00) string name close string Boo close end
+>{} (00) string description close string This is a field, wow! close end
+
+comment In 2 seconds, update the 'Visited' field on the table schema
+[/] 2 function _ returns open {{= ({0}) $$ (00) close close end
 ```
 
 ### Advanced functions
