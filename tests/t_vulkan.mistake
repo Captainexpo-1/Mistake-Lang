@@ -1,15 +1,33 @@
-variable [0] is [!] unit end
+comment Create the Vulkan manager
+variable $$$ is 🔥🔥 end
+
+comment Create a list for us to turn into a buffer
+variable [0] is [!] unit end 
 [<] [0] 1 1 end
 [<] [0] 2 2 end
 [<] [0] 3 3 end
 
+comment Create the other list for us to turn into a buffer
 variable [1] is [!] unit end
 [<] [1] 1 9 end
 [<] [1] 2 18 end
 [<] [1] 3 27 end
 
-?! [1] end
+comment Convert the data lists into compute buffers
+variable <#[0] is 🔥[!] 🔥+32 [0] end
+variable <#[1] is 🔥[!] 🔥+32 [1] end
 
+
+comment Create the output list
+variable >[!] is [!] unit end
+[<] >[!] 1 0 end
+[<] >[!] 2 0 end
+[<] >[!] 3 0 end
+
+comment Convert the output list into a compute buffer
+variable >#[] is 🔥[!] 🔥+32 >[!] end
+
+comment Define the compute shader function 
 variable 🔥() is function _ returns open 
 
 #version 460    
@@ -26,27 +44,21 @@ void main() {
 
 close close end
 
-variable <#[0] is 🔥[!] 🔥+32 [0] end
-variable <#[1] is 🔥[!] 🔥+32 [1] end
 
-variable >[!] is [!] unit end
-[<] >[!] 1 0 end
-[<] >[!] 2 0 end
-[<] >[!] 3 0 end
 
-variable >#[] is 🔥[!] 🔥+32 >[!] end
-
-variable $$$ is 🔥🔥 end
-
-variable %%% is [!] unit end
+comment Create the list of input buffers
 variable *** is [!] unit end
-[<] %%% 1 >#[] end
-
 [<] *** 1 <#[0] end
 [<] *** 2 <#[1] end
 
-?! open 🔥🔥() 🔥() $$$ *** %%% close end
+comment Create the list of output buffers
+variable %%% is [!] unit end
+[<] %%% 1 >#[] end
 
+comment Run the vulkan program with the buffers
+🔥🔥() 🔥() $$$ *** %%% end
+
+comment Print the result
 [/] 1 function _ returns open 
 ?! open 🔥[<] <#[0] close end
 ?! open 🔥[<] <#[1] close end

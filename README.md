@@ -775,81 +775,30 @@ comment Syntax error - we never closed the function block
 ### GPGPU
 
 Sometimes, traditional CPUs aren't enough. That's okay. Using Advanced Functions, Mistake now supports GPGPU programming through Vulkan compute shaders.
-As a simple example, let's multiply 65536 unsigned 32 bit numbers by, say, 26.
+As a simple example, let's multiply two lists together
 
 All GPGPU functions and constants start with a fire emoji, because it's blazingly fast.
 
-First, let's enumerate through all of the physical devices. Thankfully, Mistake handles setting up instances for us. We'll just pick the first one.
+First, let's create the manager object with 🔥🔥. Mistake will handle enabling all of the required extensions and such for you.
 
 ```go
-variable |=| is [<] open 
-  🔥[<=>] unitGPGPU
-Sometimes, traditional CPUs aren't enough. That's okay. Using Advanced Functions, Mistake now supports GPGPU programming through Vulkan compute shaders.
-As a simple example, let's multiply 65536 unsigned 32 bit numbers by, say, 26.
-All GPGPU functions and constants start with a fire emoji, because it's blazingly fast.
-close end
-
-comment Make sure that we have found a physical device
-!! |=|
-
-Next, we'll pick the first compute queue of that device. Right now, Mistake only supports compute queues.
-
-* 🔥<= gets a queue.
-* 🔥@ is a flag that means "compute queue".
-
-variable #<=> is [<] open
-  comment Create a list of flags
-  variable [@] is [!] end
-  [<] [@] 🔥@
-  
-  comment Query physical device for those flags
-  🔥<= |=| [@]
-close
-
-comment Make sure that we've found a queue
-!! #<=>
+variable $$$ is 🔥🔥 end
 ```
 
-Now, let's create the actual device object with 🔥🔥. Mistake will handle enabling all of the required extensions and such for you.
+Now, let's create two buffers. First, let's fill both lists with some example values.
 
 ```go
-variable <=> is 🔥🔥 #<=> end
+comment Create a list for us to turn into a buffer
+variable [0] is [!] unit end 
+[<] [0] 1 1 end
+[<] [0] 2 2 end
+[<] [0] 3 3 end
 
-comment Make sure that it was created
-!! <=>
-```
-
-Now, let's create a a buffer. First, let's fill a list with 65536 numbers. The algorithm we'll use to fill each list item is n * 48 mod 256.
-
-```go
-variable [] is [!] unit end
-open
-  variable ++ is impure function #, $ returns
-    comment Add 48 to $...
-    variable $1 is match + $ 48 cases
-      comment and if $ is now above 256, take 256 away
-      comment Note that in Mistake, ≥ compares the second argument first.
-      comment So, we're doing @ ≥ 256
-      case ≥ 256 @ then - @ 256 close
-
-      comment otherwise, everyting is OK :D
-      otherwise @ close
-    close end 
-
-    [<] [] # $1 end
-    
-    comment Determine whether we should break out of the loop.
-    match + # 1 cases
-      comment If @ ≤ 65536, we're still good.
-      case ≤ 65536 @ then ++ @ $ close
-
-      comment Otherwise, we can stop.
-      otherwise unit close
-    close end
-  close end
-
-  ++ 1 0
-close
+comment Create the other list for us to turn into a buffer
+variable [1] is [!] unit end
+[<] [1] 1 9 end
+[<] [1] 2 18 end
+[<] [1] 3 27 end
 ```
 
 Now, let's transfer our buffer over to the GPU.
@@ -860,44 +809,70 @@ Now, let's transfer our buffer over to the GPU.
 In Mistake, lists don't have to be contiguous. Therefore, the new buffer function will only consider the contiguous part of the array. Like Lua.
 
 ```go
-variable #[] is 🔥[!] 🔥+32 [] end
+variable <#[0] is 🔥[!] 🔥+32 [0] end
+variable <#[1] is 🔥[!] 🔥+32 [1] end
+```
+
+We also need to make the output buffer that our data will be stored in.
+
+```go
+comment Create the output list
+variable >[!] is [!] unit end
+[<] >[!] 1 0 end
+[<] >[!] 2 0 end
+[<] >[!] 3 0 end
+
+comment Convert the output list into a compute buffer
+variable >#[] is 🔥[!] 🔥+32 >[!] end
 ```
 
 Okay, we're almost there. Now let's write a simple GPU program with Advanced Functions:
 
 ```go
-variable #$!*?# is function
-    #version 460
-    
-    layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
-    
-    layout(set = 0, binding = 0) buffer Data {
-        uint data[];
-    } buf;
-    
-    void main() {
-        uint idx = gl_GlobalInvocationID.x;
-        buf.data[idx] *= 26;
-    }
-close
+variable 🔥() is function _ returns open 
+  #version 460    
+
+  layout(local_size_x = 1) in;
+
+  layout(set = 0, binding = 0) buffer buf_in_a { uint in_a[]; };
+  layout(set = 0, binding = 1) buffer buf_in_b { uint in_b[]; };
+  layout(set = 0, binding = 2) buffer buf_out_a { uint out_a[]; };
+
+  void main() {
+      uint idx = gl_GlobalInvocationID.x;
+      out_a[idx] = in_a[idx] * in_b[idx];
+  }
+close close end
 ```
 
-And now let's execute our program. Mistake will use sophisticated heuristical detection algorithm systems to determine the optimal workgroup parameters for your program.
+As a final step, we also need to add out input and output buffers to lists in order to run the program.
 
 ```go
-<=> #$!*?#
+comment Create the list of input buffers
+variable *** is [!] unit end
+[<] *** 1 <#[0] end
+[<] *** 2 <#[1] end
+
+comment Create the list of output buffers
+variable %%% is [!] unit end
+[<] %%% 1 >#[] end
+```
+
+And now let's execute our program using `🔥🔥()`. Mistake will use sophisticated heuristical detection algorithm systems to determine the optimal workgroup parameters for your program.
+
+```go
+🔥🔥() 🔥() $$$ *** %%% end
 ```
 
 Our buffer will now contain the data. Simply use 🔥[<] to read the buffer and turn it into a Mistake list, and we're done!
 
 ```go
-variable |[]| is 🔥[<] #[] end
-
-comment Verify that we've got everything right
-!! open = 
-  open [<] |[]| 9123 close
-  144
-close
+comment Print the result
+  [/] 1 function _ returns open 
+  ?! open 🔥[<] <#[0] close end
+  ?! open 🔥[<] <#[1] close end
+  ?! open 🔥[<] >#[] close  
+close close end
 ```
 
 ### The use operator
