@@ -680,7 +680,7 @@ class RuntimeAirtableRecord(MLType):
         return RuntimeUnit()
     
     def get_field(self, field: MLType):
-        print("GETTING FIELD", field)
+        #print("GETTING FIELD", field)
         return convert_type(self.fields.get(field, RuntimeUnit()))
     
     def to_record_dict(self) -> dict:
