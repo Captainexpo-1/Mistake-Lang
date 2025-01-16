@@ -1,5 +1,4 @@
-# :rac_wtf: The Mistake Language
-https://www.github.com/Captainexpo-1/Mistake-Lang 
+# The Mistake Language
 
 ## Overview
 
@@ -12,9 +11,9 @@ All language constructs are in the user's language because it makes programs sel
 
 These are some core data types:
 
-* function
-* string
-* number
+* `function`
+* `string`
+* `number`
 
 Users can also create classes.
 In Mistake, all numbers are double precision floating point numbers.
@@ -25,22 +24,22 @@ In Mistake, all numbers are double precision floating point numbers.
 
 Note that keywords must be translated to the user's preferred language. In this document, we assume American English.
 blah matches blah, but also Blah and bLaH. All keywords are case-insensitive in Mistake.
-[blah] also matches blah
-[blah]?  matches blah or nothing
-[blah]... matches one or more blah s in between spaces
-[blah]?... matches zero or more blahs in between spaces
-<something> is a class of character
+`[blah]` also matches blah
+`[blah]?`  matches blah or nothing
+`[blah]...` matches one or more blah s in between spaces
+`[blah]?...` matches zero or more blahs in between spaces
+`<something>` is a class of character
 For the avoidance of doubt, a character is a Unicode grapheme.
 
 ### Classes of characters
 
-* <identifier> is any character that is not whitespace or in the Latin alphabet (a to z). Identifiers must contain at least one non-numeric character to distinguish them from number literals.
-    * -67.42! is an identifier.
-    * -67.42 is a number.
-    * 67.42.128.6 is an identifier, not an invalid number.
-* <expression> is, well, an expression.
-* <string>  is a set of characters. See the specific syntax element for what the string is terminated by.
-* <lifetime> is a number that ends in s, l or u (meaning seconds, lines and a timestamp respectively).
+* `<identifier>` is any character that is not whitespace or in the Latin alphabet (a to z). Identifiers must contain at least one non-numeric character to distinguish them from number literals.
+    * `-67.42!` is an identifier.
+    * `-67.42` is a number.
+    * `67.42.128.6` is an identifier, not an invalid number.
+* `<expression>` is, well, an expression.
+* `<string>`  is a set of characters. See the specific syntax element for what the string is terminated by.
+* `<lifetime>` is a number that ends in s, l or u (meaning seconds, lines and a timestamp respectively).
     * Timestamps are given in milliseconds since Jan 1, 2020 (which is the Mistake epoch).
 * Anything else refers to another syntax element.
 
@@ -54,25 +53,33 @@ Comments end at the end of a line (at a \n).
 Comments may exist anywhere. Comment bodies may contain anything.
 Comments are simply ignored.
 
+```go
 comment <string>
+```
 
 ### Statements
 
 An entire Mistake file is just a set of statements. A top-level statement is said to be in the "imperative section".
 
+```go
 [<statement>]...?
+```
 
 #### Expression statements
 
 A statement can be an expression terminated by end. Whatever the expression returns is simply discarded.
 
+```go
 <expression> end
+```
 
 #### Variable statement
 
 public is only valid in a class statement.
 
+```go
 [public] variable <identifier> [lifetime <lifetime>]? [type <string>] is <expression> end
+```
 
 #### Jump statements
 
