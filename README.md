@@ -797,34 +797,30 @@ We can use the source code of functions to do nifty things! In Mistake, function
 variable "?" is function _
   blah blah this is invalid syntax blah
 close  comment Note that you still need close 
-
-We can introspect the source code of a function:
-
-comment Prints function _  blah ...
-comment With the newlines, of course.
-?! member " of "?"  end
+```
 
 Note that in function blocks, escape sequences don't work.
 
+```go
 variable "!" is function
   Bits &amp; bytes
 close
-
-comment Prints function Bits &amp; bytes close
-?! member " of "!" end
-
+```
 Of course, if we try execute that function, we'll get a syntax error.
 
+```go
 "!" unit end  comment Syntax error!
+```
 
 IMPORTANT: Note that imbalanced open / close blocks are compile-time syntax errors.
 
+```go
 variable /// is function
   open
 close
+```
 
 comment Syntax error - we never closed the function block
-```
 
 ### GPGPU
 
