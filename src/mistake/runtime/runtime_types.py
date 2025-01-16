@@ -74,7 +74,7 @@ class RuntimeBoolean(MLType):
 
 class Function(MLType):
     def __init__(
-        self, parameter: str, body: List[ASTNode], impure: bool = False, raw_body="", is_unparsed=False
+        self, parameter: str, body: List[ASTNode], impure: bool = True, raw_body="", is_unparsed=False
     ):
         self.param: str = parameter
         self.body: List[ASTNode] = body

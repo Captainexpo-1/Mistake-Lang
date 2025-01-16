@@ -14,13 +14,17 @@ from mistake.runtime.errors.runtime_errors import RuntimeError
 from mistake.runtime.runtime_types import *  # noqa: F403
 from mistake.tokenizer.token import Token
 from mistake.utils import to_decimal_seconds
+from enum import Enum
 
+class ContextType:
+    PURE = 0
+    IMPURE = 1
 
 class Interpreter:
     def __init__(self, unsafe_mode=False):
         self.unsafe_mode = unsafe_mode
         self.parser = Parser()
-        self.global_environment = Environment(None)
+        self.global_environment = Environment(None, context_type=ContextType.IMPURE)
         self.current_line = 1
         self.files: dict[str, List[ASTNode]] = {}
         self.tasks: List[gevent.Greenlet] = []
@@ -48,7 +52,10 @@ class Interpreter:
         self.tasks.append(task)
 
     def visit_function_application(
-        self, env: Environment, node: FunctionApplication, visit_arg=True
+        self, 
+        env: Environment, 
+        node: FunctionApplication, 
+        visit_arg: bool = True,
     ):
         function = self.visit_node(node.called, env)
         is_builtin = False
@@ -63,10 +70,19 @@ class Interpreter:
             else:
                 is_builtin = True
 
+        if function.impure and env.context_type == ContextType.PURE:
+            raise RuntimeError(
+                f"Function {function} is impure and cannot be called in a pure context"
+            )
+
         if is_builtin:
             result = function(param, env, self)
             return result
-        new_env = Environment(env)
+        
+        new_env = Environment(
+            env, 
+            context_type = ContextType.IMPURE if function.impure else ContextType.PURE
+        )
 
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
         if isinstance(function.body[0], Token):
@@ -87,7 +103,7 @@ class Interpreter:
         return get_curried(params, node.body)
 
     def visit_block(self, node: Block, env: Environment, create_env=True):
-        new_env = Environment(env) if create_env else env
+        new_env = Environment(env, context_type = ContextType.IMPURE) if create_env else env
         for statement in node.body[:-1]:
             self.visit_node(statement, new_env)
 
@@ -149,7 +165,7 @@ class Interpreter:
         # Create a new instance with the class fields
         instance_members = {name: value for name, value in class_type.members.items()}
 
-        instance_env = Environment(env)
+        instance_env = Environment(env, context_type=ContextType.IMPURE)
         for name, value in instance_members.items():
             instance_env.add_variable(
                 name,

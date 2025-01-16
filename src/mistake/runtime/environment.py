@@ -3,10 +3,11 @@ from mistake.runtime.errors.runtime_errors import LifetimeExpiredError, Variable
 from mistake.runtime.stdlib import std_funcs as stdlib
 
 class Environment:
-    def __init__(self, parent: "Environment"):
+    def __init__(self, parent: "Environment", context_type: int = 0):
         self.variables: dict[str, MLType] = {}
         self.lifetimes: dict[str, Lifetime] = {}
         self.parent = parent
+        self.context_type = context_type # 0 = pure, 1 = impure
 
     def get_variable(self, name: str, force_purity=False, line: int = 0) -> MLType:
         if name in self.variables:

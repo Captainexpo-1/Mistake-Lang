@@ -44,8 +44,6 @@ void main() {
 
 close close end
 
-
-
 comment Create the list of input buffers
 variable *** is [!] unit end
 [<] *** 1 <#[0] end
