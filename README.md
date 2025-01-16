@@ -653,7 +653,7 @@ variable 5++ is class inherits #++ has
 close end
 ```
 
-### Web Scale:tm:
+### Web Scale™
 
 Mistake supports building highly scalable web applications with green threading.
 
