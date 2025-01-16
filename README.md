@@ -939,10 +939,10 @@ variable %%% is [!] unit end
 [<] %%% 1 >#[] end
 ```
 
-And now let's execute our program using `🔥🔥()`. Mistake will use sophisticated heuristical detection algorithm systems to determine the optimal workgroup parameters for your program.
+And now let's execute our program using `🔥🔥()`. Mistake will use sophisticated heuristical detection algorithm systems to determine the optimal workgroup parameters for your program. We also must specify the thread count for the X and Y axies, we'll use (3, 0) because our lists are just 3 elements long.
 
 ```go
-🔥🔥() 🔥() $$$ *** %%% end
+🔥🔥() 🔥() 3 0 $$$ *** %%% end
 ```
 
 Our buffer will now contain the data. Simply use 🔥[<] to read the buffer and turn it into a Mistake list, and we're done!

@@ -1,7 +1,7 @@
 import kp
 import subprocess
 import numpy as np
-from typing import List
+from typing import List, Tuple
 from mistake.runtime.runtime_types import RuntimeVulkanDevice, RuntimeVulkanBuffer
 
 
@@ -32,6 +32,7 @@ def compile_source(shader_code):
 
 
 def kompute(
+    threads: Tuple[int, int],
     shader,
     raw_in: List[RuntimeVulkanBuffer],
     raw_out: List[RuntimeVulkanBuffer],
@@ -53,7 +54,7 @@ def kompute(
     params = [*in_tensors, *out_tensors]
 
     # 3. Create algorithm based on shader (supports buffers & push/spec constants)
-    workgroup = (max([len(i) for i in in_tensors]), 1, 1)
+    workgroup = (int(threads[0]), int(threads[1]), 1)
 
     # See documentation shader section for compile_source
     spirv = compile_source(shader)

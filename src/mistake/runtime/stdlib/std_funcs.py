@@ -7,7 +7,7 @@ from mistake.utils import *
 import gevent
 from mistake.runtime.stdlib.networking import *
 from mistake.runtime.stdlib.vulkan_api import *
-from typing import List
+from typing import List, Tuple
 from copy import deepcopy
 from mistake.runtime.stdlib.airtable_api import *
 import os
@@ -138,6 +138,7 @@ def new_vulkan_buffer(arg: RuntimeListType, *_):
 
 
 def actually_run_vulkan_shader(
+    threads: Tuple[int, int],
     shader_code: str,
     in_buffers: RuntimeListType,
     out_buffers: RuntimeListType,
@@ -150,7 +151,7 @@ def actually_run_vulkan_shader(
         for new, cur in zip(result, out_buffs):
             cur.data = [i for i in new]
             
-    kompute(shader_code, in_buffs, out_buffs, device, on_finish)
+    kompute(threads, shader_code, in_buffs, out_buffs, device, on_finish)
 
     return RuntimeUnit()    
 
@@ -161,9 +162,15 @@ def run_vulkan_shader(shader_func: Function, *_):
 
     return BuiltinFunction(
         lambda device, *_: BuiltinFunction(
-            lambda in_buffers, *_: BuiltinFunction(
-                lambda out_buffers, *_: actually_run_vulkan_shader(
-                    code, in_buffers, out_buffers, device
+            lambda x_threads, *_: BuiltinFunction(
+                lambda y_threads, *_: BuiltinFunction(
+                    lambda in_buffers, *_: BuiltinFunction(
+                        lambda out_buffers, *_: actually_run_vulkan_shader(
+                            (x_threads.value, y_threads.value), code, in_buffers, out_buffers, device
+                        ),
+                        imp=False,
+                    ),
+                    imp=False,
                 ),
                 imp=False,
             ),
@@ -351,6 +358,7 @@ std_funcs = {
     '{!': BuiltinFunction(lambda fields, *_: new_record(de_runtime_dictify(fields))), # create local record instance
     '{-}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record_id, *_: delete_record(table, record_id.value))), # delete record
     '{\\}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record, *_: update_record(table, record))), # update record
+    
     # Schema editing
     '{{?': BuiltinFunction(lambda table, *_: RuntimeDictType(runtime_dictify(table.table.schema().dict()))), # get schema
     '{{+': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda field, *_: BuiltinFunction(lambda field_type, *_: BuiltinFunction(lambda options, *_: create_new_field(table, field, field_type, options))))), # add field    # Record editing 

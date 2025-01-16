@@ -54,7 +54,7 @@ variable %%% is [!] unit end
 [<] %%% 1 >#[] end
 
 comment Run the vulkan program with the buffers
-🔥🔥() 🔥() $$$ *** %%% end
+🔥🔥() 🔥() $$$ 3 0 *** %%% end
 
 comment Print the result
 [/] 1 function _ returns open 
