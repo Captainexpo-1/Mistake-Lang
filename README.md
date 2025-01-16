@@ -78,71 +78,95 @@ public is only valid in a class statement.
 
 Note that jump statements are only valid in the imperative section.
 
+```go
 jump <expression> of <expression> end
+```
 
 ### Expressions
 
 #### Functions
 
+```go
 [impure] function [<identifier>]... returns <expression> close
+```
 
 #### Open blocks
 
+```go
 open [<statement>]...? <expression> close
+```
 
 #### Function application
 
+```go
 <identifier> <expression>
+```
 
-Note that ; 1 2 3 4 is ;(1)(2)(3)(4), not ;(1(2(3(4))).
+Note that `; 1 2 3 4` is `;(1)(2)(3)(4)`, not `;(1(2(3(4))))`.
 
 #### String expressions
 
 String expressions are terminated with close. This means that string expressions can't have "close" in them.
 
+```go
 string <string> close
+```
 
 Strings in Mistake can have escape sequences. For familiarity, Mistake uses a familiar syntax for escape sequences:
 
+```go
 string Bits &amp; bytes close
+```
 
 Note that Mistake strings may contain arbitrary bytes.
 
+```go
 string Bits &#0; bytes close
+```
 
 #### Match expressions
 
 The output of the match expression is stored in a special variable @.
 
+```go
 match <expression> cases [case <expression> then <expression> close]...? otherwise <expression> close
+```
 
 #### Class expressions
 
 Class bodies inherit the purity of its environment.
 
+```go
 class [inherits <identifier> has]? [<statement>]...? end
+```
 
 #### Member expressions
 
+```go
 member <identifier> of <identifier>
+```
 
 #### New expressions
 
+```go
 new <identifier>
+```
 
 #### Unit expressions
 
+```go
 unit
+```
 
 #### Number literal
 
-A number literal is a number like -6 or 420.68 or 82.
+A number literal is a number like `-6`, `420.68`, or `82`.
 
 ### Builtin functions
 
 Functions that don't return anything return unit.
 
-Operators
+#### Operators
 
 * `+`, `-`, `/`, `*` are math operations.
     * For numbers, they do what you expect.
@@ -169,7 +193,7 @@ Operators
     * And so on. For things which don't have an obvious "length", it is 0.
 * `??` formats something as a string, like `?!` does.
 
-### Other functions
+#### Other functions
 
 * `?!` prints its only argument. Impure.
 * `!` creates a mutable box.
