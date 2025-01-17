@@ -1,8 +1,87 @@
-import kp
 import subprocess
-import numpy as np
 from typing import List, Tuple
-from mistake.runtime.runtime_types import RuntimeVulkanDevice, RuntimeVulkanBuffer
+from mistake.runtime.runtime_types import MLType, RuntimeListType, BuiltinFunction, RuntimeUnit, Function
+import mistake.runtime.stdlib.std_funcs as std
+from copy import deepcopy
+
+try:
+    import kp
+    import numpy as np
+except ImportError as e:
+    raise ImportError(
+        "Mistake GPU support requires additional dependencies. Install them with:\n\n"
+        "    pip install mistake-lang[full]\n"
+    ) from e
+
+
+class RuntimeVulkanDevice(MLType):
+    def __init__(self):
+        pass
+
+    def manager(self):
+        return kp.Manager()
+
+    def to_string(self):
+        return "VulkanDevice()"
+
+class RuntimeVulkanBuffer(MLType):
+    def __init__(self, data: list, dtype: np.dtype):
+        self.data = data
+        self.dtype = dtype
+
+    def to_string(self):
+        return f"VulkanBuffer({self.data}, {repr(self.dtype)})"
+
+
+
+
+def new_vulkan_buffer(arg: RuntimeListType, *_):
+    return BuiltinFunction(
+        lambda x, *_: RuntimeVulkanBuffer(deepcopy(x).continuous(), arg), imp=False
+    )
+
+
+def actually_run_vulkan_shader(
+    threads: Tuple[int, int],
+    shader_code: str,
+    in_buffers: RuntimeListType,
+    out_buffers: RuntimeListType,
+    device: RuntimeVulkanDevice,
+):
+    in_buffs: List[RuntimeVulkanBuffer] = in_buffers.continuous()
+    out_buffs: List[RuntimeVulkanBuffer] = out_buffers.continuous()
+
+    def on_finish(result: List[List]):
+        for new, cur in zip(result, out_buffs):
+            cur.data = [i for i in new]
+            
+    kompute(threads, shader_code, in_buffs, out_buffs, device, on_finish)
+
+    return RuntimeUnit()    
+
+
+def run_vulkan_shader(shader_func: Function, *_):
+    code = shader_func.body[1:-4]
+    code = "".join(i.value for i in code)
+
+    return BuiltinFunction(
+        lambda device, *_: BuiltinFunction(
+            lambda x_threads, *_: BuiltinFunction(
+                lambda y_threads, *_: BuiltinFunction(
+                    lambda in_buffers, *_: BuiltinFunction(
+                        lambda out_buffers, *_: actually_run_vulkan_shader(
+                            (x_threads.value, y_threads.value), code, in_buffers, out_buffers, device
+                        ),
+                        imp=False,
+                    ),
+                    imp=False,
+                ),
+                imp=False,
+            ),
+            imp=False,
+        ),
+        imp=False,
+    )
 
 
 def compile_source(shader_code):
@@ -107,3 +186,13 @@ if __name__ == "__main__":
         RuntimeVulkanDevice(),
     )  # [([125,152,182], np.uint32), ([4,5,6], np.uint32)], [([0,0,0], np.uint32), ([0,0,0], np.uint32)])
     print(o)
+
+
+vulkan_std_funcs = {
+    # VULKAN
+    "🔥+32": np.uint32,
+    "🔥[!]": BuiltinFunction(lambda *args: new_vulkan_buffer(*args)),
+    "🔥🔥": RuntimeVulkanDevice(),
+    '🔥🔥()': BuiltinFunction(lambda *args: run_vulkan_shader(*args)),
+    '🔥[<]': BuiltinFunction(lambda buffer, *_: RuntimeListType([(std.get_type(i) if not isinstance(i, MLType) else i) for i in buffer.data])),
+}

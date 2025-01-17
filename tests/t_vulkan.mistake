@@ -57,8 +57,8 @@ comment Run the vulkan program with the buffers
 🔥🔥() 🔥() $$$ 3 0 *** %%% end
 
 comment Print the result
-[/] 1 function _ returns open 
+function _ returns open 
 ?! open 🔥[<] <#[0] close end
 ?! open 🔥[<] <#[1] close end
 ?! open 🔥[<] >#[] close  
-close close end
+close close unit end

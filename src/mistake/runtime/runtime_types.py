@@ -9,8 +9,6 @@ from mistake.runtime import environment as rte
 import gevent
 import socket
 import re
-import kp
-import numpy as np
 import pyairtable as airtable
 import mistake.runtime.stdlib.airtable_api as airtb
 
@@ -239,7 +237,7 @@ class RuntimeListType(MLType):
         return RuntimeUnit()
 
     def to_string(self):
-        return f"List({self.list}, {id(self)})"
+        return f"List([{', '.join([str(i) for i in self.list])}])"
 
 def convert_type(val: Any):
     if isinstance(val, dict):
@@ -620,26 +618,6 @@ class RuntimeTCPSocket(RuntimeSocket):
 
     def to_string(self):
         return f"TCPSocket(hostname={self.hostname}, port={self.port})"
-
-
-class RuntimeVulkanBuffer(MLType):
-    def __init__(self, data: list, dtype: np.dtype):
-        self.data = data
-        self.dtype = dtype
-
-    def to_string(self):
-        return f"VulkanBuffer({self.data}, {repr(self.dtype)})"
-
-
-class RuntimeVulkanDevice(MLType):
-    def __init__(self):
-        pass
-
-    def manager(self):
-        return kp.Manager()
-
-    def to_string(self):
-        return "VulkanDevice()"
 
 
 # AIRTABLE

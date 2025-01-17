@@ -6,7 +6,8 @@ from mistake.parser.ast import *
 from mistake.utils import *
 import gevent
 from mistake.runtime.stdlib.networking import *
-from mistake.runtime.stdlib.vulkan_api import *
+if RUNTIME_USE_VULKAN:
+    import mistake.runtime.stdlib.vulkan_api as vstd
 from typing import List, Tuple
 from copy import deepcopy
 from mistake.runtime.stdlib.airtable_api import *
@@ -129,56 +130,6 @@ def assert_true(arg: MLType, *_):
     if not is_truthy(arg):
         raise AssertionError("Assertion failed")
     return RuntimeUnit()
-
-
-def new_vulkan_buffer(arg: RuntimeListType, *_):
-    return BuiltinFunction(
-        lambda x, *_: RuntimeVulkanBuffer(deepcopy(x).continuous(), arg), imp=False
-    )
-
-
-def actually_run_vulkan_shader(
-    threads: Tuple[int, int],
-    shader_code: str,
-    in_buffers: RuntimeListType,
-    out_buffers: RuntimeListType,
-    device: RuntimeVulkanDevice,
-):
-    in_buffs: List[RuntimeVulkanBuffer] = in_buffers.continuous()
-    out_buffs: List[RuntimeVulkanBuffer] = out_buffers.continuous()
-
-    def on_finish(result: List[List]):
-        for new, cur in zip(result, out_buffs):
-            cur.data = [i for i in new]
-            
-    kompute(threads, shader_code, in_buffs, out_buffs, device, on_finish)
-
-    return RuntimeUnit()    
-
-
-def run_vulkan_shader(shader_func: Function, *_):
-    code = shader_func.body[1:-4]
-    code = "".join(i.value for i in code)
-
-    return BuiltinFunction(
-        lambda device, *_: BuiltinFunction(
-            lambda x_threads, *_: BuiltinFunction(
-                lambda y_threads, *_: BuiltinFunction(
-                    lambda in_buffers, *_: BuiltinFunction(
-                        lambda out_buffers, *_: actually_run_vulkan_shader(
-                            (x_threads.value, y_threads.value), code, in_buffers, out_buffers, device
-                        ),
-                        imp=False,
-                    ),
-                    imp=False,
-                ),
-                imp=False,
-            ),
-            imp=False,
-        ),
-        imp=False,
-    )
-
 
 
 std_funcs = {
@@ -342,13 +293,7 @@ std_funcs = {
     
     # MISC HELPERS
     '>"<': BuiltinFunction(lambda arg, *_: RuntimeString(arg.value.strip()), imp=False),
-    # VULKAN
-    "🔥+32": np.uint32,
-    "🔥[!]": BuiltinFunction(lambda *args: new_vulkan_buffer(*args)),
-    "🔥🔥": RuntimeVulkanDevice(),
-    '🔥🔥()': BuiltinFunction(lambda *args: run_vulkan_shader(*args)),
-    '🔥[<]': BuiltinFunction(lambda buffer, *_: RuntimeListType([(get_type(i) if not isinstance(i, MLType) else i) for i in buffer.data])),
-    
+
     # AIRTABLE
     '{>!<}': BuiltinFunction(lambda arg, *_: create_airtable_api_instance(arg)), # create airtable api
     '{!}': BuiltinFunction(lambda arg, *_: create_base(arg)), # create base
@@ -377,3 +322,6 @@ std_funcs = {
     # ENV
     '[@@@]': BuiltinFunction(lambda key, *_: RuntimeString(os.getenv(key.value))),
 }
+
+if RUNTIME_USE_VULKAN:
+    std_funcs.update(vstd.vulkan_std_funcs)
