@@ -260,24 +260,31 @@ class Interpreter:
         if self.current_line > len(self.ast):
             raise RuntimeError(f"Line {line} is out of bounds in file {filename}")
 
-    def execute(self, ast: List[ASTNode], filename: str):
+    def execute(self, ast: List[ASTNode], filename: str, standalone = True) -> List[MLType]:
         self.ast = ast
         self.current_line = 1
         self.lines_executed = 1
         self.files[filename] = ast
-
+        
+        result: List[MLType] = []
+        
         while self.current_line <= len(self.ast):
             node = self.ast[self.current_line - 1]
             try:
-                result = self.visit_node(node, self.global_environment, imperative=True)
+                result.append(
+                    self.visit_node(node, self.global_environment, imperative=True)
+                )
                 self.run_all_tasks()
 
             except RuntimeError as e:
-                if self.unsafe_mode:
+                if self.unsafe_mode and not standalone:
                     raise e
-                print(f"Error at line {self.current_line}, {e}")
-                return 1
+                if not standalone:
+                    print(f"Error at line {self.current_line}, {e}")
+                return result + [e]
             self.current_line += 1
             self.lines_executed += 1
 
         gevent.joinall(self.tasks)
+        
+        return result
