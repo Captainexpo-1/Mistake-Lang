@@ -17,7 +17,6 @@ comment Convert the data lists into compute buffers
 variable <#[0] is 🔥[!] 🔥+32 [0] end
 variable <#[1] is 🔥[!] 🔥+32 [1] end
 
-
 comment Create the output list
 variable >[!] is [!] unit end
 [<] >[!] 1 0 end
@@ -39,7 +38,7 @@ layout(set = 0, binding = 2) buffer buf_out_a { uint out_a[]; };
 
 void main() {
     uint idx = gl_GlobalInvocationID.x;
-    out_a[idx] = in_a[idx] * in_b[idx];
+    out_a[idx] = in_a[idx] + in_b[idx];
 }
 
 close close end
@@ -53,12 +52,12 @@ comment Create the list of output buffers
 variable %%% is [!] unit end
 [<] %%% 1 >#[] end
 
+
 comment Run the vulkan program with the buffers
 🔥🔥() 🔥() $$$ 3 0 *** %%% end
 
 comment Print the result
-function _ returns open 
+
 ?! open 🔥[<] <#[0] close end
 ?! open 🔥[<] <#[1] close end
-?! open 🔥[<] >#[] close  
-close close unit end
+?! open 🔥[<] >#[] close end

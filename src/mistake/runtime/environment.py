@@ -23,7 +23,7 @@ class Environment:
         if name in stdlib.std_funcs:
             return stdlib.std_funcs[name]
 
-        raise VariableNotFoundError(f"Variable {name} not found in {self}")
+        raise VariableNotFoundError(f"Variable {name} not found.")
 
     def add_variable(self, name: str, value: MLType, lifetime: Lifetime, ignore_duplicate=False):
         if name == "_": return

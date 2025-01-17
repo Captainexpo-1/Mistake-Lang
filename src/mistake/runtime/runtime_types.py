@@ -237,7 +237,7 @@ class RuntimeListType(MLType):
         return RuntimeUnit()
 
     def to_string(self):
-        return f"List([{', '.join([str(i) for i in self.list])}])"
+        return f"List([{', '.join([str(i) for i in self.list.values()])}])"
 
 def convert_type(val: Any):
     if isinstance(val, dict):

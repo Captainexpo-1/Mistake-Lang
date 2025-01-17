@@ -9,12 +9,28 @@ from dotenv import load_dotenv
 
 ENV_PATH = None
 
+def print_help():
+    print("Usage: mistake-lang <filename> [--time] [--tokens] [--ast] [--no-exe] [--env <path>] [--vulkan]")
+
 def get_args() -> Tuple[str, List[str]]:
+    if "--help" in sys.argv:
+        print_help()
+        sys.exit(0)
+    
     if len(sys.argv) < 2:
-        print("Usage: python main.py <file>")
+        print_help()
+        sys.exit(1)
+
+    if not os.path.isfile(sys.argv[1]):
+        print(f"File '{sys.argv[1]}' not found")
         sys.exit(1)
 
     return sys.argv[1], sys.argv[2:]
+
+def run_script(program: str, lex=Lexer(),parser=Parser(),rt=Interpreter(),standalone=True) -> List:
+    tokens = lex.tokenize(program)
+    ast = parser.parse(tokens)
+    return rt.execute(ast, standalone=standalone)
 
 def main():
     global ENV_PATH
