@@ -71,7 +71,10 @@ def main():
 
         if "--no-exe" not in args:
             runtime.execute(ast, filename=fname)
-
+        
+        if "--end-env" in args:
+            print(runtime.global_environment)
+        
         if p_time:
             print(f"Total runtime: {time.time() - start} seconds")
 

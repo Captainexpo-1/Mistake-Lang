@@ -97,8 +97,8 @@ class Interpreter:
         # curry the function
         def get_curried(params, body):
             if len(params) == 1:
-                return Function(params[0], body)
-            return Function(params[0], [get_curried(params[1:], body)], is_unparsed=node.is_unparsed)
+                return Function(params[0], body, is_unparsed=node.is_unparsed, raw_body=node.raw_body)
+            return Function(params[0], [get_curried(params[1:], body)], is_unparsed=node.is_unparsed, raw_body=node.raw_body)
 
         return get_curried(params, node.body)
 
@@ -178,6 +178,13 @@ class Interpreter:
     def visit_member_access(self, node: MemberAccess, env: Environment):
         # Lookup the instance in the environment
         instance = self.visit_node(node.obj, env)
+        
+        if node.member == "\"":
+            print("GETTING SOURCE")
+            if isinstance(instance, Function):
+                print(instance)
+                return RuntimeString(instance.raw_body)
+            
         if not isinstance(instance, ClassInstance):
             raise RuntimeError(f"'{node.obj}' is not a valid instance.")
 
