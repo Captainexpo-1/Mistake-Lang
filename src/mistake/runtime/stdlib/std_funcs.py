@@ -4,7 +4,7 @@ from mistake.runtime.runtime_types import *
 import mistake.runtime.interpreter as interpreter
 from mistake.parser.ast import *
 from mistake.utils import *
-import gevent
+from gevent import spawn
 from mistake.runtime.stdlib.networking import *
 if RUNTIME_USE_VULKAN:
     import mistake.runtime.stdlib.vulkan_api as vstd

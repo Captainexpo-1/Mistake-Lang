@@ -1,16 +1,23 @@
-from typing import List, Optional, Any
-from mistake.parser.ast import *
-from enum import Enum
-from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
-from datetime import datetime
 import time
-from mistake.utils import to_decimal_seconds
-from mistake.runtime import environment as rte
-import gevent
 import socket
 import re
-import pyairtable as airtable
-import mistake.runtime.stdlib.airtable_api as airtb
+from datetime import datetime
+
+from enum import Enum
+import gevent
+
+from typing import List, Optional, Any
+
+from mistake.utils import to_decimal_seconds
+
+from mistake.parser.ast import ASTNode
+
+from mistake.runtime import environment as rte
+
+from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
+
+
+
 
 class MLType:
     def to_string(self):
@@ -625,18 +632,19 @@ class RuntimeTCPSocket(RuntimeSocket):
 
 class RuntimeAirtableBase(MLCallable):
     def __init__(self, base):
-        self.base: airtable.Base = base
+        self.base = base
 
     def __call__(self, table_name: RuntimeString, env: 'rte.Environment', runtime) -> MLType:
+        from mistake.runtime.stdlib.airtable_api import create_table
         # get table instance
-        return airtb.create_table(self, table_name.value)
+        return create_table(self, table_name.value)
     
     def to_string(self):
         return f"AirtableBase({self.base.name}, {self.base.id})"
     
 class RuntimeAirtableTable(MLType):
-    def __init__(self, table: airtable.Table):
-        self.table: airtable.Table = table
+    def __init__(self, table):
+        self.table = table
         
     def to_string(self):
         return f"AirtableTable({self.table.id}, {self.table.base.id})"
