@@ -7,6 +7,8 @@ from mistake.runtime.interpreter import Interpreter
 from typing import Tuple, List
 from dotenv import load_dotenv
 import argparse
+import mistake.localize as localize
+import json
 
 ENV_PATH = None
 
@@ -24,7 +26,8 @@ def get_args() -> Tuple[str, List[str]]:
     parser.add_argument('--vulkan', action='store_true', help='Enable Vulkan support')
     parser.add_argument('--unsafe', action='store_true', help='Enable unsafe mode')
     parser.add_argument('--end-env', action='store_true', help='Print the global environment at the end')
-
+    parser.add_argument('--language', type=str, help='Language for localization')
+    
     args = parser.parse_args()
 
     if not os.path.isfile(args.filename):
@@ -38,14 +41,36 @@ def run_script(program: str, lex=Lexer(), parser=Parser(), rt=Interpreter(), sta
     ast = parser.parse(tokens)
     return rt.execute(ast, standalone=standalone)
 
+def get_system_language() -> str:
+    return os.getenv('LANG', 'en').split('.')[0]
+
 def main():
     global ENV_PATH
     args = get_args()
     p_time = args.time
 
+    cur_path = os.path.dirname(os.path.abspath(__file__))
+
+
     lexer = Lexer()
     parser = Parser()
     runtime = Interpreter(args.unsafe)
+
+    lang = args.language if args.language is not None else get_system_language()
+    file = os.path.join(cur_path, f"./tokenizer/.localizations/{lang}.json")
+    if not os.path.isfile(file):
+        print(f"Localization file for {lang} not found, generating new translation.")
+        localize.translate(lang)
+        
+    with open(file, "r", encoding="utf-8") as f:
+        translate = json.loads(f.read())
+        trans, keywords = translate.keys(), translate.values()
+        n = {}
+        for t, kw in zip(trans, keywords):
+            n[t] = lexer.keywords[kw]
+                
+        lexer.keywords = n
+            
 
     ENV_PATH = args.env
     if ENV_PATH is not None: 

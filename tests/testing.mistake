@@ -1,8 +1,2 @@
-variable ^ is function _ returns open
-
-This is a test function yipee
-
-close close end
-
-
-variable %% is member " of ^ end
+variable && is string Hello World! close end
+?! && end

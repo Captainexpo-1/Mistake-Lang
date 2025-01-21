@@ -137,3 +137,4 @@ cython_debug/
 
 # Other
 .vscode
+.localizations/

@@ -5,52 +5,53 @@ from mistake.parser.errors.parser_errors import *
 import re
 import html
 
-
+keywords_en: dict[str, TokenType] = {
+    "variable": TokenType.KW_VARIABLE,
+    "is": TokenType.KW_IS,
+    "open": TokenType.KW_OPEN,
+    "close": TokenType.KW_CLOSE,
+    "impure": TokenType.KW_IMPURE,
+    "function": TokenType.KW_FUNCTION,
+    "end": TokenType.KW_END,
+    "returns": TokenType.KW_RETURNS,
+    "string": TokenType.KW_STRING,
+    "lifetime": TokenType.KW_LIFETIME,
+    "true": TokenType.KW_TRUE,
+    "false": TokenType.KW_FALSE,
+    "public": TokenType.KW_PUBLIC,
+    "randomize": TokenType.KW_RANDOMIZE,
+    "type": TokenType.KW_TYPE,
+    "number": TokenType.TYPE_NUMBER,
+    "boolean": TokenType.TYPE_BOOLEAN,
+    "unit": TokenType.KW_UNIT,
+    "jump": TokenType.KW_JUMP,
+    "new": TokenType.KW_NEW,
+    "class": TokenType.KW_CLASS,
+    "inherits": TokenType.KW_INHERITS,
+    "has": TokenType.KW_HAS,
+    "match": TokenType.KW_MATCH,
+    "case": TokenType.KW_CASE,
+    "cases": TokenType.KW_CASES,
+    "otherwise": TokenType.KW_OTHERWISE,
+    "member": TokenType.KW_MEMBER,
+    "then": TokenType.KW_THEN,
+    "of": TokenType.KW_OF,
+    "do": TokenType.KW_DO,
+    "use": TokenType.KW_USE,
+    "from": TokenType.KW_FROM,
+    "with": TokenType.KW_WITH,
+    "comment": TokenType.EX_COMMENT,
+    "string": TokenType.EX_STRING,    
+}
 class Lexer:
-    keywords: dict[str, TokenType] = {
-        "variable": TokenType.KW_VARIABLE,
-        "is": TokenType.KW_IS,
-        "open": TokenType.KW_OPEN,
-        "close": TokenType.KW_CLOSE,
-        "impure": TokenType.KW_IMPURE,
-        "function": TokenType.KW_FUNCTION,
-        "end": TokenType.KW_END,
-        "returns": TokenType.KW_RETURNS,
-        "string": TokenType.KW_STRING,
-        "lifetime": TokenType.KW_LIFETIME,
-        "true": TokenType.KW_TRUE,
-        "false": TokenType.KW_FALSE,
-        "public": TokenType.KW_PUBLIC,
-        "randomize": TokenType.KW_RANDOMIZE,
-        "type": TokenType.KW_TYPE,
-        "number": TokenType.TYPE_NUMBER,
-        "boolean": TokenType.TYPE_BOOLEAN,
-        "unit": TokenType.KW_UNIT,
-        "jump": TokenType.KW_JUMP,
-        "new": TokenType.KW_NEW,
-        "class": TokenType.KW_CLASS,
-        "inherits": TokenType.KW_INHERITS,
-        "has": TokenType.KW_HAS,
-        "match": TokenType.KW_MATCH,
-        "case": TokenType.KW_CASE,
-        "cases": TokenType.KW_CASES,
-        "otherwise": TokenType.KW_OTHERWISE,
-        "member": TokenType.KW_MEMBER,
-        "then": TokenType.KW_THEN,
-        "of": TokenType.KW_OF,
-        "do": TokenType.KW_DO,
-        "use": TokenType.KW_USE,
-        "from": TokenType.KW_FROM,
-        "with": TokenType.KW_WITH,
-    }
-
-    def __init__(self):
+    def __init__(self, keywords = keywords_en):
         self.errors: List[ParserError] = []
         self.tokens: List[Token] = []
         self.code = ""
         self.current_token = None
         self.current_position = 0
         self.current_line = 1
+        self.keywords = keywords
 
     def add_token(self, token: Token):
         if token.type == TokenType.SYM_WHITESPACE and token.value == "":
@@ -67,6 +68,8 @@ class Lexer:
         return contains_non_number
 
     def get_token(self, s: str) -> TokenType:
+        if s in self.keywords:
+            return self.keywords[s]
         if re.fullmatch(r"\-?[0-9]+(\.[0-9]+)?", s) != None:
             return TokenType.SYM_NUMBER
         if s[:-1].isdigit() and s[-1] in "lust":
@@ -74,7 +77,7 @@ class Lexer:
         if self.is_identifier(s):
             return TokenType.SYM_IDENTIFIER
 
-        return Lexer.keywords.get(s, TokenType.ERROR)
+        return TokenType.ERROR
 
     def skip_whitespace(self):
         ws = ""
@@ -126,17 +129,17 @@ class Lexer:
 
             t = self.code[start : self.current_position]
 
-            if t == "comment":
+            token_type = self.get_token(t)
+            if token_type == TokenType.EX_COMMENT:
                 self.skip_line()
                 continue
 
-            if t == "string":
+            if token_type == TokenType.EX_STRING:
                 self.add_token(
                     Token(TokenType.SYM_STRING, self.get_string(), self.current_line)
                 )
                 continue
 
-            token_type = self.get_token(t)
             if token_type == TokenType.ERROR:
                 self.add_token(Token(TokenType.ERROR, t, self.current_line))
             else:

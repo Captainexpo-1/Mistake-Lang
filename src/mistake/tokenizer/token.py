@@ -54,6 +54,10 @@ class TokenType(Enum):
     KW_USE = 44
     KW_FROM = 45
     KW_WITH = 46
+    
+    EX_COMMENT = 47
+    EX_STRING = 48
+    
     SYM_EOF = 100
 
 
