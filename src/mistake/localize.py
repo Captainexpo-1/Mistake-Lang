@@ -4,11 +4,9 @@ import json
 from typing import List
 from mistake.tokenizer.lexer import keywords_en
 
-# Google Translate API endpoint (unofficial)
 GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
 
 def translate_keyword(keyword: str, dest_language: str) -> str:
-    """Translate a single keyword using a direct request to Google Translate API."""
     params = {
         "client": "gtx",
         "sl": "en",  # Source language (English)
@@ -20,12 +18,11 @@ def translate_keyword(keyword: str, dest_language: str) -> str:
     response = requests.get(GOOGLE_TRANSLATE_URL, params=params)
     if response.status_code != 200:
         print(f"Failed to translate {keyword}. HTTP {response.status_code}")
-        return keyword  # Return the original word on failure
-    translated_text = response.json()[0][0][0]  # Extract translated text
+        return keyword
+    translated_text = response.json()[0][0][0]
     return translated_text
 
 def translate_keywords(keywords: List[str], dest_language: str) -> List[str]:
-    """Translate a list of keywords using manual HTTP requests."""
     result = []
     for keyword in keywords:
         print(f"Translating {keyword}...")
@@ -34,8 +31,6 @@ def translate_keywords(keywords: List[str], dest_language: str) -> List[str]:
     return result
 
 def translate(dest_language: str):
-    """Translate all keywords and save them to a JSON file."""
-
     localizations_path = os.path.join(os.path.dirname(__file__), f"./tokenizer/.localizations/{dest_language}.json")
     os.makedirs(os.path.dirname(localizations_path), exist_ok=True)
 
