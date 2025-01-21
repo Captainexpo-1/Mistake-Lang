@@ -39,6 +39,10 @@ def get_args() -> Tuple[str, List[str]]:
 def run_script(program: str, lex=Lexer(), parser=Parser(), rt=Interpreter(), standalone=True) -> List:
     tokens = lex.tokenize(program)
     ast = parser.parse(tokens)
+    if parser.errors:
+        for error in parser.errors:
+            print(error)
+        return []
     return rt.execute(ast, standalone=standalone)
 
 def get_system_language() -> str:
@@ -96,6 +100,11 @@ def main():
         ast = parser.parse(tokens)
         if p_time:
             print("Parsed:", time.process_time())
+
+        if parser.errors:
+            for error in parser.errors:
+                print(error)
+            return
 
         if args.ast:
             open("ast.txt", "w").write(str(ast))

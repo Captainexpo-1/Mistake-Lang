@@ -1,5 +1,5 @@
 from mistake.parser.ast import *
-from mistake.parser.errors.parser_errors import UnexpectedTokenError
+from mistake.parser.errors.parser_errors import UnexpectedTokenError, ParserError
 from typing import List
 
 from mistake.tokenizer.lexer import Lexer
@@ -23,6 +23,7 @@ class Parser:
         self.tokens = []
         self.position = 0
         self.current_token = None
+        self.errors: List[ParserError] = []
 
     def parse(self, tokens: List[Token]) -> ASTNode:
         self.tokens = tokens
@@ -32,10 +33,19 @@ class Parser:
 
         return self.parse_program()
 
+    def synchronize(self):
+        while self.current_token.type not in self.breaking_tokens:
+            self.advance()
+
     def parse_program(self):
         nodes = []
         while self.current_token.type != TokenType.SYM_EOF:
-            nodes.append(self.parse_node())
+            try:
+                nodes.append(self.parse_node())
+            except ParserError as e:
+                self.errors.append(e)
+                self.advance()
+                self.synchronize()
         return nodes
 
     def eat(self, token_type: TokenType):
@@ -45,7 +55,7 @@ class Parser:
             return self.tokens[start]
         else:
             raise UnexpectedTokenError(
-                f"Unexpected token {self.current_token} at position {self.position}, expected {token_type}"
+                f"Unexpected token {self.current_token} at line {self.current_token.line}, expected {token_type}"
             )
 
     def advance(self, allow_ws=False):
@@ -125,7 +135,7 @@ class Parser:
                 val = self.parse_with()
             case _:
                 raise UnexpectedTokenError(
-                    f"Unexpected token {self.current_token} at position {self.position}"
+                    f"Unexpected token {self.current_token} at line {self.current_token.line}"
                 )
 
         return self.parse_single_expr(
