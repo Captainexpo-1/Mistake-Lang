@@ -30,7 +30,7 @@ dependencies = [
     "requests==2.32.3",
     "urllib3==2.3.0",
     "zope.event==5.0",
-    "zope.interface==7.2"
+    "zope.interface==7.2",
     "googletrans==4.0.2"
 ]
 
