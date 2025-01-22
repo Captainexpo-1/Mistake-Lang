@@ -1,4 +1,3 @@
-import time
 from mistake.runtime.runtime_types import MLType, Lifetime
 
 from mistake.runtime.errors.runtime_errors import LifetimeExpiredError, VariableNotFoundError, VariableAlreadyDefinedError
@@ -12,7 +11,7 @@ class Environment:
         self.parent = parent
         self.context_type = context_type # 0 = pure, 1 = impure
 
-    def get_variable(self, name: str, force_purity=False, line: int = 0) -> MLType:
+    def get_variable(self, name: str, line: int = 0) -> MLType:
         if name in self.variables:
             if self.lifetimes[name].is_expired(line):
                 del self.variables[name]
@@ -20,7 +19,7 @@ class Environment:
                 raise LifetimeExpiredError(f"Lifetime for variable {name} has expired")
             return self.variables[name]
 
-        if self.parent and not force_purity:
+        if self.parent and self.context_type == 1:
             return self.parent.get_variable(name)
 
         if name in stdlib.std_funcs:
