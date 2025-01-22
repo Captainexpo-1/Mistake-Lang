@@ -3,6 +3,7 @@ import os
 import json
 from typing import List
 from mistake.tokenizer.lexer import keywords_en
+from concurrent.futures import ThreadPoolExecutor
 
 GOOGLE_TRANSLATE_URL = "https://translate.googleapis.com/translate_a/single"
 
@@ -22,13 +23,28 @@ def translate_keyword(keyword: str, dest_language: str) -> str:
     translated_text = response.json()[0][0][0]
     return translated_text
 
+
 def translate_keywords(keywords: List[str], dest_language: str) -> List[str]:
-    result = []
-    for keyword in keywords:
+    def translate_single_keyword(keyword):
         print(f"Translating {keyword}...")
-        translated_text = translate_keyword(keyword, dest_language)
-        result.append(translated_text)
+        return translate_keyword(keyword, dest_language)
+
+    with ThreadPoolExecutor() as executor:
+        result = list(executor.map(translate_single_keyword, keywords))
+        
     return result
+
+def purge_localizations():
+    localizations_path = os.path.join(os.path.dirname(__file__), f"./tokenizer/.localizations")
+    if os.path.exists(localizations_path):
+        for file in os.listdir(localizations_path):
+            file_path = os.path.join(localizations_path, file)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        print(f"Purged all localization files in {localizations_path}")
+        os.rmdir(localizations_path)
+    else:
+        print(f"No localization files found in {localizations_path}")
 
 def translate(dest_language: str):
     localizations_path = os.path.join(os.path.dirname(__file__), f"./tokenizer/.localizations/{dest_language}.json")

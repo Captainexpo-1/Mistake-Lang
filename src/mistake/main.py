@@ -26,7 +26,7 @@ def get_args() -> Tuple[str, List[str]]:
     parser.add_argument('--vulkan', action='store_true', help='Enable Vulkan support')
     parser.add_argument('--unsafe', action='store_true', help='Enable unsafe mode')
     parser.add_argument('--end-env', action='store_true', help='Print the global environment at the end')
-    parser.add_argument('--language', type=str, help='Language for localization')
+    parser.add_argument('--language', type=str, help='Language for localization, use lang = "purge" to purge all localizations')
     
     args = parser.parse_args()
 
@@ -61,6 +61,9 @@ def main():
     runtime = Interpreter(args.unsafe)
 
     lang = args.language if args.language is not None else get_system_language()
+    if lang == "purge":
+        localize.purge_localizations()
+        return
     file = os.path.join(cur_path, f"./tokenizer/.localizations/{lang}.json")
     if not os.path.isfile(file):
         print(f"Localization file for {lang} not found, generating new translation.")
