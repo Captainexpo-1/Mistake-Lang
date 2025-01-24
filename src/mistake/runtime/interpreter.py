@@ -83,11 +83,14 @@ class Interpreter:
             env, 
             context_type = ContextType.IMPURE if function.impure else ContextType.PURE
         )
+        if function.captured_env is not None: 
+            new_env.absorb_environment(function.captured_env)
 
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
         if isinstance(function.body[0], Token):
             function.is_unparsed = False
             function.body = self.parser.parse(function.body)
+
 
         return self.visit_block(function.body[0], new_env, create_env=False)
 
@@ -153,7 +156,6 @@ class Interpreter:
         pmembers.update(node.public_members)
 
         new_class = ClassType(members, pmembers)
-        env.add_variable(new_class, Lifetime(LifetimeType.INFINITE, 0))
         return new_class
 
     def visit_class_instancing(self, node: ClassInstancing, env: Environment):
@@ -167,9 +169,12 @@ class Interpreter:
 
         instance_env = Environment(env, context_type=ContextType.IMPURE)
         for name, value in instance_members.items():
+            v = self.visit_node(value, instance_env)
+            if isinstance(v, Function):
+                v.captured_env = instance_env
             instance_env.add_variable(
                 name,
-                self.visit_node(value, instance_env),
+                v,
                 Lifetime(LifetimeType.INFINITE, 0),
             )  # HACK: No lifetime handling for instance members because that's stupid
 
@@ -180,9 +185,7 @@ class Interpreter:
         instance = self.visit_node(node.obj, env)
         
         if node.member == "\"":
-            print("GETTING SOURCE")
             if isinstance(instance, Function):
-                print(instance)
                 return RuntimeString(instance.raw_body)
             
         if not isinstance(instance, ClassInstance):
@@ -195,7 +198,9 @@ class Interpreter:
             raise RuntimeError(
                 f"'{node.member}' is not a public field of '{node.obj}'."
             )
-        return ClassMemberReference(instance, node.member)
+
+        return instance.environment.get_variable(node.member, line=self.lines_executed)
+        
 
     def visit_match(self, node: Match, env: Environment):
         expr = self.visit_node(node.expr, env)
@@ -236,8 +241,6 @@ class Interpreter:
             return self.visit_class_instancing(node, env)
         if isinstance(node, MemberAccess):
             return self.visit_member_access(node, env)
-        if isinstance(node, ClassMemberReference):
-            return node.get()
         if isinstance(node, Match):
             return self.visit_match(node, env)
         if isinstance(node, JumpStatement):

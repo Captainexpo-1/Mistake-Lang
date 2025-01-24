@@ -40,6 +40,10 @@ class Environment:
             raise TypeError(f"{lifetime} must be of type Lifetime")
         self.lifetimes[name] = lifetime
 
+    def absorb_environment(self, env: "Environment"):
+        for var in env.variables:
+            self.add_variable(var, env.get_variable(var), env.lifetimes[var], ignore_duplicate=True)
+
     def __repr__(self):
         out = "Environment(\n"
         for var in self.variables:

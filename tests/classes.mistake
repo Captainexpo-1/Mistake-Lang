@@ -1,0 +1,14 @@
+variable #++ is class has
+  public variable [#] is ! 0 end
+
+  public variable ++ is impure function _ returns open
+   !< [#] open + open !? [#] close 1 close  
+  close close end
+close end
+
+variable #1 is new #++ end
+
+open member ++ of #1 close unit end
+
+
+?! open member [#] of #1 close end

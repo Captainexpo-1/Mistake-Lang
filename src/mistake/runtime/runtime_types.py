@@ -13,6 +13,7 @@ from mistake.utils import to_decimal_seconds
 from mistake.parser.ast import ASTNode
 
 from mistake.runtime import environment as rte
+from mistake.runtime import interpreter as rt
 
 from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
 
@@ -79,13 +80,14 @@ class RuntimeBoolean(MLType):
 
 class Function(MLType):
     def __init__(
-        self, parameter: str, body: List[ASTNode], impure: bool = True, raw_body="", is_unparsed=False
+        self, parameter: str, body: List[ASTNode], impure: bool = True, raw_body="", is_unparsed=False, captured_env: 'rte.Environment'=None
     ):
         self.param: str = parameter
         self.body: List[ASTNode] = body
         self.impure: bool = impure
         self.raw_body: str = raw_body
         self.is_unparsed = is_unparsed
+        self.captured_env = captured_env
 
     def to_string(self):
         return (
@@ -116,25 +118,7 @@ class ClassInstance(MLType):
         # print("CLASS INSTANCE ENVIRONMENT", self.environment)
 
     def to_string(self):
-        return f"InstanceOf({self.class_type.name}, fields={self.members})"
-
-
-class ClassMemberReference(MLType):
-    def __init__(self, instance: ClassInstance, member_name: str):
-        self.instance = instance
-        self.member_name = member_name
-
-    def to_string(self):
-        return f"ClassMemberReference({self.instance}, {self.member_name})"
-
-    def get(self):
-        # Get the actual value from the instance
-        return self.instance.members[self.member_name]
-
-    def set(self, value: MLType):
-        # Update the instance's member
-        self.instance.members[self.member_name] = value
-        return RuntimeUnit()
+        return f"ClassInstance(fields={self.members})"
 
 
 class BuiltinFunction(MLType):
@@ -212,7 +196,7 @@ class RuntimeMutableBox(MLType):
         self.value = value
 
     def to_string(self):
-        return f"MutableBox({self.value})"
+        return f"MutableBox({self.value}, {id(self)})"
 
     def write(self, value):
         self.value = value

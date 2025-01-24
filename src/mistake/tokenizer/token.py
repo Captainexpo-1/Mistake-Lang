@@ -79,7 +79,9 @@ class Token:
         self.line = line
 
     def __str__(self) -> str:
-        return f'Token({self.type}: "{self.value}")'
+        v = self.value
+        v = v.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+        return f'Token({self.type}: "{v}")'
 
     def __repr__(self) -> str:
         return str(self)

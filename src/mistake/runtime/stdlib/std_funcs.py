@@ -47,8 +47,6 @@ def get_cur_line(rt: "interpreter.Interpreter"):
 
 def write_to_mut_box(box: RuntimeMutableBox, *_):
     if not isinstance(box, RuntimeMutableBox):
-        if isinstance(box, ClassMemberReference):
-            return BuiltinFunction(lambda arg, *_: box.set(arg), True)
         raise RuntimeTypeError(f"Expected mutable box, got {type(box)}")
     return BuiltinFunction(lambda arg, *_: box.write(arg), True)
 
