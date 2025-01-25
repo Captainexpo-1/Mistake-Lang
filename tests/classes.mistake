@@ -1,14 +1,17 @@
 variable #++ is class has
-  public variable [#] is ! 0 end
+  	comment Create the counter
+	public variable [#] is ! 0 end
 
-  public variable ++ is impure function _ returns open
-   !< [#] open + open !? [#] close 1 close  
-  close close end
+	comment Increment the counter
+  	public variable ++ is impure function _ returns open
+   		!< [#] open + open !? [#] close 1 close  
+  	close close end
 close end
 
+comment Create an instance of the class
 variable #1 is new #++ end
 
+comment Increment the counter
 open member ++ of #1 close unit end
-
 
 ?! open member [#] of #1 close end

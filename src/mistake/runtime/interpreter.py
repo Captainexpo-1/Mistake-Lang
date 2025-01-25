@@ -9,16 +9,12 @@ from typing import List
 from mistake import runner
 from mistake.parser.ast import *
 from mistake.parser.parser import Parser
-from mistake.runtime.environment import Environment
+from mistake.runtime.environment import Environment, ContextType
 from mistake.runtime.errors.runtime_errors import RuntimeError
 from mistake.runtime.runtime_types import *  # noqa: F403
 from mistake.tokenizer.token import Token
 from mistake.utils import to_decimal_seconds
-from enum import Enum
 
-class ContextType:
-    PURE = 0
-    IMPURE = 1
 
 class Interpreter:
     def __init__(self, unsafe_mode=False):
@@ -83,14 +79,19 @@ class Interpreter:
             env, 
             context_type = ContextType.IMPURE if function.impure else ContextType.PURE
         )
+        
         if function.captured_env is not None: 
             new_env.absorb_environment(function.captured_env)
-
+            new_env = Environment(
+                new_env,
+                context_type = ContextType.IMPURE if function.impure else ContextType.PURE
+            )  
+            
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
+        
         if isinstance(function.body[0], Token):
             function.is_unparsed = False
             function.body = self.parser.parse(function.body)
-
 
         return self.visit_block(function.body[0], new_env, create_env=False)
 
@@ -100,7 +101,7 @@ class Interpreter:
         # curry the function
         def get_curried(params, body):
             if len(params) == 1:
-                return Function(params[0], body, is_unparsed=node.is_unparsed, raw_body=node.raw_body)
+                return Function(params[0], body, is_unparsed=node.is_unparsed, raw_body=node.raw_body, impure=node.impure)
             return Function(params[0], [get_curried(params[1:], body)], is_unparsed=node.is_unparsed, raw_body=node.raw_body)
 
         return get_curried(params, node.body)
@@ -113,30 +114,7 @@ class Interpreter:
         return self.visit_node(node.body[-1], new_env)
 
     def get_lifetime(self, lifetime: str, *_):
-        return (
-            Lifetime(LifetimeType.INFINITE, 0)
-            if lifetime == "inf"
-            else (
-                [
-                    lambda: Lifetime(
-                        LifetimeType.LINES, int(lifetime[:-1]), self.lines_executed
-                    ),
-                    lambda: Lifetime(
-                        LifetimeType.DMS_TIMESTAMP, int(lifetime[:-1]), get_timestamp()
-                    ),
-                    lambda: Lifetime(
-                        LifetimeType.TICKS, int(lifetime[:-1]), time.process_time() * 20
-                    ),
-                    lambda: Lifetime(
-                        LifetimeType.DECIMAL_SECONDS,
-                        int(lifetime[:-1]),
-                        to_decimal_seconds(time.process_time()),
-                    ),
-                ]["luts".find(lifetime[-1])]
-                if lifetime[-1] in "luts"
-                else exec(f"raise RuntimeError(f'Invalid lifetime {lifetime}')")
-            )()
-        )
+        return (Lifetime(LifetimeType.INFINITE, 0) if lifetime == "inf" else ([lambda: Lifetime(LifetimeType.LINES, int(lifetime[:-1]), self.lines_executed),lambda: Lifetime(LifetimeType.DMS_TIMESTAMP, int(lifetime[:-1]), get_timestamp()),lambda: Lifetime(LifetimeType.TICKS, int(lifetime[:-1]), time.process_time() * 20),lambda: Lifetime(LifetimeType.DECIMAL_SECONDS,int(lifetime[:-1]),to_decimal_seconds(time.process_time()),),]["slut".find(lifetime[-1])]if lifetime[-1] in "slut"else exec(f"raise RuntimeError(f'Invalid lifetime {lifetime}')"))())
 
     def visit_class_definition(self, node: ClassDefinition, env: Environment):
         parent_class = None

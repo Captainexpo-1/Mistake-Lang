@@ -4,12 +4,16 @@ from mistake.runtime.errors.runtime_errors import LifetimeExpiredError, Variable
 
 from mistake.runtime.stdlib import std_funcs as stdlib
 
+class ContextType:
+    PURE = 0
+    IMPURE = 1
+
 class Environment:
-    def __init__(self, parent: "Environment", context_type: int = 0):
+    def __init__(self, parent: "Environment", context_type: ContextType = ContextType.IMPURE):
         self.variables: dict[str, MLType] = {}
         self.lifetimes: dict[str, Lifetime] = {}
         self.parent = parent
-        self.context_type = context_type # 0 = pure, 1 = impure
+        self.context_type = context_type
 
     def get_variable(self, name: str, line: int = 0) -> MLType:
         if name in self.variables:
@@ -19,7 +23,7 @@ class Environment:
                 raise LifetimeExpiredError(f"Lifetime for variable {name} has expired")
             return self.variables[name]
 
-        if self.parent and self.context_type == 1:
+        if self.parent and self.context_type == ContextType.IMPURE:
             return self.parent.get_variable(name)
 
         if name in stdlib.std_funcs:
@@ -45,10 +49,10 @@ class Environment:
             self.add_variable(var, env.get_variable(var), env.lifetimes[var], ignore_duplicate=True)
 
     def __repr__(self):
-        out = "Environment(\n"
+        out = "Environment((\n"
         for var in self.variables:
             out += f"   {var}: {self.variables[var].to_string()}\n"
 
-        out += ")"
+        out += f"), {self.context_type})"
         return out
 

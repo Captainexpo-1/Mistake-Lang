@@ -1,2 +1,4 @@
-variable && is string Hello World! close end
-?! && end
+variable %1 is function _ returns 1 close end
+
+
+?! %1 end
