@@ -1,7 +1,1 @@
-variable % is impure function ^0 ^1 returns open 
-?! string Hello World! close end
-+ ^0 ^1
-
-close close end
-
-?! open % 2 3 close end
+?! string HWELEWLEL

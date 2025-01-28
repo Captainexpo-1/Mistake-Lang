@@ -25,27 +25,34 @@ class Parser:
         self.current_token = None
         self.errors: List[ParserError] = []
 
+    def get_current(self):
+        if self.position < len(self.tokens):
+            return self.tokens[self.position]
+        raise ParserError("Unexpected end of input")
+    
     def parse(self, tokens: List[Token]) -> ASTNode:
         self.tokens = tokens
 
         self.position = 0
-        self.current_token = self.tokens[self.position]
+        self.current_token = self.get_current()
 
         return self.parse_program()
 
     def synchronize(self):
         while self.current_token.type not in self.breaking_tokens:
             self.advance()
-
     def parse_program(self):
         nodes = []
         while self.current_token.type != TokenType.SYM_EOF:
             try:
                 nodes.append(self.parse_node())
-            except ParserError as e:
+            except (ParserError, UnexpectedTokenError) as e:
                 self.errors.append(e)
-                self.advance()
-                self.synchronize()
+                try:
+                    self.advance()
+                    self.synchronize()
+                except ParserError:
+                    break
         return nodes
 
     def eat(self, token_type: TokenType):
@@ -61,11 +68,11 @@ class Parser:
     def advance(self, allow_ws=False):
         self.position += 1
         while (
-            self.tokens[self.position].type == TokenType.SYM_WHITESPACE and not allow_ws
+            self.get_current().type == TokenType.SYM_WHITESPACE and not allow_ws
         ):
             self.position += 1
         if self.position < len(self.tokens):
-            self.current_token = self.tokens[self.position]
+            self.current_token = self.get_current()
 
     def peek_next_is(self, token_type: TokenType):
         return self.tokens[self.position + 1].type == token_type
