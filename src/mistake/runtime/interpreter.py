@@ -305,7 +305,7 @@ class Interpreter:
             raise RuntimeError(f"Line {line} is out of bounds in file {filename}")
 
     def execute(
-        self, ast: List[ASTNode], filename: str, standalone=False
+        self, ast: List[ASTNode], filename: str = "NO_FILE", standalone=False
     ) -> List[MLType]:
         self.ast = ast
         self.current_line = 1
