@@ -1,7 +1,7 @@
-variable % is function ^0 returns 
-	function ^1 returns 
-		+ 2 3
-	close 
-close end
+variable % is impure function ^0 ^1 returns open 
+?! string Hello World! close end
++ ^0 ^1
 
-?! open % unit unit close end
+close close end
+
+?! open % 2 3 close end

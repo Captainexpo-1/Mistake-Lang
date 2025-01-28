@@ -35,7 +35,7 @@ def translate_keywords(keywords: List[str], dest_language: str) -> List[str]:
     return result
 
 def purge_localizations():
-    localizations_path = os.path.join(os.path.dirname(__file__), f"./tokenizer/.localizations")
+    localizations_path = os.path.join(os.path.dirname(__file__), "./tokenizer/.localizations")
     if os.path.exists(localizations_path):
         for file in os.listdir(localizations_path):
             file_path = os.path.join(localizations_path, file)

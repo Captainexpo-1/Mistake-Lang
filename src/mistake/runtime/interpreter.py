@@ -1,18 +1,21 @@
+from gevent import monkey
+monkey.patch_all()
+
 import time
 
 import gevent
-from gevent import monkey
 
-monkey.patch_all()
-from typing import List
 
 from mistake import runner
 from mistake.parser.ast import *
 from mistake.parser.parser import Parser
-from mistake.runtime.environment import Environment, ContextType, test
+from mistake.runtime.environment import ContextType, Environment
 from mistake.runtime.errors.runtime_errors import RuntimeError
 from mistake.runtime.runtime_types import *
-from mistake.utils import to_decimal_seconds, print_color
+from mistake.utils import print_color, to_decimal_seconds
+
+
+from typing import List
 
 
 class Interpreter:
@@ -20,7 +23,6 @@ class Interpreter:
         self.unsafe_mode = unsafe_mode
         self.parser = Parser()
         self.global_environment = Environment(None, context_type=ContextType.IMPURE)
-        print("INITIALIZED WITH", id(self.global_environment))
         self.current_line = 1
         self.files: dict[str, List[ASTNode]] = {}
         self.tasks: List[gevent.Greenlet] = []
@@ -48,19 +50,21 @@ class Interpreter:
         self.tasks.append(task)
 
     def visit_function_application(
-        self, 
-        env: Environment, 
-        node: FunctionApplication, 
+        self,
+        env: Environment,
+        node: FunctionApplication,
         visit_arg: bool = True,
     ):
-        print_color("red","CALLED VISIT_FUNCTION_APPLICATION WITH", env.repr_simple(), node)
+
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
-        
+
         function = self.visit_node(node.called, env)
         is_builtin = False
-        
+
         if not isinstance(function, Function):
-            if not isinstance(function, BuiltinFunction) and not isinstance(function, MLCallable):  
+            if not isinstance(function, BuiltinFunction) and not isinstance(
+                function, MLCallable
+            ):
                 raise RuntimeError(
                     f"Called {node.called} is not a function, but a {type(function)}"
                 )
@@ -75,58 +79,99 @@ class Interpreter:
         if is_builtin:
             result = function(param, env, self)
             return result
-        
+
         new_env = Environment(
-            env, 
-            context_type = ContextType.IMPURE if function.impure else ContextType.PURE
+            env,
+            context_type=ContextType.IMPURE if function.impure else ContextType.PURE,
         )
-        
-        if function.captured_env is not None: 
+
+        if function.captured_env is not None:
             new_env.absorb_environment(function.captured_env)
             new_env = Environment(
                 new_env,
-                context_type = ContextType.IMPURE if function.impure else ContextType.PURE
-            )  
-            
+                context_type=ContextType.IMPURE
+                if function.impure
+                else ContextType.PURE,
+            )
+
+
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
-        print_color("green","CREATED NEW ENV", new_env.repr_simple(), "WITH PARENT", env.repr_simple())
+
+
         return self.visit_node(function.body, new_env)
 
     def visit_function_declaration(self, node: FunctionDeclaration, env: Environment):
         params = node.parameters
+
+
+
+        cap_env = Environment(None, context_type=env.context_type)
+        for var in env.get_all_defined_vars():
+            value, life = env.get_full_var_data(var)
+            cap_env.add_variable(
+                var,
+                value,
+                life,
+                ignore_duplicate=True,
+            )
+
         # curry the function
         def get_curried(params, body):
             if len(params) == 1:
                 return Function(
-                    params[0], 
-                    body, 
-                    is_unparsed=True, 
-                    raw_body=node.raw_body, 
-                    impure=node.impure
+                    params[0],
+                    body,
+                    is_unparsed=True,
+                    raw_body=node.raw_body,
+                    impure=node.impure,
+                    captured_env=cap_env,
                 )
             return Function(
-                params[0], 
-                Block([get_curried(params[1:], body)]), 
-                is_unparsed=False, 
-                raw_body=node.raw_body, 
-                impure=node.impure
+                params[0],
+                Block([get_curried(params[1:], body)]),
+                is_unparsed=False,
+                raw_body=node.raw_body,
+                impure=node.impure,
+                captured_env=cap_env,
             )
-
-        return get_curried(params, node.body)
+        r = get_curried(params, node.body)
+        return r
 
     def visit_block(self, node: Block, env: Environment):
-        new_env = Environment(env, context_type = env.context_type)
-        print_color("yellow","CALLED VISIT_BLOCK WITH", env.repr_simple(), node)
+        new_env = Environment(env, context_type=env.context_type)
         if not node.body:
             return Unit()
-        
+
         for statement in node.body[:-1]:
             self.visit_node(statement, new_env)
 
         return self.visit_node(node.body[-1], new_env)
 
     def get_lifetime(self, lifetime: str, *_):
-        return (Lifetime(LifetimeType.INFINITE, 0) if lifetime == "inf" else ([lambda: Lifetime(LifetimeType.LINES, int(lifetime[:-1]), self.lines_executed),lambda: Lifetime(LifetimeType.DMS_TIMESTAMP, int(lifetime[:-1]), get_timestamp()),lambda: Lifetime(LifetimeType.TICKS, int(lifetime[:-1]), time.process_time() * 20),lambda: Lifetime(LifetimeType.DECIMAL_SECONDS,int(lifetime[:-1]),to_decimal_seconds(time.process_time()),),]["slut".find(lifetime[-1])]if lifetime[-1] in "slut"else exec(f"raise RuntimeError(f'Invalid lifetime {lifetime}')"))())
+        return (
+            Lifetime(LifetimeType.INFINITE, 0)
+            if lifetime == "inf"
+            else (
+                [
+                    lambda: Lifetime(
+                        LifetimeType.LINES, int(lifetime[:-1]), self.lines_executed
+                    ),
+                    lambda: Lifetime(
+                        LifetimeType.DMS_TIMESTAMP, int(lifetime[:-1]), get_timestamp()
+                    ),
+                    lambda: Lifetime(
+                        LifetimeType.TICKS, int(lifetime[:-1]), time.process_time() * 20
+                    ),
+                    lambda: Lifetime(
+                        LifetimeType.DECIMAL_SECONDS,
+                        int(lifetime[:-1]),
+                        to_decimal_seconds(time.process_time()),
+                    ),
+                ]["sltu".find(lifetime[-1])]
+                if lifetime[-1] in "slut"
+                else exec(f"raise RuntimeError(f'Invalid lifetime {lifetime}')")
+            )()
+        )
 
     def visit_class_definition(self, node: ClassDefinition, env: Environment):
         parent_class = None
@@ -173,11 +218,11 @@ class Interpreter:
     def visit_member_access(self, node: MemberAccess, env: Environment):
         # Lookup the instance in the environment
         instance = self.visit_node(node.obj, env)
-        
-        if node.member == "\"":
+
+        if node.member == '"':
             if isinstance(instance, Function):
                 return RuntimeString(instance.raw_body)
-            
+
         if not isinstance(instance, ClassInstance):
             raise RuntimeError(f"'{node.obj}' is not a valid instance.")
 
@@ -190,7 +235,6 @@ class Interpreter:
             )
 
         return instance.environment.get_variable(node.member, line=self.lines_executed)
-        
 
     def visit_match(self, node: Match, env: Environment):
         expr = self.visit_node(node.expr, env)
@@ -203,7 +247,6 @@ class Interpreter:
         return self.visit_node(node.otherwise, env)
 
     def visit_node(self, node: ASTNode, env: Environment, imperative=False):
-        #print("VISITING WITH", env.repr_simple(), node)
         if isinstance(node, Unit):
             return RuntimeUnit()
         if isinstance(node, Number):
@@ -261,14 +304,16 @@ class Interpreter:
         if self.current_line > len(self.ast):
             raise RuntimeError(f"Line {line} is out of bounds in file {filename}")
 
-    def execute(self, ast: List[ASTNode], filename: str, standalone = False) -> List[MLType]:
+    def execute(
+        self, ast: List[ASTNode], filename: str, standalone=False
+    ) -> List[MLType]:
         self.ast = ast
         self.current_line = 1
         self.lines_executed = 1
         self.files[filename] = ast
-        
+
         result: List[MLType] = []
-        
+
         while self.current_line <= len(self.ast):
             node = self.ast[self.current_line - 1]
             try:
@@ -288,4 +333,3 @@ class Interpreter:
 
         gevent.joinall(self.tasks)
         return result
-    

@@ -1,7 +1,4 @@
-from mistake.runtime.errors.runtime_errors import *
-from mistake.runtime.runtime_types import *
-from mistake.parser.ast import *
-from mistake.utils import *
+from mistake.runtime.runtime_types import RuntimeUDPServer, RuntimeUDPSocket, RuntimeTCPServer, RuntimeTCPSocket
 
 """
 # TCP Documentation

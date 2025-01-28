@@ -1,23 +1,17 @@
-import time
-import socket
 import re
+import socket
+import time
 from datetime import datetime
-
 from enum import Enum
+from typing import Any, List, Optional
+
 import gevent
 
-from typing import List, Optional, Any
-
-from mistake.utils import to_decimal_seconds
-
 from mistake.parser.ast import ASTNode
-
 from mistake.runtime import environment as rte
 from mistake.runtime import interpreter as rt
-
 from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
-
-
+from mistake.utils import to_decimal_seconds
 
 
 class MLType:
@@ -80,7 +74,7 @@ class RuntimeBoolean(MLType):
 
 class Function(MLType):
     def __init__(
-        self, parameter: str, body: ASTNode | List, impure: bool = True, raw_body="", is_unparsed=False, captured_env: 'rte.Environment'=None
+        self, parameter: str, body: ASTNode | List, captured_env: 'rte.Environment', impure: bool = True, raw_body="", is_unparsed=False, 
     ):
         self.param: str = parameter
         self.body: ASTNode | List = body

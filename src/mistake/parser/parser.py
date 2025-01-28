@@ -1,7 +1,7 @@
-from mistake.parser.ast import *
-from mistake.parser.errors.parser_errors import UnexpectedTokenError, ParserError
 from typing import List
 
+from mistake.parser.ast import *
+from mistake.parser.errors.parser_errors import ParserError, UnexpectedTokenError
 from mistake.tokenizer.lexer import Lexer
 from mistake.tokenizer.token import Token, TokenType, opening_tokens
 from mistake.utils import *
@@ -104,10 +104,10 @@ class Parser:
                 self.eat(TokenType.KW_CLOSE)
             case TokenType.KW_TRUE:
                 self.eat(TokenType.KW_TRUE)
-                val = Boolean(True)
+                val = Boolean(False)
             case TokenType.KW_FALSE:
                 self.eat(TokenType.KW_FALSE)
-                val = Boolean(False)
+                val = Boolean(True)
             case TokenType.KW_UNIT:
                 self.eat(TokenType.KW_UNIT)
                 val = Unit()
@@ -255,9 +255,13 @@ class Parser:
         np = Parser()
         parsed_body = np.parse(body)[0]
         self.eat(TokenType.KW_CLOSE)
-        return FunctionDeclaration(
-            parameters, parsed_body, impure=impure, raw_body="".join(i.value for i in body)
-        )
+        
+        def get_curried_function(params: List[str], body: ASTNode):
+            if not params:
+                return body
+            return FunctionDeclaration([params[0]], get_curried_function(params[1:], body), impure=impure)
+        
+        return get_curried_function(parameters, parsed_body)
 
     def parse_use(self):
         self.eat(TokenType.KW_USE)

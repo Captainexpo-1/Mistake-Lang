@@ -29,6 +29,7 @@ def get_args() -> Tuple[str, List[str]]:
     parser.add_argument('--unsafe', action='store_true', help='Enable unsafe mode')
     parser.add_argument('--end-env', action='store_true', help='Print the global environment at the end')
     parser.add_argument('--language', type=str, help='Language for localization, use lang = "purge" to purge all localizations')
+    parser.add_argument('--env-tree', action='store_true', help='Print the environment tree')
     
     args = parser.parse_args()
 
@@ -139,7 +140,8 @@ def main():
         
         if p_time:
             print(f"Total runtime: {time.time() - start} seconds")
-
-        print(json.dumps(graph_env_relations(), indent=3))
+        
+        if args.env_tree:
+            print(json.dumps(graph_env_relations(), indent=3)) 
 if __name__ == "__main__":  
     main()

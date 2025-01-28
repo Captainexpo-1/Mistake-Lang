@@ -33,8 +33,6 @@ class RuntimeVulkanBuffer(MLType):
         return f"VulkanBuffer({self.data}, {repr(self.dtype)})"
 
 
-
-
 def new_vulkan_buffer(arg: RuntimeListType, *_):
     return BuiltinFunction(
         lambda x, *_: RuntimeVulkanBuffer(deepcopy(x).continuous(), arg), imp=False
@@ -72,7 +70,7 @@ def run_vulkan_shader(shader_func: Function, *_):
                         lambda out_buffers, *_: actually_run_vulkan_shader(
                             (x_threads.value, y_threads.value), code, in_buffers, out_buffers, device
                         ),
-                        imp=False,
+                        imp=True,
                     ),
                     imp=False,
                 ),
