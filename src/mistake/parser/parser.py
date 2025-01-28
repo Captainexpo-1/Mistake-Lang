@@ -1,10 +1,26 @@
 from typing import List
 
-from mistake.parser.ast import *
+from mistake.parser.ast import (
+    ASTNode,
+    Boolean,
+    JumpStatement,
+    Unit,
+    VariableAccess,
+    String,
+    Number,
+    Block,
+    FunctionDeclaration,
+    FunctionApplication,
+    VariableDeclaration,
+    Match,
+    MatchCase,
+    ClassDefinition,
+    MemberAccess,
+    ClassInstancing,
+)
 from mistake.parser.errors.parser_errors import ParserError, UnexpectedTokenError
 from mistake.tokenizer.lexer import Lexer
 from mistake.tokenizer.token import Token, TokenType, opening_tokens
-from mistake.utils import *
 
 
 class Parser:

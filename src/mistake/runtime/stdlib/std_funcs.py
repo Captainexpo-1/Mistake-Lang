@@ -1,17 +1,59 @@
 import re
-
+import time
+import gevent
 import mistake.runtime.interpreter as interpreter
-from mistake.parser.ast import *
-from mistake.runtime.errors.runtime_errors import *
-from mistake.runtime.runtime_types import *
-from mistake.runtime.stdlib.networking import *
-from mistake.utils import *
+
+from mistake.parser.ast import (
+    FunctionApplication,
+)
+from mistake.runtime.errors.runtime_errors import (
+    RuntimeTypeError,
+)
+from mistake.runtime.runtime_types import (
+    RuntimeBoolean,
+    RuntimeNumber,
+    RuntimeString,
+    RuntimeUnit,
+    RuntimeMutableBox,
+    RuntimeListType,
+    RuntimeMatchObject,
+    RuntimeTask,
+    RuntimeDictType,
+    BuiltinFunction,
+    Function,
+    MLType,
+    convert_type,
+    de_runtime_dictify,
+    runtime_dictify,
+)
+from mistake.runtime.stdlib.networking import (
+    create_TCP_server,
+    create_UDP_server,
+    create_TCP_socket,
+    create_UDP_socket,
+)
+from mistake.utils import from_decimal_seconds, RUNTIME_USE_VULKAN
 
 if RUNTIME_USE_VULKAN:
     import mistake.runtime.stdlib.vulkan_api as vstd
 import os
 
-from mistake.runtime.stdlib.airtable_api import *
+from mistake.runtime.stdlib.airtable_api import (
+    all_bases,
+    create_airtable_api_instance,
+    create_base,
+    list_table_records,
+    get_record,
+    create_record,
+    update_record,
+    delete_record,
+    new_record,
+    base_schema,
+    create_new_field,
+    update_field,
+)
+
+from typing import Any
 
 
 def get_type(val: Any):
@@ -62,7 +104,7 @@ def get_length(arg: MLType, *_):
             return len(str(value))
         case RuntimeMatchObject(value):
             return RuntimeNumber(len(value.groups()))
-        case RuntimeTask(task_ref, start_time):
+        case RuntimeTask(_, start_time):
             return RuntimeNumber(time.time() - start_time)
         case _:
             return RuntimeNumber(0)
@@ -283,42 +325,90 @@ std_funcs = {
         )
     ),
     ">|<": BuiltinFunction(lambda arg, *_: arg.close(), imp=True),
-    
     # DICTIONARIES
-    '{+}': BuiltinFunction(lambda *_: RuntimeDictType(), imp=False),
-    '>{}': BuiltinFunction(lambda d, *_: BuiltinFunction(lambda key, *_: BuiltinFunction(lambda value, *_: d.set(key, value))), imp=False),
-    '<{}': BuiltinFunction(lambda d, *_: BuiltinFunction(lambda key, *_: d.get(key), imp=False)),
-    
+    "{+}": BuiltinFunction(lambda *_: RuntimeDictType(), imp=False),
+    ">{}": BuiltinFunction(
+        lambda d, *_: BuiltinFunction(
+            lambda key, *_: BuiltinFunction(lambda value, *_: d.set(key, value))
+        ),
+        imp=False,
+    ),
+    "<{}": BuiltinFunction(
+        lambda d, *_: BuiltinFunction(lambda key, *_: d.get(key), imp=False)
+    ),
     # MISC HELPERS
     '>"<': BuiltinFunction(lambda arg, *_: RuntimeString(arg.value.strip()), imp=False),
-
     # AIRTABLE
-    '{>!<}': BuiltinFunction(lambda arg, *_: create_airtable_api_instance(arg)), # create airtable api
-    '{!}': BuiltinFunction(lambda arg, *_: create_base(arg)), # create base
-    '{?}': BuiltinFunction(lambda table, *_: list_table_records(table)), # get all records
-    '{>}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda id, *_: get_record(table, id))), # get record
-    '{<}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record, *_: create_record(table, record))), # put record
-    '{!': BuiltinFunction(lambda fields, *_: new_record(de_runtime_dictify(fields))), # create local record instance
-    '{-}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record_id, *_: delete_record(table, record_id.value))), # delete record
-    '{\\}': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda record, *_: update_record(table, record))), # update record
-    
+    "{>!<}": BuiltinFunction(
+        lambda arg, *_: create_airtable_api_instance(arg)
+    ),  # create airtable api
+    "{!}": BuiltinFunction(lambda arg, *_: create_base(arg)),  # create base
+    "{?}": BuiltinFunction(
+        lambda table, *_: list_table_records(table)
+    ),  # get all records
+    "{>}": BuiltinFunction(
+        lambda table, *_: BuiltinFunction(lambda id, *_: get_record(table, id))
+    ),  # get record
+    "{<}": BuiltinFunction(
+        lambda table, *_: BuiltinFunction(
+            lambda record, *_: create_record(table, record)
+        )
+    ),  # put record
+    "{!": BuiltinFunction(
+        lambda fields, *_: new_record(de_runtime_dictify(fields))
+    ),  # create local record instance
+    "{-}": BuiltinFunction(
+        lambda table, *_: BuiltinFunction(
+            lambda record_id, *_: delete_record(table, record_id.value)
+        )
+    ),  # delete record
+    "{\\}": BuiltinFunction(
+        lambda table, *_: BuiltinFunction(
+            lambda record, *_: update_record(table, record)
+        )
+    ),  # update record
     # Schema editing
-    '{{?': BuiltinFunction(lambda table, *_: RuntimeDictType(runtime_dictify(table.table.schema().dict()))), # get schema
-    '{{+': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda field, *_: BuiltinFunction(lambda field_type, *_: BuiltinFunction(lambda options, *_: create_new_field(table, field, field_type, options))))), # add field    # Record editing 
-    '{{=': BuiltinFunction(lambda table, *_: BuiltinFunction(lambda field_id, *_: BuiltinFunction(lambda new_options, *_: update_field(table, field_id, new_options)))),  # update field
-    
+    "{{?": BuiltinFunction(
+        lambda table, *_: RuntimeDictType(runtime_dictify(table.table.schema().dict()))
+    ),  # get schema
+    "{{+": BuiltinFunction(
+        lambda table, *_: BuiltinFunction(
+            lambda field, *_: BuiltinFunction(
+                lambda field_type, *_: BuiltinFunction(
+                    lambda options, *_: create_new_field(
+                        table, field, field_type, options
+                    )
+                )
+            )
+        )
+    ),  # add field    # Record editing
+    "{{=": BuiltinFunction(
+        lambda table, *_: BuiltinFunction(
+            lambda field_id, *_: BuiltinFunction(
+                lambda new_options, *_: update_field(table, field_id, new_options)
+            )
+        )
+    ),  # update field
     # RECORD EDITING
-    '{<': BuiltinFunction(lambda record, *_: BuiltinFunction(lambda field, *_: BuiltinFunction(lambda value, *_: record.set_field(field, value)))), # create airtable api
-    '{>': BuiltinFunction(lambda record, *_: BuiltinFunction(lambda field, *_: field.fields[record])), # create airtable api
-    '{#>': BuiltinFunction(lambda record, *_: convert_type(record.id)), # get ID
-    '{#<': BuiltinFunction(lambda record, *_: BuiltinFunction(lambda ID, *_: record.set_id(ID))), # set ID 
-    
+    "{<": BuiltinFunction(
+        lambda record, *_: BuiltinFunction(
+            lambda field, *_: BuiltinFunction(
+                lambda value, *_: record.set_field(field, value)
+            )
+        )
+    ),  # create airtable api
+    "{>": BuiltinFunction(
+        lambda record, *_: BuiltinFunction(lambda field, *_: field.fields[record])
+    ),  # create airtable api
+    "{#>": BuiltinFunction(lambda record, *_: convert_type(record.id)),  # get ID
+    "{#<": BuiltinFunction(
+        lambda record, *_: BuiltinFunction(lambda ID, *_: record.set_id(ID))
+    ),  # set ID
     # BASE MANIPULATION
-    '{}?': BuiltinFunction(lambda *args: all_bases(*args)),
-    '{}??': BuiltinFunction(lambda base, *_: base_schema(base)),
-    
+    "{}?": BuiltinFunction(lambda *args: all_bases(*args)),
+    "{}??": BuiltinFunction(lambda base, *_: base_schema(base)),
     # ENV
-    '[@@@]': BuiltinFunction(lambda key, *_: RuntimeString(os.getenv(key.value))),
+    "[@@@]": BuiltinFunction(lambda key, *_: RuntimeString(os.getenv(key.value))),
 }
 
 if RUNTIME_USE_VULKAN:

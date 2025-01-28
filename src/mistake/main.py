@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 import argparse
 import mistake.localize as localize
 import json
-from collections import defaultdict
 
 ENV_PATH = None
 
@@ -40,9 +39,12 @@ def get_args() -> Tuple[str, List[str]]:
     return args
 
 def run_script(program: str, lex=None, parser=None, rt=None, standalone=True) -> List:
-    if lex is None: lex = Lexer()
-    if parser is None: parser = Parser()
-    if rt is None: rt = Interpreter()
+    if lex is None: 
+        lex = Lexer()
+    if parser is None: 
+        parser = Parser()
+    if rt is None: 
+        rt = Interpreter()
     
     tokens = lex.tokenize(program)
     ast = parser.parse(tokens)  

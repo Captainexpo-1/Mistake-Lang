@@ -1,21 +1,54 @@
-from gevent import monkey
-monkey.patch_all()
-
 import time
-
-import gevent
-
+from typing import List
 
 from mistake import runner
-from mistake.parser.ast import *
+from mistake.parser.ast import (
+    ASTNode,
+    Block,
+    Boolean,
+    ClassDefinition,
+    ClassInstancing,
+    FunctionApplication,
+    FunctionDeclaration,
+    JumpStatement,
+    Match,
+    MemberAccess,
+    Number,
+    String,
+    Unit,
+    VariableAccess,
+    VariableDeclaration,
+)
 from mistake.parser.parser import Parser
 from mistake.runtime.environment import ContextType, Environment
 from mistake.runtime.errors.runtime_errors import RuntimeError
-from mistake.runtime.runtime_types import *
-from mistake.utils import print_color, to_decimal_seconds
+from mistake.runtime.runtime_types import (
+    BuiltinFunction,
+    ClassInstance,
+    ClassType,
+    Function,
+    Lifetime,
+    LifetimeType,
+    MLCallable,
+    MLType,
+    RuntimeBoolean,
+    RuntimeChannel,
+    RuntimeNumber,
+    RuntimeString,
+    RuntimeUnit,
+    get_timestamp,
+)
+from mistake.utils import to_decimal_seconds
+
+# Must keep this down here to supress warnings 
+from gevent import monkey
+monkey.patch_all()
+import gevent  # noqa: E402
 
 
-from typing import List
+
+
+
 
 
 class Interpreter:
@@ -55,7 +88,6 @@ class Interpreter:
         node: FunctionApplication,
         visit_arg: bool = True,
     ):
-
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
         function = self.visit_node(node.called, env)
@@ -94,16 +126,12 @@ class Interpreter:
                 else ContextType.PURE,
             )
 
-
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
-
 
         return self.visit_node(function.body, new_env)
 
     def visit_function_declaration(self, node: FunctionDeclaration, env: Environment):
         params = node.parameters
-
-
 
         cap_env = Environment(None, context_type=env.context_type)
         for var in env.get_all_defined_vars():
@@ -134,6 +162,7 @@ class Interpreter:
                 impure=node.impure,
                 captured_env=cap_env,
             )
+
         r = get_curried(params, node.body)
         return r
 
@@ -242,7 +271,7 @@ class Interpreter:
         for case in node.cases:
             v = self.visit_node(case.condition, env)
 
-            if v == True:
+            if v:
                 return self.visit_node(case.expr, env)
         return self.visit_node(node.otherwise, env)
 
