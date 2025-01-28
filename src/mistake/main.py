@@ -4,11 +4,13 @@ import os
 from mistake.tokenizer.lexer import Lexer
 from mistake.parser.parser import Parser
 from mistake.runtime.interpreter import Interpreter
+from mistake.runtime.environment import test
 from typing import Tuple, List
 from dotenv import load_dotenv
 import argparse
 import mistake.localize as localize
 import json
+from collections import defaultdict
 
 ENV_PATH = None
 
@@ -36,9 +38,13 @@ def get_args() -> Tuple[str, List[str]]:
 
     return args
 
-def run_script(program: str, lex=Lexer(), parser=Parser(), rt=Interpreter(), standalone=True) -> List:
+def run_script(program: str, lex=None, parser=None, rt=None, standalone=True) -> List:
+    if lex is None: lex = Lexer()
+    if parser is None: parser = Parser()
+    if rt is None: rt = Interpreter()
+    
     tokens = lex.tokenize(program)
-    ast = parser.parse(tokens)
+    ast = parser.parse(tokens)  
     if parser.errors:
         for error in parser.errors:
             print(error)
@@ -48,6 +54,16 @@ def run_script(program: str, lex=Lexer(), parser=Parser(), rt=Interpreter(), sta
 def get_system_language() -> str:
     return os.getenv('LANG', 'en').split('.')[0]
 
+def graph_env_relations():
+    graph = {} # {parent: [children]}
+    for env in test:
+        graph[str(id(env))[-4:]] = []
+    
+    for env in test:
+        if env.parent:
+            graph[str(id(env.parent))[-4:]].append(env.repr_simple())
+        
+    return graph
 def main():
     global ENV_PATH
     args = get_args()
@@ -110,8 +126,10 @@ def main():
             return
 
         if args.ast:
-            open("ast.txt", "w").write(str(ast))
-            print(ast)
+            print("AST BEGIN")
+            for i in ast:
+                print(i)
+            print("AST END")
 
         if not args.no_exe:
             runtime.execute(ast, filename=args.filename)
@@ -122,5 +140,6 @@ def main():
         if p_time:
             print(f"Total runtime: {time.time() - start} seconds")
 
-if __name__ == "__main__":
+        print(json.dumps(graph_env_relations(), indent=3))
+if __name__ == "__main__":  
     main()

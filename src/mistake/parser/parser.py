@@ -252,9 +252,11 @@ class Parser:
 
         self.eat(TokenType.KW_RETURNS)
         body = self.get_unparsed_body()
+        np = Parser()
+        parsed_body = np.parse(body)[0]
         self.eat(TokenType.KW_CLOSE)
         return FunctionDeclaration(
-            parameters, body, impure=impure, raw_body="".join(i.value for i in body), is_unparsed=True
+            parameters, parsed_body, impure=impure, raw_body="".join(i.value for i in body)
         )
 
     def parse_use(self):

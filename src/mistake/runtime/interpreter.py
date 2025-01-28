@@ -9,11 +9,10 @@ from typing import List
 from mistake import runner
 from mistake.parser.ast import *
 from mistake.parser.parser import Parser
-from mistake.runtime.environment import Environment, ContextType
+from mistake.runtime.environment import Environment, ContextType, test
 from mistake.runtime.errors.runtime_errors import RuntimeError
-from mistake.runtime.runtime_types import *  # noqa: F403
-from mistake.tokenizer.token import Token
-from mistake.utils import to_decimal_seconds
+from mistake.runtime.runtime_types import *
+from mistake.utils import to_decimal_seconds, print_color
 
 
 class Interpreter:
@@ -21,6 +20,7 @@ class Interpreter:
         self.unsafe_mode = unsafe_mode
         self.parser = Parser()
         self.global_environment = Environment(None, context_type=ContextType.IMPURE)
+        print("INITIALIZED WITH", id(self.global_environment))
         self.current_line = 1
         self.files: dict[str, List[ASTNode]] = {}
         self.tasks: List[gevent.Greenlet] = []
@@ -53,11 +53,12 @@ class Interpreter:
         node: FunctionApplication, 
         visit_arg: bool = True,
     ):
+        print_color("red","CALLED VISIT_FUNCTION_APPLICATION WITH", env.repr_simple(), node)
+        param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
+        
         function = self.visit_node(node.called, env)
         is_builtin = False
-
-        param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
-
+        
         if not isinstance(function, Function):
             if not isinstance(function, BuiltinFunction) and not isinstance(function, MLCallable):  
                 raise RuntimeError(
@@ -88,26 +89,37 @@ class Interpreter:
             )  
             
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
-        
-        if isinstance(function.body[0], Token):
-            function.is_unparsed = False
-            function.body = self.parser.parse(function.body)
-
-        return self.visit_block(function.body[0], new_env, create_env=False)
+        print_color("green","CREATED NEW ENV", new_env.repr_simple(), "WITH PARENT", env.repr_simple())
+        return self.visit_node(function.body, new_env)
 
     def visit_function_declaration(self, node: FunctionDeclaration, env: Environment):
         params = node.parameters
-
         # curry the function
         def get_curried(params, body):
             if len(params) == 1:
-                return Function(params[0], body, is_unparsed=node.is_unparsed, raw_body=node.raw_body, impure=node.impure)
-            return Function(params[0], [get_curried(params[1:], body)], is_unparsed=node.is_unparsed, raw_body=node.raw_body)
+                return Function(
+                    params[0], 
+                    body, 
+                    is_unparsed=True, 
+                    raw_body=node.raw_body, 
+                    impure=node.impure
+                )
+            return Function(
+                params[0], 
+                Block([get_curried(params[1:], body)]), 
+                is_unparsed=False, 
+                raw_body=node.raw_body, 
+                impure=node.impure
+            )
 
         return get_curried(params, node.body)
 
-    def visit_block(self, node: Block, env: Environment, create_env=True):
-        new_env = Environment(env, context_type = ContextType.IMPURE) if create_env else env
+    def visit_block(self, node: Block, env: Environment):
+        new_env = Environment(env, context_type = env.context_type)
+        print_color("yellow","CALLED VISIT_BLOCK WITH", env.repr_simple(), node)
+        if not node.body:
+            return Unit()
+        
         for statement in node.body[:-1]:
             self.visit_node(statement, new_env)
 
@@ -191,6 +203,7 @@ class Interpreter:
         return self.visit_node(node.otherwise, env)
 
     def visit_node(self, node: ASTNode, env: Environment, imperative=False):
+        #print("VISITING WITH", env.repr_simple(), node)
         if isinstance(node, Unit):
             return RuntimeUnit()
         if isinstance(node, Number):
@@ -264,7 +277,7 @@ class Interpreter:
                 )
                 self.run_all_tasks()
 
-            except RuntimeError as e:
+            except Exception as e:
                 if self.unsafe_mode and not standalone:
                     raise e
                 if not standalone:
@@ -274,5 +287,5 @@ class Interpreter:
             self.lines_executed += 1
 
         gevent.joinall(self.tasks)
-        
         return result
+    

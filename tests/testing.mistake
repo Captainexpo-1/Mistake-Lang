@@ -1,4 +1,7 @@
-variable %1 is function _ returns 1 close end
+variable % is function ^0 returns 
+	function ^1 returns 
+		+ 2 3
+	close 
+close end
 
-
-?! %1 end
+?! open % unit unit close end

@@ -80,10 +80,11 @@ class RuntimeBoolean(MLType):
 
 class Function(MLType):
     def __init__(
-        self, parameter: str, body: List[ASTNode], impure: bool = True, raw_body="", is_unparsed=False, captured_env: 'rte.Environment'=None
+        self, parameter: str, body: ASTNode | List, impure: bool = True, raw_body="", is_unparsed=False, captured_env: 'rte.Environment'=None
     ):
         self.param: str = parameter
-        self.body: List[ASTNode] = body
+        self.body: ASTNode | List = body
+        
         self.impure: bool = impure
         self.raw_body: str = raw_body
         self.is_unparsed = is_unparsed
