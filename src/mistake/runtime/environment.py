@@ -1,14 +1,12 @@
-from mistake.runtime.runtime_types import MLType, Lifetime
+import time
 
 from mistake.runtime.errors.runtime_errors import (
     LifetimeExpiredError,
-    VariableNotFoundError,
     VariableAlreadyDefinedError,
+    VariableNotFoundError,
 )
-
+from mistake.runtime.runtime_types import Lifetime, MLType
 from mistake.runtime.stdlib import std_funcs as stdlib
-
-import time
 
 
 class ContextType:
@@ -45,7 +43,7 @@ class Environment:
             return stdlib.std_funcs[name]
 
         raise VariableNotFoundError(f"Variable {name} not found.")
-    
+
     def get_full_var_data(self, name: str):
         if name in self.variables:
             return self.variables[name], self.lifetimes[name]

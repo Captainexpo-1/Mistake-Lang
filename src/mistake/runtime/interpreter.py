@@ -1,6 +1,9 @@
 import time
 from typing import List
 
+# Must keep this down here to supress warnings
+from gevent import monkey
+
 from mistake import runner
 from mistake.parser.ast import (
     ASTNode,
@@ -40,15 +43,8 @@ from mistake.runtime.runtime_types import (
 )
 from mistake.utils import to_decimal_seconds
 
-# Must keep this down here to supress warnings 
-from gevent import monkey
 monkey.patch_all()
 import gevent  # noqa: E402
-
-
-
-
-
 
 
 class Interpreter:

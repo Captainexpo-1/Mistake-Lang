@@ -3,12 +3,13 @@ import socket
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, Callable, List, Optional
 
 import gevent
 
 from mistake.parser.ast import ASTNode
 from mistake.runtime import environment as rte
+from mistake.runtime import interpreter as rt
 from mistake.runtime.errors.runtime_errors import InvalidLifetimeError
 from mistake.utils import to_decimal_seconds
 
@@ -23,10 +24,12 @@ class MLType:
     def __repr__(self):
         return self.to_string()
 
+
 class MLCallable(MLType):
-    def __call__(self, arg: MLType, env: 'rte.Environment', runtime) -> MLType:
+    def __call__(self, arg: MLType, env: "rte.Environment", runtime) -> MLType:
         raise NotImplementedError("Callable must implement __call__ method")
-    
+
+
 class RuntimeUnit(MLType):
     def __init__(self, _=None):
         pass
@@ -73,20 +76,24 @@ class RuntimeBoolean(MLType):
 
 class Function(MLType):
     def __init__(
-        self, parameter: str, body: ASTNode | List, captured_env: 'rte.Environment', impure: bool = True, raw_body="", is_unparsed=False, 
+        self,
+        parameter: str,
+        body: ASTNode | List,
+        captured_env: "rte.Environment",
+        impure: bool = True,
+        raw_body="",
+        is_unparsed=False,
     ):
         self.param: str = parameter
         self.body: ASTNode | List = body
-        
+
         self.impure: bool = impure
         self.raw_body: str = raw_body
         self.is_unparsed = is_unparsed
         self.captured_env = captured_env
 
     def to_string(self):
-        return (
-            f"{'Impure' if self.impure else ''}Function({self.param}, body={self.body}, is_unparsed={self.is_unparsed})"
-        )
+        return f"{'Impure' if self.impure else ''}Function({self.param}, body={self.body}, is_unparsed={self.is_unparsed})"
 
 
 class ClassType(MLType):
@@ -116,7 +123,12 @@ class ClassInstance(MLType):
 
 
 class BuiltinFunction(MLType):
-    def __init__(self, func: callable, imp=True, subtype=None):
+    def __init__(
+        self,
+        func: Callable[[MLType, "rte.Environment", "rt.Interpreter"], MLType],
+        imp=True,
+        subtype=None,
+    ):
         self.func = func
         self.impure = imp
         self.subtype = subtype
@@ -224,6 +236,7 @@ class RuntimeListType(MLType):
     def to_string(self):
         return f"List([{', '.join([str(i) for i in self.list.values()])}])"
 
+
 def convert_type(val: Any):
     if isinstance(val, dict):
         return runtime_dictify(val)
@@ -237,6 +250,7 @@ def convert_type(val: Any):
         return RuntimeBoolean(val)
     else:
         return val
+
 
 def un_convert_type(val: Any):
     if isinstance(val, RuntimeDictType):
@@ -252,13 +266,13 @@ def un_convert_type(val: Any):
     else:
         return val
 
+
 def runtime_dictify(d: dict):
     new_d = {}
     for k, v in d.items():
         new_d[convert_type(k)] = convert_type(v)
 
     return new_d
-
 
 
 class RuntimeDictType(MLType):
@@ -278,6 +292,7 @@ class RuntimeDictType(MLType):
     def to_string(self):
         return f"Dict({self.dict}, {id(self)})"
 
+
 def de_runtime_dictify(d: RuntimeDictType):
     def convert_type(val: MLType) -> Any:
         if isinstance(val, RuntimeDictType):
@@ -292,13 +307,14 @@ def de_runtime_dictify(d: RuntimeDictType):
             return val.value
         else:
             return val
-    
+
     new_d = {}
-    
+
     for k, v in d.dict.items():
         new_d[convert_type(k)] = convert_type(v)
-    
+
     return new_d
+
 
 class RuntimeMatchObject(MLType):
     def __init__(self, match: re.Match):
@@ -612,18 +628,22 @@ class RuntimeAirtableBase(MLCallable):
     def __init__(self, base):
         self.base = base
 
-    def __call__(self, table_name: RuntimeString, env: 'rte.Environment', runtime) -> MLType:
+    def __call__(
+        self, table_name: RuntimeString, env: "rte.Environment", runtime
+    ) -> MLType:
         from mistake.runtime.stdlib.airtable_api import create_table
+
         # get table instance
         return create_table(self, table_name.value)
-    
+
     def to_string(self):
         return f"AirtableBase({self.base.name}, {self.base.id})"
-    
+
+
 class RuntimeAirtableTable(MLType):
     def __init__(self, table):
         self.table = table
-        
+
     def to_string(self):
         return f"AirtableTable({self.table.id}, {self.table.base.id})"
 
@@ -633,23 +653,21 @@ class RuntimeAirtableRecord(MLType):
         self.id = record["id"]
         self.creation_time = record["createdTime"]
         self.fields: dict = record["fields"]
-    
+
     def set_id(self, id: str):
         self.id = convert_type(id)
         return RuntimeUnit()
 
-    
     def set_field(self, field: MLType, value: Any):
         self.fields[un_convert_type(field)] = un_convert_type(value)
         return RuntimeUnit()
-    
+
     def get_field(self, field: MLType):
-        #print("GETTING FIELD", field)
+        # print("GETTING FIELD", field)
         return convert_type(self.fields.get(field, RuntimeUnit()))
-    
+
     def to_record_dict(self) -> dict:
         return self.fields
-    
+
     def to_string(self):
         return f"AirtableRecord({self.id}, {self.creation_time}, {self.fields})"
-    

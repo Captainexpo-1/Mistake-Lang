@@ -137,7 +137,7 @@ class MemberAccess(ASTNode):
         self.member = member
 
     def __str__(self):
-        return f"MemberAccess({self.obj}, {self.member})"
+        return f"MeberAccess({self.obj}, {self.member})"
 
 
 class ClassInstancing(ASTNode):
