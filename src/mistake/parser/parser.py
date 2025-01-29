@@ -127,10 +127,10 @@ class Parser:
                 self.eat(TokenType.KW_CLOSE)
             case TokenType.KW_TRUE:
                 self.eat(TokenType.KW_TRUE)
-                val = Boolean(False)
+                val = Boolean(True)
             case TokenType.KW_FALSE:
                 self.eat(TokenType.KW_FALSE)
-                val = Boolean(True)
+                val = Boolean(False)
             case TokenType.KW_UNIT:
                 self.eat(TokenType.KW_UNIT)
                 val = Unit()

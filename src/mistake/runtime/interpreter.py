@@ -3,9 +3,10 @@ from typing import List
 
 # Must keep this down here to supress warnings
 from gevent import monkey
+monkey.patch_all()
 
-from mistake import runner
-from mistake.parser.ast import (
+from mistake import runner # noqa: E402
+from mistake.parser.ast import ( # noqa: E402
     ASTNode,
     Block,
     Boolean,
@@ -21,11 +22,11 @@ from mistake.parser.ast import (
     Unit,
     VariableAccess,
     VariableDeclaration,
-)
-from mistake.parser.parser import Parser
-from mistake.runtime.environment import ContextType, Environment
-from mistake.runtime.errors.runtime_errors import RuntimeError
-from mistake.runtime.runtime_types import (
+) 
+from mistake.parser.parser import Parser # noqa: E402
+from mistake.runtime.environment import ContextType, Environment # noqa: E402
+from mistake.runtime.errors.runtime_errors import RuntimeError # noqa: E402
+from mistake.runtime.runtime_types import (  # noqa: E402
     BuiltinFunction,
     ClassInstance,
     ClassType,
@@ -40,10 +41,10 @@ from mistake.runtime.runtime_types import (
     RuntimeString,
     RuntimeUnit,
     get_timestamp,
-)
-from mistake.utils import to_decimal_seconds
+) 
 
-monkey.patch_all()
+from mistake.utils import to_decimal_seconds # noqa: E402
+
 import gevent  # noqa: E402
 
 
@@ -56,6 +57,17 @@ class Interpreter:
         self.files: dict[str, List[ASTNode]] = {}
         self.tasks: List[gevent.Greenlet] = []
         self.channel_id = 0
+        self.current_line = 1
+        self.lines_executed = 1
+
+    def _reset(self):
+        self.global_environment = Environment(None, context_type=ContextType.IMPURE)
+        self.current_line = 1
+        self.files: dict[str, List[ASTNode]] = {}
+        self.tasks: List[gevent.Greenlet] = []
+        self.channel_id = 0
+        self.current_line = 1
+        self.lines_executed = 1
 
     def create_channel(self, cb_s=lambda *_: None, cb_r=lambda: None):
         self.channel_id += 1
@@ -173,30 +185,22 @@ class Interpreter:
         return self.visit_node(node.body[-1], new_env)
 
     def get_lifetime(self, lifetime: str, *_):
-        return (
-            Lifetime(LifetimeType.INFINITE, 0)
-            if lifetime == "inf"
-            else (
-                [
-                    lambda: Lifetime(
-                        LifetimeType.LINES, int(lifetime[:-1]), self.lines_executed
-                    ),
-                    lambda: Lifetime(
-                        LifetimeType.DMS_TIMESTAMP, int(lifetime[:-1]), get_timestamp()
-                    ),
-                    lambda: Lifetime(
-                        LifetimeType.TICKS, int(lifetime[:-1]), time.process_time() * 20
-                    ),
-                    lambda: Lifetime(
-                        LifetimeType.DECIMAL_SECONDS,
-                        int(lifetime[:-1]),
-                        to_decimal_seconds(time.process_time()),
-                    ),
-                ]["sltu".find(lifetime[-1])]
-                if lifetime[-1] in "slut"
-                else exec(f"raise RuntimeError(f'Invalid lifetime {lifetime}')")
-            )()
-        )
+        if lifetime == "inf":
+            return Lifetime(LifetimeType.INFINITE, 0)
+        
+        lifetime_value = int(lifetime[:-1])
+        lifetime_type = lifetime[-1]
+        
+        if lifetime_type == 'l':
+            return Lifetime(LifetimeType.LINES, lifetime_value, self.lines_executed)
+        elif lifetime_type == 'u':
+            return Lifetime(LifetimeType.DMS_TIMESTAMP, lifetime_value, get_timestamp())
+        elif lifetime_type == 't':
+            return Lifetime(LifetimeType.TICKS, lifetime_value, time.process_time() * 20)
+        elif lifetime_type == 's':
+            return Lifetime(LifetimeType.DECIMAL_SECONDS, lifetime_value, to_decimal_seconds(time.process_time()))
+        else:
+            raise RuntimeError(f"Invalid lifetime {lifetime}")
 
     def visit_class_definition(self, node: ClassDefinition, env: Environment):
         parent_class = None
