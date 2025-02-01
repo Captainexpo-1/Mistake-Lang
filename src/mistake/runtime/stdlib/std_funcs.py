@@ -53,7 +53,7 @@ from mistake.runtime.stdlib.airtable_api import (
     update_field,
 )
 
-from typing import Any
+from typing import Any, Callable
 
 
 def get_type(val: Any):
@@ -67,14 +67,19 @@ def get_type(val: Any):
         return BuiltinFunction(val)
 
 
-THE_STACK = []
+_STACK = []
+PRINT_CALLBACK = None
 
+def set_print_callback(callback: Callable[[str], None]):
+    global PRINT_CALLBACK
+    PRINT_CALLBACK = callback
+    
 
 def try_pop(arg, env, runtime: "interpreter.Interpreter"):
-    if len(THE_STACK) == 0:
+    if len(_STACK) == 0:
         return RuntimeUnit()
 
-    val = THE_STACK.pop()
+    val = _STACK.pop()
 
     runtime.visit_function_application(
         env, FunctionApplication(val, arg), visit_arg=False
@@ -171,9 +176,16 @@ def assert_true(arg: MLType, *_):
         raise AssertionError("Assertion failed")
     return RuntimeUnit()
 
+def mlprint(arg: MLType, *_):
+    if PRINT_CALLBACK:
+        PRINT_CALLBACK(arg.to_string())
+    else:
+        print(arg)
+    return RuntimeUnit()
+    
 
 std_funcs = {
-    "?!": BuiltinFunction(lambda arg, *_: print(arg)),
+    "?!": BuiltinFunction(lambda arg, *_: mlprint(arg)),
     "+": BuiltinFunction(
         lambda arg, *_: BuiltinFunction(
             lambda x, *_: get_type(arg.value + x.value), imp=False
@@ -242,7 +254,7 @@ std_funcs = {
     ),
     "->": BuiltinFunction(lambda arg, *_: get_length(arg), imp=False),
     "[?]": BuiltinFunction(lambda arg, env, runtime: get_cur_line(runtime), imp=False),
-    "|<|": BuiltinFunction(lambda arg, *_: THE_STACK.append(arg), imp=True),
+    "|<|": BuiltinFunction(lambda arg, *_: _STACK.append(arg), imp=True),
     "|>|": BuiltinFunction(
         lambda arg, env, runtime: try_pop(arg, env, runtime), imp=True
     ),

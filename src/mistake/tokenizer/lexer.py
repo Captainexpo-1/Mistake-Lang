@@ -1,7 +1,7 @@
-from mistake.tokenizer.token import *
-from mistake.utils import *
+from mistake.tokenizer.token import Token, TokenType
+from mistake.utils import is_latin_alph
 from typing import List
-from mistake.parser.errors.parser_errors import *
+from mistake.parser.errors.parser_errors import ParserError
 import re
 import html
 
@@ -14,7 +14,6 @@ keywords_en: dict[str, TokenType] = {
     "function": TokenType.KW_FUNCTION,
     "end": TokenType.KW_END,
     "returns": TokenType.KW_RETURNS,
-    "string": TokenType.KW_STRING,
     "lifetime": TokenType.KW_LIFETIME,
     "true": TokenType.KW_TRUE,
     "false": TokenType.KW_FALSE,
@@ -70,7 +69,7 @@ class Lexer:
     def get_token(self, s: str) -> TokenType:
         if s in self.keywords:
             return self.keywords[s]
-        if re.fullmatch(r"\-?[0-9]+(\.[0-9]+)?", s) != None:
+        if re.fullmatch(r"\-?[0-9]+(\.[0-9]+)?", s) is not None:
             return TokenType.SYM_NUMBER
         if s[:-1].isdigit() and s[-1] in "lust":
             return TokenType.SYM_DURATION

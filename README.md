@@ -1,5 +1,50 @@
 # The Mistake Language
 
+## Installation
+
+MistakeLang is registered on PyPI. To install it, run:
+
+```bash
+pip install mistake-lang
+```
+
+Or if you also want Vulkan Compute Shader support
+
+```bash
+pip install mistake-lang[vulkan]
+```
+
+## Usage
+
+To run a MistakeLang script, use the following command:
+
+```bash
+mistake-lang [options] filename
+```
+
+### Options
+
+- `-h, --help`: Show the help message and exit.
+- `--time`: Print timing information.
+- `--tokens`: Print tokens.
+- `--ast`: Print the Abstract Syntax Tree (AST).
+- `--no-exe`: Do not execute the script.
+- `--env ENV`: Path to the `.env` file.
+- `--vulkan`: Enable Vulkan support. (Requires Vulkan SDK)
+- `--unsafe`: Enable unsafe mode.
+- `--end-env`: Print the global environment at the end.
+- `--language LANGUAGE`: Language for localization. Use `lang = "purge"` to purge all localizations.
+- `--env-tree`: Print the environment tree.
+
+### Example
+
+To run a script with Vulkan support and print the AST:
+
+```bash
+mistake-lang --vulkan --ast my_script.mistake
+```
+
+
 ## Overview
 
 Mistake is an imperative, functional, object-oriented, message-passing language.

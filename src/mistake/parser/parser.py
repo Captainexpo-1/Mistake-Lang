@@ -276,7 +276,12 @@ class Parser:
         self.eat(TokenType.KW_RETURNS)
         body = self.get_unparsed_body()
         np = Parser()
-        parsed_body = np.parse(body)[0]
+        parsed = np.parse(body)
+        if len(parsed) != 1:
+            raise UnexpectedTokenError(
+                f"Unexpected token {self.current_token} at line {self.current_token.line}"
+            )
+        parsed_body = parsed[0]
         self.eat(TokenType.KW_CLOSE)
         
         def get_curried_function(params: List[str], body: ASTNode):
