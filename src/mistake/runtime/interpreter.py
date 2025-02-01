@@ -47,6 +47,12 @@ from mistake.utils import to_decimal_seconds # noqa: E402
 
 import gevent  # noqa: E402
 
+def is_truthy(value: MLType) -> bool:
+    if isinstance(value, RuntimeBoolean):
+        return value.value
+    if isinstance(value, RuntimeUnit):
+        return False
+    return True
 
 class Interpreter:
     def __init__(self, unsafe_mode=False):
@@ -270,8 +276,9 @@ class Interpreter:
         env.add_variable("@", expr, Lifetime(LifetimeType.INFINITE, 0))
         for case in node.cases:
             v = self.visit_node(case.condition, env)
-
-            if v:
+            if not isinstance(v, RuntimeBoolean):
+                raise RuntimeError(f"Match condition must be a boolean, got {v}")
+            if is_truthy(v):
                 return self.visit_node(case.expr, env)
         return self.visit_node(node.otherwise, env)
 
