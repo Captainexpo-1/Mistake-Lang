@@ -5,7 +5,7 @@ from mistake.tokenizer.lexer import Lexer
 from mistake.parser.parser import Parser
 from mistake.runtime.interpreter import Interpreter
 from mistake.runtime.environment import test
-from typing import Tuple, List
+from typing import Tuple, List, Any
 from dotenv import load_dotenv
 import argparse
 import mistake.localize as localize
@@ -38,22 +38,24 @@ def get_args() -> Tuple[str, List[str]]:
 
     return args
 
-def run_script(program: str, lex=None, parser=None, rt=None, standalone=True) -> List:
+def run_script(program: str, lex=None, parser=None, rt=None, standalone=True) -> Tuple[bool, list|Any]:
     if lex is None: 
         lex = Lexer()
     if parser is None: 
         parser = Parser()
     if rt is None: 
-        rt = Interpreter()
+        rt = Interpreter(unsafe_mode=True)
     
     tokens = lex.tokenize(program)
     ast = parser.parse(tokens)  
     if parser.errors:
-        for error in parser.errors:
-            print(error)
-        return []
-    return rt.execute(ast, standalone=standalone)
-
+        return (False, parser.errors)
+    try:
+        exe = rt.execute(ast, standalone=standalone)
+        return (True, exe)
+    except Exception as e:
+        return (False, str(e))
+    
 def get_system_language() -> str:
     return os.getenv('LANG', 'en').split('.')[0]
 

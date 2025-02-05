@@ -53,7 +53,7 @@ from mistake.runtime.stdlib.airtable_api import (
     update_field,
 )
 
-from typing import Any, Callable
+from typing import Any
 
 
 def get_type(val: Any):
@@ -68,11 +68,6 @@ def get_type(val: Any):
 
 
 _STACK = []
-PRINT_CALLBACK = None
-
-def set_print_callback(callback: Callable[[str], None]):
-    global PRINT_CALLBACK
-    PRINT_CALLBACK = callback
     
 
 def try_pop(arg, env, runtime: "interpreter.Interpreter"):
@@ -175,17 +170,10 @@ def assert_true(arg: MLType, *_):
     if not is_truthy(arg):
         raise AssertionError("Assertion failed")
     return RuntimeUnit()
-
-def mlprint(arg: MLType, *_):
-    if PRINT_CALLBACK:
-        PRINT_CALLBACK(arg.to_string())
-    else:
-        print(arg)
-    return RuntimeUnit()
     
 
 std_funcs = {
-    "?!": BuiltinFunction(lambda arg, *_: mlprint(arg)),
+    "?!": BuiltinFunction(lambda arg, env, runtime: runtime.print(arg)),
     "+": BuiltinFunction(
         lambda arg, *_: BuiltinFunction(
             lambda x, *_: get_type(arg.value + x.value), imp=False

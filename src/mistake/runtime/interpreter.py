@@ -1,5 +1,9 @@
 import time
-from typing import List
+from typing import (
+    List,
+    Callable,
+    
+)
 
 # Must keep this down here to supress warnings
 from gevent import monkey
@@ -65,6 +69,11 @@ class Interpreter:
         self.channel_id = 0
         self.current_line = 1
         self.lines_executed = 1
+        self.print_callback: Callable[[MLType], None] = lambda x: None
+
+    def print(self, value: MLType):
+        print(value.to_string())
+        self.print_callback(value)
 
     def _reset(self):
         self.global_environment = Environment(None, context_type=ContextType.IMPURE)
@@ -105,6 +114,8 @@ class Interpreter:
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
         function = self.visit_node(node.called, env)
+
+
         is_builtin = False
 
         if not isinstance(function, Function):
@@ -141,8 +152,9 @@ class Interpreter:
             )
 
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
-
-        return self.visit_node(function.body, new_env)
+                
+        result = self.visit_node(function.body, new_env)
+        return result
 
     def visit_function_declaration(self, node: FunctionDeclaration, env: Environment):
         params = node.parameters

@@ -1,0 +1,13 @@
+comment Yeah baby it's time to write an actual program
+
+variable %2% is impure function ^1 ^2 ^3 returns open
+   match unit cases
+      case ≥ ^2 ^1 then %2% open + ^1 1 close ^2 open * ^3 ^1 close close
+      otherwise ^3 close
+   close
+close close end
+
+variable !() is impure function ^1 returns %2% 1 ^1 1 close end
+
+
+?! open !() 5 close end

@@ -92,6 +92,8 @@ class Function(MLType):
         self.is_unparsed = is_unparsed
         self.captured_env = captured_env
 
+        self.cache = {}
+    
     def to_string(self):
         return f"{'Impure' if self.impure else ''}Function({self.param}, body={self.body}, is_unparsed={self.is_unparsed})"
 
