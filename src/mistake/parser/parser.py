@@ -45,7 +45,7 @@ class Parser:
         if self.position < len(self.tokens):
             return self.tokens[self.position]
         raise ParserError("Unexpected end of input")
-    
+
     def parse(self, tokens: List[Token]) -> ASTNode:
         self.tokens = tokens
 
@@ -57,6 +57,7 @@ class Parser:
     def synchronize(self):
         while self.current_token.type not in self.breaking_tokens:
             self.advance()
+
     def parse_program(self):
         nodes = []
         while self.current_token.type != TokenType.SYM_EOF:
@@ -83,9 +84,7 @@ class Parser:
 
     def advance(self, allow_ws=False):
         self.position += 1
-        while (
-            self.get_current().type == TokenType.SYM_WHITESPACE and not allow_ws
-        ):
+        while self.get_current().type == TokenType.SYM_WHITESPACE and not allow_ws:
             self.position += 1
         if self.position < len(self.tokens):
             self.current_token = self.get_current()
@@ -165,7 +164,6 @@ class Parser:
             val, allow_function_application=allow_function_application
         )
 
-
     def parse_variable_declaration(self):
         public = False
         if self.next_is(TokenType.KW_PUBLIC):
@@ -194,7 +192,7 @@ class Parser:
         return MatchCase(condition, body)
 
     def parse_match_expression(self):
-        # match <expression> cases [case <expression> then <expression> close]mistake..? otherwise <expression> close
+        # match <expression> cases [case <expression> then <expression> close]mistake..? otherwise <expression> close close
 
         self.eat(TokenType.KW_MATCH)
         expr = self.parse_expression()
@@ -274,21 +272,23 @@ class Parser:
             parameters.append(self.eat(TokenType.SYM_IDENTIFIER).value)
 
         self.eat(TokenType.KW_RETURNS)
+
+        # NOW SHIT HAPPENS
+
         body = self.get_unparsed_body()
+        print(body)
         np = Parser()
         parsed = np.parse(body)
-        if len(parsed) != 1:
-            raise UnexpectedTokenError(
-                f"Unexpected token {self.current_token} at line {self.current_token.line}"
-            )
-        parsed_body = parsed[0]
+        parsed_body = parsed[0] if len(body) == 1 else Block(parsed)
         self.eat(TokenType.KW_CLOSE)
-        
+
         def get_curried_function(params: List[str], body: ASTNode):
             if not params:
                 return body
-            return FunctionDeclaration([params[0]], get_curried_function(params[1:], body), impure=impure)
-        
+            return FunctionDeclaration(
+                [params[0]], get_curried_function(params[1:], body), impure=impure
+            )
+
         return get_curried_function(parameters, parsed_body)
 
     def parse_use(self):
@@ -300,8 +300,10 @@ class Parser:
         call_expr = self.parse_expression()
         self.eat(TokenType.KW_DO)
         body_expr = self.parse_expression()
-        
-        callback = FunctionDeclaration(parameters, [Block([body_expr])], impure=True, is_unparsed=False)
+
+        callback = FunctionDeclaration(
+            parameters, [Block([body_expr])], impure=True, is_unparsed=False
+        )
         return FunctionApplication(call_expr, callback)
 
     def parse_with(self):
@@ -311,15 +313,15 @@ class Parser:
             self.eat(TokenType.KW_DO)
             raw.append(self.parse_expression())
         self.eat(TokenType.KW_CLOSE)
-        
+
         def build_nested_call(exprs: List[ASTNode]):
             if len(exprs) == 1:
                 return exprs[0]
             return FunctionApplication(exprs.pop(-1), build_nested_call(exprs))
-            
+
         res = build_nested_call(raw.copy())
         return res
-        
+
     def parse_id_expression(self, allow_function_application=True):
         if (
             self.tokens[self.position + 1].type not in self.breaking_tokens

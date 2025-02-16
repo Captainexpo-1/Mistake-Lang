@@ -1,35 +1,5 @@
 
-variable %2% is impure function ^1 returns open
-   ?! ^1 end
-   match ^1 cases
-      case = @ 3 then true close
-      otherwise false close 
-   close
-
-close close end
-
-?! string Running... close end
-
-?! open %2% 3 close end
+variable %2% is function _ returns fuck you close end
 
 
-
-
-
-
-
-
-
-
-
-
-	
-
-
-
-
-
-
-
-
-
+?! open %2% unit close end
