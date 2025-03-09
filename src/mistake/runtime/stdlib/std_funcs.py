@@ -1,7 +1,7 @@
 import re
 import time
-import gevent
 import mistake.runtime.interpreter as interpreter
+
 
 from mistake.parser.ast import (
     FunctionApplication,
@@ -55,6 +55,8 @@ from mistake.runtime.stdlib.airtable_api import (
 
 from typing import Any
 
+gevent = None
+
 
 def get_type(val: Any):
     if isinstance(val, bool):
@@ -68,7 +70,7 @@ def get_type(val: Any):
 
 
 _STACK = []
-    
+
 
 def try_pop(arg, env, runtime: "interpreter.Interpreter"):
     if len(_STACK) == 0:
@@ -137,6 +139,10 @@ def get_string_from_match(arg: RuntimeMatchObject, *_):
 def new_task_from_function_app(
     function: Function, env, runtime: "interpreter.Interpreter", delay: float = 0.0
 ):
+    global gevent
+    if gevent is None:
+        import gevent
+
     def task():
         gevent.sleep(from_decimal_seconds(delay))
         runtime.visit_function_application(
@@ -151,6 +157,10 @@ def new_task_from_function_app(
 def new_task_from_func(
     func: callable, runtime: "interpreter.Interpreter", delay: float = 0.0
 ):
+    global gevent
+    if gevent is None:
+        import gevent
+
     def task():
         gevent.sleep(from_decimal_seconds(delay))
         func()
@@ -170,7 +180,7 @@ def assert_true(arg: MLType, *_):
     if not is_truthy(arg):
         raise AssertionError("Assertion failed")
     return RuntimeUnit()
-    
+
 
 std_funcs = {
     "?!": BuiltinFunction(lambda arg, env, runtime: runtime.print(arg)),

@@ -2,15 +2,11 @@ import time
 from typing import (
     List,
     Callable,
-    
 )
 
-# Must keep this down here to supress warnings
-from gevent import monkey
-monkey.patch_all()
 
-from mistake import runner # noqa: E402
-from mistake.parser.ast import ( # noqa: E402
+from mistake import runner  # noqa: E402
+from mistake.parser.ast import (  # noqa: E402
     ASTNode,
     Block,
     Boolean,
@@ -26,10 +22,10 @@ from mistake.parser.ast import ( # noqa: E402
     Unit,
     VariableAccess,
     VariableDeclaration,
-) 
-from mistake.parser.parser import Parser # noqa: E402
-from mistake.runtime.environment import ContextType, Environment # noqa: E402
-from mistake.runtime.errors.runtime_errors import RuntimeError # noqa: E402
+)
+from mistake.parser.parser import Parser  # noqa: E402
+from mistake.runtime.environment import ContextType, Environment  # noqa: E402
+from mistake.runtime.errors.runtime_errors import RuntimeError  # noqa: E402
 from mistake.runtime.runtime_types import (  # noqa: E402
     BuiltinFunction,
     ClassInstance,
@@ -45,11 +41,13 @@ from mistake.runtime.runtime_types import (  # noqa: E402
     RuntimeString,
     RuntimeUnit,
     get_timestamp,
-) 
+)
 
-from mistake.utils import to_decimal_seconds # noqa: E402
+from mistake.utils import to_decimal_seconds  # noqa: E402
 
-import gevent  # noqa: E402
+
+gevent = None
+
 
 def is_truthy(value: MLType) -> bool:
     if isinstance(value, RuntimeBoolean):
@@ -58,6 +56,7 @@ def is_truthy(value: MLType) -> bool:
         return False
     return True
 
+
 class Interpreter:
     def __init__(self, unsafe_mode=False):
         self.unsafe_mode = unsafe_mode
@@ -65,7 +64,7 @@ class Interpreter:
         self.global_environment = Environment(None, context_type=ContextType.IMPURE)
         self.current_line = 1
         self.files: dict[str, List[ASTNode]] = {}
-        self.tasks: List[gevent.Greenlet] = []
+        self.tasks: List = []
         self.channel_id = 0
         self.current_line = 1
         self.lines_executed = 1
@@ -79,7 +78,7 @@ class Interpreter:
         self.global_environment = Environment(None, context_type=ContextType.IMPURE)
         self.current_line = 1
         self.files: dict[str, List[ASTNode]] = {}
-        self.tasks: List[gevent.Greenlet] = []
+        self.tasks: List = []
         self.channel_id = 0
         self.current_line = 1
         self.lines_executed = 1
@@ -96,13 +95,19 @@ class Interpreter:
         return channel.receive()
 
     def run_all_tasks(self):
+        if gevent is None:
+            from gevent import monkey
+
+            monkey.patch_all()
+
+            import gevent  # noqa: E402
         if self.tasks:
             # Run tasks asynchronously without blocking the main thread
             for task in self.tasks:
                 task.start()
             self.tasks = [task for task in self.tasks if not task.ready()]
 
-    def add_task(self, task: gevent.Greenlet):
+    def add_task(self, task):
         self.tasks.append(task)
 
     def visit_function_application(
@@ -114,7 +119,6 @@ class Interpreter:
         param = self.visit_node(node.parameter, env) if visit_arg else node.parameter
 
         function = self.visit_node(node.called, env)
-
 
         is_builtin = False
 
@@ -152,7 +156,7 @@ class Interpreter:
             )
 
         new_env.add_variable(function.param, param, Lifetime(LifetimeType.INFINITE, 0))
-                
+
         result = self.visit_node(function.body, new_env)
         return result
 
@@ -205,18 +209,24 @@ class Interpreter:
     def get_lifetime(self, lifetime: str, *_):
         if lifetime == "inf":
             return Lifetime(LifetimeType.INFINITE, 0)
-        
+
         lifetime_value = int(lifetime[:-1])
         lifetime_type = lifetime[-1]
-        
-        if lifetime_type == 'l':
+
+        if lifetime_type == "l":
             return Lifetime(LifetimeType.LINES, lifetime_value, self.lines_executed)
-        elif lifetime_type == 'u':
+        elif lifetime_type == "u":
             return Lifetime(LifetimeType.DMS_TIMESTAMP, lifetime_value, get_timestamp())
-        elif lifetime_type == 't':
-            return Lifetime(LifetimeType.TICKS, lifetime_value, time.process_time() * 20)
-        elif lifetime_type == 's':
-            return Lifetime(LifetimeType.DECIMAL_SECONDS, lifetime_value, to_decimal_seconds(time.process_time()))
+        elif lifetime_type == "t":
+            return Lifetime(
+                LifetimeType.TICKS, lifetime_value, time.process_time() * 20
+            )
+        elif lifetime_type == "s":
+            return Lifetime(
+                LifetimeType.DECIMAL_SECONDS,
+                lifetime_value,
+                to_decimal_seconds(time.process_time()),
+            )
         else:
             raise RuntimeError(f"Invalid lifetime {lifetime}")
 
@@ -379,5 +389,6 @@ class Interpreter:
             self.current_line += 1
             self.lines_executed += 1
 
-        gevent.joinall(self.tasks)
+        if gevent:
+            gevent.joinall(self.tasks)
         return result

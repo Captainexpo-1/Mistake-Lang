@@ -13,23 +13,37 @@ import json
 
 ENV_PATH = None
 
+
 def print_help():
-    print("Usage: mistake-lang <filename> [--time] [--tokens] [--ast] [--no-exe] [--env <path>] [--vulkan]")
+    print(
+        "Usage: mistake-lang <filename> [--time] [--tokens] [--ast] [--no-exe] [--env <path>] [--vulkan]"
+    )
+
 
 def get_args() -> Tuple[str, List[str]]:
-    parser = argparse.ArgumentParser(description='MistakeLang Interpreter')
-    parser.add_argument('filename', type=str, help='The script file to run')
-    parser.add_argument('--time', action='store_true', help='Print timing information')
-    parser.add_argument('--tokens', action='store_true', help='Print tokens')
-    parser.add_argument('--ast', action='store_true', help='Print AST')
-    parser.add_argument('--no-exe', action='store_true', help='Do not execute the script')
-    parser.add_argument('--env', type=str, help='Path to the .env file')
-    parser.add_argument('--vulkan', action='store_true', help='Enable Vulkan support')
-    parser.add_argument('--unsafe', action='store_true', help='Enable unsafe mode')
-    parser.add_argument('--end-env', action='store_true', help='Print the global environment at the end')
-    parser.add_argument('--language', type=str, help='Language for localization, use lang = "purge" to purge all localizations')
-    parser.add_argument('--env-tree', action='store_true', help='Print the environment tree')
-    
+    parser = argparse.ArgumentParser(description="MistakeLang Interpreter")
+    parser.add_argument("filename", type=str, help="The script file to run")
+    parser.add_argument("--time", action="store_true", help="Print timing information")
+    parser.add_argument("--tokens", action="store_true", help="Print tokens")
+    parser.add_argument("--ast", action="store_true", help="Print AST")
+    parser.add_argument(
+        "--no-exe", action="store_true", help="Do not execute the script"
+    )
+    parser.add_argument("--env", type=str, help="Path to the .env file")
+    parser.add_argument("--vulkan", action="store_true", help="Enable Vulkan support")
+    parser.add_argument("--unsafe", action="store_true", help="Enable unsafe mode")
+    parser.add_argument(
+        "--end-env", action="store_true", help="Print the global environment at the end"
+    )
+    parser.add_argument(
+        "--language",
+        type=str,
+        help='Language for localization, use lang = "purge" to purge all localizations',
+    )
+    parser.add_argument(
+        "--env-tree", action="store_true", help="Print the environment tree"
+    )
+
     args = parser.parse_args()
 
     if not os.path.isfile(args.filename):
@@ -38,16 +52,19 @@ def get_args() -> Tuple[str, List[str]]:
 
     return args
 
-def run_script(program: str, lex=None, parser=None, rt=None, standalone=True) -> Tuple[bool, list|Any]:
-    if lex is None: 
+
+def run_script(
+    program: str, lex=None, parser=None, rt=None, standalone=True
+) -> Tuple[bool, list | Any]:
+    if lex is None:
         lex = Lexer()
-    if parser is None: 
+    if parser is None:
         parser = Parser()
-    if rt is None: 
+    if rt is None:
         rt = Interpreter(unsafe_mode=True)
-    
+
     tokens = lex.tokenize(program)
-    ast = parser.parse(tokens)  
+    ast = parser.parse(tokens)
     if parser.errors:
         return (False, parser.errors)
     try:
@@ -55,27 +72,30 @@ def run_script(program: str, lex=None, parser=None, rt=None, standalone=True) ->
         return (True, exe)
     except Exception as e:
         return (False, str(e))
-    
+
+
 def get_system_language() -> str:
-    return os.getenv('LANG', 'en').split('.')[0]
+    return os.getenv("LANG", "en").split(".")[0]
+
 
 def graph_env_relations():
-    graph = {} # {parent: [children]}
+    graph = {}  # {parent: [children]}
     for env in test:
         graph[str(id(env))[-4:]] = []
-    
+
     for env in test:
         if env.parent:
             graph[str(id(env.parent))[-4:]].append(env.repr_simple())
-        
+
     return graph
+
+
 def main():
     global ENV_PATH
     args = get_args()
     p_time = args.time
 
     cur_path = os.path.dirname(os.path.abspath(__file__))
-
 
     lexer = Lexer()
     parser = Parser()
@@ -89,24 +109,23 @@ def main():
     if not os.path.isfile(file):
         print(f"Localization file for {lang} not found, generating new translation.")
         localize.translate(lang)
-        
+
     with open(file, "r", encoding="utf-8") as f:
         translate = json.loads(f.read())
         trans, keywords = translate.keys(), translate.values()
         n = {}
         for t, kw in zip(trans, keywords):
             n[t] = lexer.keywords[kw]
-                
+
         lexer.keywords = n
-            
 
     ENV_PATH = args.env
-    if ENV_PATH is not None: 
+    if ENV_PATH is not None:
         load_dotenv(ENV_PATH)
-    else: 
+    else:
         load_dotenv()
-    
-    with open(args.filename, "r", encoding='utf-8') as f:
+
+    with open(args.filename, "r", encoding="utf-8") as f:
         if p_time:
             print("Read file:", time.process_time())
         start = time.time()
@@ -138,14 +157,16 @@ def main():
 
         if not args.no_exe:
             runtime.execute(ast, filename=args.filename)
-        
+
         if args.end_env:
             print(runtime.global_environment)
-        
+
         if p_time:
             print(f"Total runtime: {time.time() - start} seconds")
-        
+
         if args.env_tree:
-            print(json.dumps(graph_env_relations(), indent=3)) 
-if __name__ == "__main__":  
+            print(json.dumps(graph_env_relations(), indent=3))
+
+
+if __name__ == "__main__":
     main()

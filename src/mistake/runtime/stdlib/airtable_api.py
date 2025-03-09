@@ -1,8 +1,7 @@
 import mistake.runtime.runtime_types as rt
-import requests
 from mistake.runtime.errors.runtime_errors import RuntimeError
-from typing import Any
 
+requests = None
 Base = None
 Api = None
 
@@ -11,11 +10,13 @@ API_KEY = None
 
 
 def create_airtable_api_instance(key: "rt.RuntimeString", *_):
-    global AIRTABLE_API, API_KEY, Base, Api
+    global AIRTABLE_API, API_KEY, Base, Api, requests
 
     if Base is None:
         from pyairtable import Api as _a, Base as _b
+        import requests as _r
 
+        requests = _r
         Base = _b
         Api = _a
 
