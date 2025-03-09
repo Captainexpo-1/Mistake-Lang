@@ -1,14 +1,24 @@
 import mistake.runtime.runtime_types as rt
-from pyairtable import Base, Api
 import requests
 from mistake.runtime.errors.runtime_errors import RuntimeError
+from typing import Any
 
-AIRTABLE_API: Api = None
+Base = None
+Api = None
+
+AIRTABLE_API = None
 API_KEY = None
 
 
 def create_airtable_api_instance(key: "rt.RuntimeString", *_):
-    global AIRTABLE_API, API_KEY
+    global AIRTABLE_API, API_KEY, Base, Api
+
+    if Base is None:
+        from pyairtable import Api as _a, Base as _b
+
+        Base = _b
+        Api = _a
+
     if not isinstance(key, rt.RuntimeString):
         raise rt.RuntimeTypeError(f"Expected RuntimeString, got {type(key)}")
 

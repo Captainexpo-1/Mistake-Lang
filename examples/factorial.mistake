@@ -1,4 +1,4 @@
-comment Yeah baby it's time to write an actual program
+comment Yeah baby its time to write an actual program
 
 variable %2% is impure function ^1 ^2 ^3 returns open
    match unit cases
@@ -10,4 +10,4 @@ close close end
 variable !() is impure function ^1 returns %2% 1 ^1 1 close end
 
 
-?! open !() 5 close end
+?! open !() 25 close end
