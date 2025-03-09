@@ -95,6 +95,7 @@ class Interpreter:
         return channel.receive()
 
     def run_all_tasks(self):
+        global gevent
         if gevent is None:
             from gevent import monkey
 
