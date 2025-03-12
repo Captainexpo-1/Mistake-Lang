@@ -1,7 +1,7 @@
 variable $^&* is <=#=> unit end
 
-variable &&& is function <% returns open 
-	variable !*! is function _ returns open
+variable &&& is impure function <% returns open 
+	variable !*! is impure function _ returns open
 		<< <% string Hello, World!<br> close end
 		variable >% is >> <% end
 		?! open >"< >% close end

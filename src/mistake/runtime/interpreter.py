@@ -3,7 +3,11 @@ from typing import (
     List,
     Callable,
 )
+from gevent import monkey
 
+monkey.patch_all()
+
+import gevent  # noqa: E402
 
 from mistake import runner  # noqa: E402
 from mistake.parser.ast import (  # noqa: E402
@@ -46,7 +50,6 @@ from mistake.runtime.runtime_types import (  # noqa: E402
 from mistake.utils import to_decimal_seconds  # noqa: E402
 
 
-gevent = None
 
 
 def is_truthy(value: MLType) -> bool:
@@ -95,13 +98,6 @@ class Interpreter:
         return channel.receive()
 
     def run_all_tasks(self):
-        global gevent
-        if gevent is None:
-            from gevent import monkey
-
-            monkey.patch_all()
-
-            import gevent  # noqa: E402
         if self.tasks:
             # Run tasks asynchronously without blocking the main thread
             for task in self.tasks:
