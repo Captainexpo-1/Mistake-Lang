@@ -66,6 +66,9 @@ def actually_run_vulkan_shader(
 
 
 def run_vulkan_shader(shader_func: Function, *_):
+    print(shader_func.body.to_string())
+    print(shader_func.raw_body)
+    print(shader_func.to_string())
     code = shader_func.body[1:-4]
     code = "".join(i.value for i in code)
 

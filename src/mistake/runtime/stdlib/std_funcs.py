@@ -2,7 +2,6 @@ import re
 import time
 import mistake.runtime.interpreter as interpreter
 
-
 from mistake.parser.ast import (
     FunctionApplication,
 )
