@@ -1,5 +1,2 @@
-
-variable %2% is function _ returns fuck you close end
-
-
-?! open %2% unit close end
+variable <> is /?/ string /Sarah|Hello/ close string Hello, Sarah! close end
+?! <> end  comment Prints "list"

@@ -15,7 +15,7 @@ from mistake.runtime.runtime_types import (
     RuntimeUnit,
     RuntimeMutableBox,
     RuntimeListType,
-    RuntimeMatchObject,
+    RuntimeRegexResult,
     RuntimeTask,
     RuntimeDictType,
     BuiltinFunction,
@@ -103,23 +103,37 @@ def get_length(arg: MLType, *_):
             return RuntimeNumber(len(value))
         case RuntimeNumber(value):
             return len(str(value))
-        case RuntimeMatchObject(value):
-            return RuntimeNumber(len(value.groups()))
+        case RuntimeRegexResult(value):
+            return RuntimeNumber(len(value.groups))
         case RuntimeTask(_, start_time):
             return RuntimeNumber(time.time() - start_time)
         case _:
             return RuntimeNumber(0)
 
+def str_to_regex_flags(flag_string):
+    flag_map = {
+        'i': re.IGNORECASE,
+        'm': re.MULTILINE,
+        's': re.DOTALL,
+        'u': re.UNICODE,
+        'l': re.LOCALE,
+    }
+    
+    combined_flags = 0
+    for char in flag_string.lower():
+        if char in flag_map:
+            combined_flags |= flag_map[char]
+    return combined_flags
+
 
 def create_regex_func(arg: RuntimeString, *_):
     try:
-        comp = re.compile(arg.value)
+        vals = arg.value.split("/")[1:3:1]
+        comp = re.compile(vals[0]) if len(vals) == 1 else re.compile(vals[0], str_to_regex_flags(vals[1])) 
         return BuiltinFunction(
-            lambda arg, *_: RuntimeListType(
-                {
-                    (i + 1): RuntimeMatchObject(m)
-                    for i, m in enumerate(comp.findall(arg.value))
-                }
+            lambda arg, *_: RuntimeRegexResult(
+                comp.findall(arg.value),
+                comp.match(arg.value)
             ),
             imp=False,
         )
@@ -127,12 +141,12 @@ def create_regex_func(arg: RuntimeString, *_):
         return RuntimeUnit()
 
 
-def get_group_from_match(arg: RuntimeMatchObject, *_):
-    return BuiltinFunction(lambda x, *_: RuntimeString(arg.group(x.value)), imp=False)
+def get_group_from_match(arg: RuntimeRegexResult, *_):
+    return BuiltinFunction(lambda x, *_: RuntimeString(arg.group[int(x.value) - 1]), imp=False)
 
 
-def get_string_from_match(arg: RuntimeMatchObject, *_):
-    return RuntimeString(str(arg.match))
+def get_string_from_match(arg: RuntimeRegexResult, *_):
+    return RuntimeString(arg.full_match)
 
 
 def new_task_from_function_app(
