@@ -1,2 +1,5 @@
-variable <> is /?/ string /Sarah|Hello/ close string Hello, Sarah! close end
-?! <> end  comment Prints "list"
+variable [] is ! 5 end  comment Creates a mutable box with initial value 5
+
+with !? [] do ?! close end  comment Prints 5
+!< [] 6 end                 comment Sets the box's content to 6
+with !? [] do ?! close end  comment Now prints 6
