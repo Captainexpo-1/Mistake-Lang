@@ -112,14 +112,15 @@ def get_length(arg: MLType, *_):
 
 
 def create_regex_func(arg: RuntimeString, *_):
+    print(arg)
     try:
         comp = re.compile(arg.value)
         return BuiltinFunction(
             lambda arg, *_: RuntimeListType(
-                {
-                    (i + 1): RuntimeMatchObject(m)
+                [
+                    RuntimeMatchObject(m)
                     for i, m in enumerate(comp.findall(arg.value))
-                }
+                ]
             ),
             imp=False,
         )
