@@ -3,11 +3,11 @@ from typing import (
     List,
     Callable,
 )
-from gevent import monkey
 
-monkey.patch_all()
+import warnings
 
-import gevent  # noqa: E402
+gevent = None 
+
 
 from mistake import runner  # noqa: E402
 from mistake.parser.ast import (  # noqa: E402
@@ -98,6 +98,15 @@ class Interpreter:
         return channel.receive()
 
     def run_all_tasks(self):
+        global gevent
+        if not gevent:
+            from gevent import monkey
+
+            warnings.simplefilter("ignore", category=monkey.MonkeyPatchWarning) # Remove stupid monkey patch warning
+            monkey.patch_all()
+
+            import gevent as _g  # noqa: E402
+            gevent = _g
         if self.tasks:
             # Run tasks asynchronously without blocking the main thread
             for task in self.tasks:

@@ -69,7 +69,7 @@ opening_tokens = [
     TokenType.KW_RETURNS,
     TokenType.KW_HAS,
     TokenType.SYM_STRING,
-    TokenType.KW_WITH,
+    TokenType.KW_WITH
 ]
 
 

@@ -11,7 +11,7 @@ authors = [
     {name = "Elliot", email = "captainexpo@gmail.com"}
 ]
 license = {text = "MIT"}
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 
 dependencies = [
     "annotated-types==0.7.0",

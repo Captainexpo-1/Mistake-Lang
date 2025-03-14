@@ -56,7 +56,6 @@ from typing import Any
 
 gevent = None
 
-
 def get_type(val: Any):
     if isinstance(val, bool):
         return RuntimeBoolean(val)
@@ -154,8 +153,8 @@ def new_task_from_function_app(
 ):
     global gevent
     if gevent is None:
-        import gevent
-
+        import gevent as _g
+        gevent = _g
     def task():
         gevent.sleep(from_decimal_seconds(delay))
         runtime.visit_function_application(
@@ -172,7 +171,8 @@ def new_task_from_func(
 ):
     global gevent
     if gevent is None:
-        import gevent
+        import gevent as _g
+        gevent = _g
 
     def task():
         gevent.sleep(from_decimal_seconds(delay))

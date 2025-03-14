@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set, Dict, Callable, Any
 
 from mistake.parser.ast import (
     ASTNode,
@@ -46,30 +46,35 @@ class Parser:
             return self.tokens[self.position]
         raise ParserError("Unexpected end of input")
 
-    def parse(self, tokens: List[Token]) -> ASTNode:
+    def parse(self, tokens: List[Token], throw=False) -> ASTNode:
         self.tokens = tokens
 
         self.position = 0
         self.current_token = self.get_current()
 
-        return self.parse_program()
+        return self.parse_program(throw=throw)
 
     def synchronize(self):
         while self.current_token.type not in self.breaking_tokens:
             self.advance()
 
-    def parse_program(self):
+    def parse_program(self, throw=False) -> List[ASTNode]:
         nodes = []
         while self.current_token.type != TokenType.SYM_EOF:
             try:
                 nodes.append(self.parse_node())
             except (ParserError, UnexpectedTokenError) as e:
+                if throw:
+                    raise e
+
                 self.errors.append(e)
                 try:
                     self.advance()
                     self.synchronize()
                 except ParserError:
-                    break
+                    raise UnexpectedTokenError(
+                        f"Unexpected token {self.current_token} at line {self.current_token.line}"
+                    )
         return nodes
 
     def eat(self, token_type: TokenType):
@@ -95,17 +100,15 @@ class Parser:
     def next_is(self, token_type: TokenType):
         return self.current_token.type == token_type
 
-    def parse_node(self):
+    def parse_node(self, require_end=True):
         if self.current_token.type in [TokenType.KW_PUBLIC, TokenType.KW_VARIABLE]:
             val = self.parse_variable_declaration()
         elif self.current_token.type == TokenType.KW_JUMP:
             val = self.parse_jump_statement()
         else:
-            try:
-                val = self.parse_expression()
-            except UnexpectedTokenError as e:
-                raise e
-        self.eat(TokenType.KW_END)
+            val = self.parse_expression()
+        if require_end: 
+            self.eat(TokenType.KW_END)
         return val
 
     def parse_single_expr(self, atom: ASTNode, allow_function_application=True):
@@ -228,7 +231,8 @@ class Parser:
                 + [Token(TokenType.KW_CLOSE, "close")]
             )
 
-        return body + [Token(TokenType.KW_END, "end"), Token(TokenType.SYM_EOF, "eof")]
+        result = body + [Token(TokenType.KW_END, "end"), Token(TokenType.SYM_EOF, "eof")]
+        return result
 
     def parse_class_definition(self):
         self.eat(TokenType.KW_CLASS)
@@ -239,12 +243,13 @@ class Parser:
         self.eat(TokenType.KW_HAS)
 
         members = {}
-        pmembers = set()
+        pmembers: Set[str] = set()
         body: List[VariableDeclaration] = []
         while self.current_token.type != TokenType.KW_CLOSE:
-            body.append(v := self.parse_variable_declaration())
-            if v.public:
-                pmembers.add(v.name)
+            fucker = self.parse_variable_declaration()
+            body.append(fucker)
+            if fucker.public:
+                pmembers.add(fucker.name)
             self.eat(TokenType.KW_END)
 
         for member in body:
@@ -276,9 +281,21 @@ class Parser:
         # NOW SHIT HAPPENS
 
         body = self.get_unparsed_body()
-        # print(body)
+        
         np = Parser()
-        parsed = np.parse(body)
+        parsed = None
+        try:
+            parsed = np.parse(body, throw=True)
+        except (ParserError, UnexpectedTokenError) as e:
+            self.errors.append(e)
+            try:
+                self.advance()
+                self.synchronize()
+            except ParserError:
+                raise UnexpectedTokenError(
+                    f"Unexpected token {self.current_token} at line {self.current_token.line}"
+                )
+            return Unit()
         parsed_body = parsed[0] if len(body) == 1 else Block(parsed)
         self.eat(TokenType.KW_CLOSE)
 
@@ -320,6 +337,7 @@ class Parser:
             return FunctionApplication(exprs.pop(-1), build_nested_call(exprs))
 
         res = build_nested_call(raw.copy())
+        
         return res
 
     def parse_id_expression(self, allow_function_application=True):
@@ -348,38 +366,17 @@ class Parser:
 
         return self.get_function_application_from_params(func, parameters)
 
-    def is_final_expr_in_block(self):
-        stack = [
-            self.tokens[self.position].type
-        ]  # Initialize with the current opening token
-
-        for i in range(self.position + 1, len(self.tokens)):
-            token = self.tokens[i]
-
-            if token.type in opening_tokens:
-                stack.append(token.type)
-            elif token.type == TokenType.KW_CLOSE:
-                stack.pop()
-
-                if not stack:
-                    # We've closed all nested blocks
-                    return True
-            elif token.type == TokenType.KW_END and len(stack) == 1:
-                # If we find an 'end' at the current block depth, it's not the final expression
-                return False
-
-        # If we exit the loop without returning, we've hit the end of the input
-        return True
-
     def parse_block(self):
         self.eat(TokenType.KW_OPEN)
         body = []
         while self.current_token.type != TokenType.KW_CLOSE:
-            # print("PARSING BLOCK", self.current_token, self.is_final_expr_in_block())
-            if self.is_final_expr_in_block():
-                body.append(self.parse_expression())
-            else:
-                body.append(self.parse_node())
+            r = self.parse_node(False)
+            body.append(r)
+            if self.current_token.type == TokenType.KW_CLOSE:
+                break
+            self.eat(TokenType.KW_END)
+            
+        
         self.eat(TokenType.KW_CLOSE)
         return Block(body)
 

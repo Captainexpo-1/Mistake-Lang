@@ -5,10 +5,10 @@ class ASTNode:
     def __init__(self):
         pass
 
-    def __str__(self):
-        pass
+    def __str__(self) -> str:
+        return ""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     def to_string(self):
@@ -87,7 +87,7 @@ class VariableDeclaration(ASTNode):
 
 class FunctionDeclaration(ASTNode):
     def __init__(
-        self, parameters: List[str], body: ASTNode, impure: bool = False, raw_body=""
+        self, parameters: List[str], body: ASTNode, impure: bool = False, raw_body: str=""
     ):
         self.parameters = parameters
         self.body = body
