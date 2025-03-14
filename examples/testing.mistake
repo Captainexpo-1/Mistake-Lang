@@ -1,5 +1,114 @@
-variable [] is ! 5 end  comment Creates a mutable box with initial value 5
+comment HTTP verb
+variable [#?#] is /?/ string ^([A-Z]+) (.*) close end
 
-with !? [] do ?! close end  comment Prints 5
-!< [] 6 end                 comment Sets the box's content to 6
-with !? [] do ?! close end  comment Now prints 6
+comment HTTP path
+variable [/##/##] is /?/ string (.*)HTTP/1.1\r\n(.*) close end
+
+comment Header regex
+variable [##:##] is /?/ string (\w+): *(.*)\r\n(.*) close end
+
+comment End of headers marker
+variable [####] is /?/ string \r\n\r\n close end
+
+comment Helper function to append to the end of a list
+variable []<< is impure function [] []< returns
+    [<] [] with -> []
+        do + 1
+    close []<
+close end
+
+comment Helper function to debug something
+variable @?! is impure function ~? ~! returns open
+    with ~!
+        do + ~?
+        do + string debug: close
+        do ?!
+    close end
+
+    ~!
+close close end
+
+@?! string debug test close 5 end
+
+comment HTTP parser class
+variable [#] is class has
+    comment Current regex to be applied
+    variable #?# is ! [#?#] end
+    
+    comment Current feed state
+    variable >#> is ! unit end
+    
+    comment Current HTTP verb
+    variable #?# is ! unit end
+    
+    comment Current HTTP path
+    variable /##/## is ! unit end
+    
+    comment Current headers
+    variable ##:## is [!] unit end
+    
+    comment Feed the HTTP parser
+    public variable #>>> is impure function ### returns open
+        ?! string hello close end
+    
+        with ###
+            comment Append string to parse to the end of feed state
+            do + open !? >#> close
+            
+            comment Save new feed state
+            do !< >#>
+        close end
+        
+        comment Then, try match our regex
+        variable [???] is with !? >#>  comment With the current feed state...
+            do !? #?#  comment try applying the regex...
+        close end
+        
+        comment Did we match anything?
+        match -> [???] cases
+            case = 0 @ then open
+                ?! string No matches! close end
+                unit
+            close close
+            otherwise open
+                comment Ok, we matched something!
+                comment Get the match object
+                variable ??? is [>] [???] 1 end
+                
+                comment Figure out which part of the parser were at
+                match !? #?# cases
+                    comment We were parsing the verb
+                    case = [#?#] @ then open
+                        ?! string Got HTTP verb! close end
+                        comment Set the verb
+                        with />?/ ??? 1
+                            do !< #?#
+                        close end
+                        
+                        comment Set the new feed state
+                        with />?/ ??? 2
+                            do !< >#>
+                        close end
+                        
+                        comment Set the new regex to use
+                        !< #?# [/##/##]
+                    close close
+                    
+                    otherwise ?! string uh oh! close close
+                close
+            close close
+        close end
+    close close end
+close end
+
+?! string im killing myself close end
+
+variable # is new [#] end
+
+?! string im killing myself close end
+
+with member #>>> of # do ?! close end
+
+with string GET / HTTP/1.1 close
+    do member #>>> of #
+close end

@@ -127,7 +127,10 @@ def str_to_regex_flags(flag_string):
 
 def create_regex_func(arg: RuntimeString, *_):
     try:
-        vals = arg.value.split("/")[1:3:1]
+        vals = arg.value.split("/")
+        if len(vals) == 0 or len(vals) > 2:
+            raise RuntimeTypeError("Invalid regex input")
+        vals = vals[1:3:1]
         comp = re.compile(vals[0]) if len(vals) == 1 else re.compile(vals[0], str_to_regex_flags(vals[1])) 
         return BuiltinFunction(
             lambda arg, *_: RuntimeRegexResult(

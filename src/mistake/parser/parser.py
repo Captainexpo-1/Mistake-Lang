@@ -375,8 +375,6 @@ class Parser:
             if self.current_token.type == TokenType.KW_CLOSE:
                 break
             self.eat(TokenType.KW_END)
-            
-        
         self.eat(TokenType.KW_CLOSE)
         return Block(body)
 
