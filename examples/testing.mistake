@@ -1,14 +1,14 @@
 comment HTTP verb
-variable [#?#] is /?/ string ^([A-Z]+) (.*) close end
+variable [#?#] is /?/ string /^([A-Z]+) (.*)/ close end
 
 comment HTTP path
-variable [/##/##] is /?/ string (.*)HTTP/1.1\r\n(.*) close end
+variable [/##/##] is /?/ string /(.*)HTTP/1.1\r\n(.*)/ close end
 
 comment Header regex
-variable [##:##] is /?/ string (\w+): *(.*)\r\n(.*) close end
+variable [##:##] is /?/ string /(\w+): *(.*)\r\n(.*)/ close end
 
 comment End of headers marker
-variable [####] is /?/ string \r\n\r\n close end
+variable [####] is /?/ string /\r\n\r\n/ close end
 
 comment Helper function to append to the end of a list
 variable []<< is impure function [] []< returns
